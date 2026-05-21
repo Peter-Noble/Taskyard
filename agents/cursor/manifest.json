@@ -1,0 +1,8 @@
+{
+  "name": "Cursor",
+  "description": "Cursor SDK agent (official @cursor/sdk)",
+  "version": "1.0.0",
+  "entrypoint": "run.ts",
+  "language": "typescript",
+  "env_vars": ["CURSOR_API_KEY"]
+}

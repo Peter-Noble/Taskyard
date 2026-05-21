@@ -1,0 +1,2 @@
+-- Reference schema; source of truth is packages/db (Drizzle).
+-- Run: pnpm db:push

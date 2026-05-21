@@ -1,0 +1,8 @@
+{
+  "name": "Kimi",
+  "description": "Moonshot Kimi agent",
+  "version": "1.0.0",
+  "entrypoint": "run.py",
+  "language": "python",
+  "env_vars": ["KIMI_API_KEY"]
+}

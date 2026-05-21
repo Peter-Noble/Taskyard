@@ -1,0 +1,7 @@
+[
+  {
+    "name": "taskyard",
+    "repo_url": "https://github.com/example/taskyard.git",
+    "default_branch": "main"
+  }
+]

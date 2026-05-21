@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -m py_compile agents/kimi/run.py)",
+      "Bash(npx tsx:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npm install:*)",
+      "Bash(node_modules/.pnpm/node_modules/.bin/tsx:*)",
+      "Bash(OPENAI_API_KEY=sk-dummy TASKYARD_PROMPT=\"hello\" node_modules/.pnpm/node_modules/.bin/tsx agents/codex/run.ts)",
+      "Bash(CURSOR_API_KEY=sk-dummy TASKYARD_PROMPT=\"hello\" npx tsx agents/cursor/run.ts)",
+      "Bash(KIMI_API_KEY=sk-dummy TASKYARD_PROMPT=\"hello\" python agents/kimi/run.py)",
+      "Bash(pip install:*)",
+      "Bash(node -e \"console.log\\(require.resolve\\('openai'\\)\\)\")"
+    ]
+  }
+}

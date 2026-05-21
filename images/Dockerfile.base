@@ -1,0 +1,19 @@
+FROM ubuntu:24.04
+
+RUN apt-get update && apt-get install -y \
+    git curl wget ca-certificates \
+    python3 python3-pip python3-venv \
+    nodejs npm \
+    rustc cargo \
+    xvfb x11vnc fluxbox \
+    && rm -rf /var/lib/apt/lists/*
+
+# Common agent tooling
+RUN pip3 install --break-system-packages openai
+RUN npm install -g tsx typescript
+RUN cd / && npm install @cursor/sdk
+
+ENV DISPLAY=:99
+EXPOSE 5900 8080
+
+CMD ["bash"]

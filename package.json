@@ -1,0 +1,16 @@
+{
+  "name": "taskyard",
+  "private": true,
+  "packageManager": "pnpm@9.15.0",
+  "scripts": {
+    "dev:server": "pnpm --filter server dev",
+    "dev:hub": "pnpm --filter hub dev",
+    "dev:worker": "pnpm --filter cli dev:worker",
+    "dev:tui": "pnpm --filter cli dev:tui",
+    "build": "pnpm -r build",
+    "db:push": "pnpm --filter db push"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0"
+  }
+}
