@@ -4,5 +4,8 @@
   "type": "module",
   "dependencies": {
     "@cursor/sdk": "*"
+  },
+  "devDependencies": {
+    "tsx": "^4.22.3"
   }
 }

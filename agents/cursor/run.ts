@@ -19,7 +19,7 @@ function emit(event: Event): void {
 const API_KEY = process.env.CURSOR_API_KEY;
 const WORKSPACE = process.env.TASKYARD_WORKSPACE || "/workspace";
 const PROMPT = process.env.TASKYARD_PROMPT || "";
-const MODEL = process.env.CURSOR_MODEL || "composer-2";
+const MODEL = process.env.CURSOR_MODEL || "auto";
 
 if (!API_KEY) {
   emit({ type: "error", message: "Missing CURSOR_API_KEY" });
