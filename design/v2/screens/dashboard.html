@@ -1,0 +1,1118 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dashboard — Taskyard</title>
+  <link rel="stylesheet" href="../css/taskyard.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="top-header">
+      <a href="overview.html" class="header-brand">
+        <span class="brand-mark"><img src="../mpmrnv2b-Make_me_an_exact_copy_202605261554.png" alt="" width="28" height="28" /></span>
+        <span class="brand-name">Taskyard</span>
+      </a>
+      <nav class="header-nav" aria-label="Main">
+        <a href="overview.html">Overview</a>
+        <a href="dashboard.html" aria-current="page">Dashboard</a>
+        <a href="machines.html">Machines</a>
+        <a href="auto.html">Auto</a>
+      </nav>
+      <span class="header-spacer" aria-hidden="true"></span>
+      <div class="header-actions">
+        <button type="button" class="user-session" aria-label="Signed in as Peter">
+          <img src="../mpgwd29b-unnamed.png" alt="" width="32" height="32" />
+        </button>
+      </div>
+    </header>
+
+    <main class="main">
+      <div class="workspace">
+        <div class="workspace-body">
+          <header class="panel-head task-rail-head">
+            <span class="task-rail-head-label">Tasks</span>
+            <button type="button" class="btn btn-primary btn-rail-new">New task</button>
+          </header>
+
+          <header class="panel-head stream-header" aria-label="Center panel header">
+            <div class="stream-header-view" id="header-chat">
+              <div class="stream-header-main">
+                <h2 class="stream-title" id="stream-title">taskyard-ui-wireframe</h2>
+                <p class="stream-sub" id="stream-sub">
+                  <span class="badge badge-waiting"><span class="badge-dot"></span>Waiting</span>
+                  Cursor · linux-box-02 · 38m
+                </p>
+              </div>
+              <div class="stream-header-actions" id="stream-header-actions">
+                <button type="button" class="btn-editor" id="btn-cursor" aria-label="Open in Cursor" title="Open in Cursor">
+                  <img src="../mpgv5ejx-download.png" alt="" width="28" height="28" />
+                </button>
+                <button type="button" class="btn-editor" id="btn-zed" aria-label="Open in ZED" title="Open in ZED">
+                  <img src="../mpguycba-download.jpg" alt="" width="28" height="28" />
+                </button>
+              </div>
+            </div>
+            <div class="stream-header-view stream-header-task" id="header-task" hidden>
+              <div class="stream-header-main" id="task-header-main"></div>
+            </div>
+          </header>
+
+          <header class="panel-head thread-rail-head">
+            <span class="thread-rail-head-label">Threads</span>
+            <button type="button" class="btn btn-primary btn-rail-new">New Thread</button>
+          </header>
+
+          <aside class="task-rail" aria-label="Tasks">
+            <div class="task-list-scroll" id="tasks-list"></div>
+          </aside>
+
+          <section class="stream-panel" aria-label="Center panel">
+            <div class="center-view" id="view-chat">
+              <div class="stream-body">
+                <div class="chat-thread" id="chat-thread" role="log" aria-live="polite" aria-label="Thread conversation"></div>
+              </div>
+            </div>
+            <div class="center-view task-detail-view" id="view-task-detail" hidden>
+              <div class="task-detail-pane" id="task-detail" aria-label="Task detail"></div>
+            </div>
+          </section>
+
+          <aside class="thread-rail" aria-label="Threads">
+            <div class="thread-list-scroll">
+              <ul class="thread-list" id="thread-list-active">
+                <li>
+                  <button type="button" class="thread-item" data-thread="invoice-pdf-parser" aria-selected="false">
+                    <div class="thread-item-row">
+                      <span class="entity-num" aria-hidden="true">01</span>
+                      <div class="thread-item-main">
+                        <div class="thread-item-title-row">
+                          <h3>invoice-pdf-parser</h3>
+                          <span class="badge badge-waiting"><span class="badge-dot"></span>Waiting</span>
+                        </div>
+                        <div class="thread-item-meta"><span class="agent-tag">Codex</span> mac-studio-01 · 2h 14m</div>
+                      </div>
+                    </div>
+                  </button>
+                </li>
+                <li>
+                  <button type="button" class="thread-item" data-thread="taskyard-ui-wireframe" aria-selected="true">
+                    <div class="thread-item-row">
+                      <span class="entity-num" aria-hidden="true">02</span>
+                      <div class="thread-item-main">
+                        <div class="thread-item-title-row">
+                          <h3>taskyard-ui-wireframe</h3>
+                          <span class="badge badge-waiting"><span class="badge-dot"></span>Waiting</span>
+                        </div>
+                        <div class="thread-item-meta"><span class="agent-tag">Cursor</span> linux-box-02 · 38m</div>
+                      </div>
+                    </div>
+                  </button>
+                </li>
+                <li>
+                  <button type="button" class="thread-item" data-thread="fix-port-forward-leak" aria-selected="false">
+                    <div class="thread-item-row">
+                      <span class="entity-num" aria-hidden="true">03</span>
+                      <div class="thread-item-main">
+                        <div class="thread-item-title-row">
+                          <h3>fix-port-forward-leak</h3>
+                          <span class="badge badge-error"><span class="badge-dot"></span>Error</span>
+                        </div>
+                        <div class="thread-item-meta"><span class="agent-tag">Codex</span> homelab-03 · 12m</div>
+                      </div>
+                    </div>
+                  </button>
+                </li>
+                <li>
+                  <button type="button" class="thread-item" data-thread="openapi-client-gen" aria-selected="false">
+                    <div class="thread-item-row">
+                      <span class="entity-num" aria-hidden="true">04</span>
+                      <div class="thread-item-main">
+                        <div class="thread-item-title-row">
+                          <h3>openapi-client-gen</h3>
+                          <span class="badge badge-waiting"><span class="badge-dot"></span>Waiting</span>
+                        </div>
+                        <div class="thread-item-meta"><span class="agent-tag">Cursor</span> linux-box-02 · 1h 05m</div>
+                      </div>
+                    </div>
+                  </button>
+                </li>
+              </ul>
+              <div class="thread-section-break" role="separator">
+                <span>Thread history</span>
+              </div>
+              <ul class="thread-list thread-list-history" id="thread-list-history">
+                <li>
+                  <button type="button" class="thread-item" data-thread="migrate-auth-to-clerk" aria-selected="false">
+                    <div class="thread-item-row">
+                      <span class="entity-num" aria-hidden="true">05</span>
+                      <div class="thread-item-main">
+                        <div class="thread-item-title-row">
+                          <h3>migrate-auth-to-clerk</h3>
+                          <span class="badge badge-completed"><span class="badge-dot"></span>Done</span>
+                        </div>
+                        <div class="thread-item-meta"><span class="agent-tag">Kimi</span> mac-studio-01 · 6h 02m</div>
+                      </div>
+                    </div>
+                  </button>
+                </li>
+                <li>
+                  <button type="button" class="thread-item" data-thread="readme-refresh" aria-selected="false">
+                    <div class="thread-item-row">
+                      <span class="entity-num" aria-hidden="true">06</span>
+                      <div class="thread-item-main">
+                        <div class="thread-item-title-row">
+                          <h3>readme-refresh</h3>
+                          <span class="badge badge-completed"><span class="badge-dot"></span>Done</span>
+                        </div>
+                        <div class="thread-item-meta"><span class="agent-tag">Kimi</span> homelab-03 · 22m</div>
+                      </div>
+                    </div>
+                  </button>
+                </li>
+              </ul>
+            </div>
+          </aside>
+        </div>
+
+        <footer class="capacity-dock" id="capacity-dock" aria-label="Machine capacity">
+          <div class="machine-tile" data-machine="mac-studio-01">
+            <div class="machine-tile-top">
+              <div class="machine-title-row">
+                <span class="entity-num" aria-hidden="true">01</span>
+                <h3 class="machine-name">mac-studio-01</h3>
+              </div>
+              <div class="machine-loads">
+                <div class="load-group" aria-label="CPU — busy">
+                  <span class="load-tag">CPU</span>
+                  <div class="load-cells">
+                    <span class="load-cell on"></span><span class="load-cell on"></span><span class="load-cell on"></span><span class="load-cell"></span>
+                  </div>
+                </div>
+                <div class="load-group" aria-label="RAM — busy">
+                  <span class="load-tag">RAM</span>
+                  <div class="load-cells">
+                    <span class="load-cell on"></span><span class="load-cell on"></span><span class="load-cell on"></span><span class="load-cell"></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="machine-tile-meta">192.168.1.10 · 2 threads</div>
+            <div class="machine-threads" aria-label="Threads on mac-studio-01">
+              <button type="button" class="machine-thread-btn" data-thread="invoice-pdf-parser" data-status="waiting" aria-pressed="false">invoice-pdf-parser</button>
+              <button type="button" class="machine-thread-btn" data-thread="migrate-auth-to-clerk" data-status="completed" aria-pressed="false">migrate-auth-to-clerk</button>
+            </div>
+          </div>
+          <div class="machine-tile" data-machine="linux-box-02">
+            <div class="machine-tile-top">
+              <div class="machine-title-row">
+                <span class="entity-num" aria-hidden="true">02</span>
+                <h3 class="machine-name">linux-box-02</h3>
+              </div>
+              <div class="machine-loads">
+                <div class="load-group" aria-label="CPU — moderate load">
+                  <span class="load-tag">CPU</span>
+                  <div class="load-cells">
+                    <span class="load-cell on"></span><span class="load-cell on"></span><span class="load-cell"></span><span class="load-cell"></span>
+                  </div>
+                </div>
+                <div class="load-group" aria-label="RAM — busy">
+                  <span class="load-tag">RAM</span>
+                  <div class="load-cells">
+                    <span class="load-cell on"></span><span class="load-cell on"></span><span class="load-cell on warn"></span><span class="load-cell"></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="machine-tile-meta">192.168.1.42 · 2 threads</div>
+            <div class="machine-threads" aria-label="Threads on linux-box-02">
+              <button type="button" class="machine-thread-btn" data-thread="taskyard-ui-wireframe" data-status="waiting" aria-pressed="true">taskyard-ui-wireframe</button>
+              <button type="button" class="machine-thread-btn" data-thread="openapi-client-gen" data-status="waiting" aria-pressed="false">openapi-client-gen</button>
+            </div>
+          </div>
+          <div class="machine-tile" data-machine="homelab-03">
+            <div class="machine-tile-top">
+              <div class="machine-title-row">
+                <span class="entity-num" aria-hidden="true">03</span>
+                <h3 class="machine-name">homelab-03</h3>
+              </div>
+              <div class="machine-loads">
+                <div class="load-group" aria-label="CPU — idle">
+                  <span class="load-tag">CPU</span>
+                  <div class="load-cells">
+                    <span class="load-cell on"></span><span class="load-cell"></span><span class="load-cell"></span><span class="load-cell"></span>
+                  </div>
+                </div>
+                <div class="load-group" aria-label="RAM — moderate load">
+                  <span class="load-tag">RAM</span>
+                  <div class="load-cells">
+                    <span class="load-cell on"></span><span class="load-cell on"></span><span class="load-cell"></span><span class="load-cell"></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="machine-tile-meta">10.0.0.23 · 2 threads</div>
+            <div class="machine-threads" aria-label="Threads on homelab-03">
+              <button type="button" class="machine-thread-btn" data-thread="fix-port-forward-leak" data-status="error" aria-pressed="false">fix-port-forward-leak</button>
+              <button type="button" class="machine-thread-btn" data-thread="readme-refresh" data-status="completed" aria-pressed="false">readme-refresh</button>
+            </div>
+          </div>
+        </footer>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const THREAD_PROJECT = {
+      "invoice-pdf-parser": "invoices",
+      "taskyard-ui-wireframe": "taskyard",
+      "migrate-auth-to-clerk": "taskyard",
+      "fix-port-forward-leak": "infra",
+      "openapi-client-gen": "taskyard",
+      "readme-refresh": "taskyard",
+    };
+
+    const PROJECTS = {
+      taskyard: {
+        name: "Taskyard",
+        repo: "peter/taskyard",
+        tasks: [
+          {
+            id: "ty-12",
+            num: "12",
+            title: "Auth middleware baseline",
+            status: "in-progress",
+            statusLabel: "In progress",
+            assignee: "Peter",
+            created: "May 16",
+            description:
+              "Session cookies, API key lookup, and worker-scoped tokens. Required before any route handlers or UI that calls the API.",
+            blockedBy: [],
+            blocks: [
+              { id: "ty-13", label: "TY-13" },
+              { id: "ty-19", label: "TY-19" },
+            ],
+            activity: [
+              { type: "status", actor: "Peter", from: "Ready for agent", to: "In progress", time: "May 17" },
+              { type: "comment", actor: "Peter", text: "Keep middleware stateless — Redis for session store only.", time: "May 16" },
+            ],
+          },
+          {
+            id: "ty-19",
+            num: "19",
+            title: "API key rotation + worker token TTL",
+            status: "backlog",
+            statusLabel: "Backlog",
+            assignee: "Peter",
+            created: "May 16",
+            description:
+              "Rotate user API keys on demand and expire worker-scoped tokens after 24h. Shares session store with TY-12 middleware.",
+            blockedBy: [{ id: "ty-12", label: "TY-12" }],
+            blocks: [],
+            activity: [
+              { type: "comment", actor: "Peter", text: "Document rotation in OpenAPI before TY-13 routes ship.", time: "May 16" },
+            ],
+          },
+          {
+            id: "ty-13",
+            num: "13",
+            title: "REST API v1 routes",
+            status: "in-progress",
+            statusLabel: "In progress",
+            assignee: "Peter",
+            created: "May 17",
+            description:
+              "Threads, tasks, machines, and port-forward endpoints. OpenAPI spec must match before dashboard wiring.",
+            blockedBy: [{ id: "ty-12", label: "TY-12" }],
+            blocks: [{ id: "ty-14", label: "TY-14" }],
+            activity: [
+              { type: "dependency", actor: "Peter", text: "Blocked by TY-12 (auth middleware)", time: "May 17" },
+              { type: "status", actor: "Agent", from: "Ready for agent", to: "In progress", time: "May 18" },
+            ],
+          },
+          {
+            id: "ty-14",
+            num: "14",
+            title: "Dashboard workspace — chat, threads, machine dock",
+            status: "in-progress",
+            statusLabel: "In progress",
+            assignee: "Peter",
+            created: "May 18",
+            description:
+              "Single-screen dashboard: center LLM chat, right thread rail with history break, bottom machine tiles with per-thread buttons and 4-cell load meters.",
+            blockedBy: [
+              { id: "ty-11", label: "TY-11" },
+              { id: "ty-13", label: "TY-13" },
+            ],
+            blocks: [{ id: "ty-15", label: "TY-15" }],
+            activity: [
+              { type: "status", actor: "Peter", from: "Ready for agent", to: "In progress", time: "Today 09:12" },
+              { type: "comment", actor: "Peter", text: "Drop rounded corners entirely — thin 1px borders only.", time: "Today 08:40" },
+              { type: "attachment", actor: "Peter", name: "high-contrast-reference.webp", size: "48 KB", time: "Yesterday" },
+              { type: "status", actor: "Peter", from: "Backlog", to: "Ready for agent", time: "May 19" },
+            ],
+          },
+          {
+            id: "ty-15",
+            num: "15",
+            title: "VNC preview gate before visual polish",
+            status: "waiting",
+            statusLabel: "Waiting for user",
+            assignee: "Peter",
+            created: "May 20",
+            description:
+              "Agent forwarded port 5901. User must confirm layout on worker VNC before agent continues wireframe iterations.",
+            blockedBy: [{ id: "ty-14", label: "TY-14" }],
+            blocks: [{ id: "ty-17", label: "TY-17" }],
+            activity: [
+              { type: "comment", actor: "Agent", text: "Port 5901 is live on linux-box-02. Open VNC or reply to continue.", time: "Today 09:05" },
+              { type: "status", actor: "Agent", from: "In progress", to: "Waiting for user", time: "Today 09:04" },
+              { type: "dependency", actor: "Peter", text: "Linked blocker TY-14 (layout shell must land first)", time: "May 20" },
+            ],
+          },
+          {
+            id: "ty-17",
+            num: "17",
+            title: "E2E smoke — dashboard, threads, task rail",
+            status: "ready",
+            statusLabel: "Ready for agent",
+            assignee: "—",
+            created: "May 23",
+            description:
+              "Playwright suite against local stack: thread selection, task dependency expand, machine dock thread buttons. Runs after VNC sign-off.",
+            blockedBy: [{ id: "ty-15", label: "TY-15" }],
+            blocks: [],
+            activity: [
+              { type: "dependency", actor: "Peter", text: "Blocked by TY-15 (VNC gate)", time: "May 23" },
+              { type: "status", actor: "Peter", from: "Backlog", to: "Ready for agent", time: "May 23" },
+            ],
+          },
+          {
+            id: "ty-11",
+            num: "11",
+            title: "Shared CSS tokens — light theme, zero radius",
+            status: "completed",
+            statusLabel: "Completed",
+            assignee: "Peter",
+            created: "May 17",
+            description: "Extract taskyard.css with oklch tokens, entity labels, badge system, and workspace grid.",
+            blockedBy: [],
+            blocks: [{ id: "ty-14", label: "TY-14" }],
+            activity: [
+              { type: "status", actor: "Peter", from: "In progress", to: "Completed", time: "May 18" },
+              { type: "attachment", actor: "Peter", name: "logo_8.jpeg", size: "12 KB", time: "May 17" },
+              { type: "comment", actor: "Peter", text: "Match Expo-adjacent light canvas but keep our own accent.", time: "May 17" },
+            ],
+          },
+          {
+            id: "ty-16",
+            num: "16",
+            title: "OpenAPI client — default auth scheme",
+            status: "waiting",
+            statusLabel: "Waiting for user",
+            assignee: "Peter",
+            created: "May 21",
+            description:
+              "taskyard.v1.yaml lists Bearer JWT and x-api-key. Decide factory default before codegen merge.",
+            blockedBy: [],
+            blocks: [],
+            activity: [
+              { type: "comment", actor: "Agent", text: "Which auth path should clients/ts/index.ts use by default?", time: "Today 07:30" },
+              { type: "status", actor: "Agent", from: "Ready for agent", to: "Waiting for user", time: "Today 07:29" },
+            ],
+          },
+          {
+            id: "ty-09",
+            num: "09",
+            title: "Machines list — port utilization segments",
+            status: "ready",
+            statusLabel: "Ready for agent",
+            assignee: "—",
+            created: "May 22",
+            tags: ["machines", "wireframe"],
+            description: "Second screen: worker rows with IP, CPU/RAM/GPU specs, thread counts, segmented port-range bars.",
+            blockedBy: [],
+            blocks: [],
+            activity: [
+              { type: "status", actor: "Peter", from: "Backlog", to: "Ready for agent", time: "Today" },
+            ],
+          },
+          {
+            id: "ty-18",
+            num: "18",
+            title: "Auto rules — run history log per rule",
+            status: "backlog",
+            statusLabel: "Backlog",
+            assignee: "Peter",
+            created: "Today",
+            tags: [],
+            description:
+              "Each auto rule should show last run time, outcome (created task / skipped / error), and a link to the spawned task. Collapse older runs behind “Show more”.",
+            blockedBy: [],
+            blocks: [],
+            activity: [
+              { type: "comment", actor: "Peter", text: "Match Machines table density — monospace timestamps, no cards.", time: "Today 10:41" },
+              { type: "comment", actor: "Peter", text: "Include webhook delivery id when trigger was an external event.", time: "Today 10:38" },
+              { type: "attachment", actor: "Peter", name: "run-history-sketch.png", size: "31 KB", time: "Today 10:35" },
+            ],
+          },
+        ],
+      },
+      invoices: {
+        name: "Invoice Parser",
+        repo: "peter/invoice-tools",
+        tasks: [
+          {
+            id: "inv-01",
+            num: "01",
+            title: "Schema v2 — line items + tax fields",
+            status: "in-progress",
+            statusLabel: "In progress",
+            assignee: "Peter",
+            created: "May 19",
+            description: "JSON schema for extracted rows; breaking change from v1. Blocks OCR pipeline and all downstream review.",
+            blockedBy: [],
+            blocks: [{ id: "inv-02", label: "INV-02" }],
+            activity: [
+              { type: "comment", actor: "Peter", text: "Align tax_code enum with accountant spreadsheet.", time: "May 19" },
+              { type: "status", actor: "Peter", from: "Ready for agent", to: "In progress", time: "May 20" },
+            ],
+          },
+          {
+            id: "inv-02",
+            num: "02",
+            title: "OCR pipeline upgrade (Tesseract 5)",
+            status: "in-progress",
+            statusLabel: "In progress",
+            assignee: "Agent",
+            created: "May 20",
+            description: "Retrain table detector on v2 schema samples. Must land before row-level review queue.",
+            blockedBy: [{ id: "inv-01", label: "INV-01" }],
+            blocks: [{ id: "inv-03", label: "INV-03" }],
+            activity: [
+              { type: "dependency", actor: "Agent", text: "Blocked by INV-01 (schema v2)", time: "May 20" },
+              { type: "status", actor: "Agent", from: "Ready for agent", to: "In progress", time: "May 21" },
+            ],
+          },
+          {
+            id: "inv-03",
+            num: "03",
+            title: "Review low-confidence extraction rows",
+            status: "waiting",
+            statusLabel: "Waiting for user",
+            assignee: "Peter",
+            created: "May 21",
+            description: "14 rows scored below 0.85 — approve corrections or skip batch review.",
+            blockedBy: [{ id: "inv-02", label: "INV-02" }],
+            blocks: [{ id: "inv-04", label: "INV-04" }],
+            activity: [
+              { type: "comment", actor: "Agent", text: "Three amount fields misaligned in inv-1042.pdf.", time: "Today 06:10" },
+              { type: "attachment", actor: "Agent", name: "review-queue.csv", size: "8 KB", time: "Today 06:08" },
+              { type: "status", actor: "Agent", from: "In progress", to: "Waiting for user", time: "Today 06:07" },
+            ],
+          },
+          {
+            id: "inv-04",
+            num: "04",
+            title: "Batch remaining PDFs after review",
+            status: "ready",
+            statusLabel: "Ready for agent",
+            assignee: "—",
+            created: "May 21",
+            description: "Run schema v2 export once inv-03 is cleared.",
+            blockedBy: [{ id: "inv-03", label: "INV-03" }],
+            blocks: [],
+            activity: [
+              { type: "dependency", actor: "Agent", text: "Blocked by INV-03 (user review)", time: "Today 06:11" },
+            ],
+          },
+        ],
+      },
+      infra: {
+        name: "Homelab Infra",
+        repo: "peter/homelab",
+        tasks: [
+          {
+            id: "inf-05",
+            num: "05",
+            title: "Network policy audit — worker ingress",
+            status: "ready",
+            statusLabel: "Ready for agent",
+            assignee: "Peter",
+            created: "May 20",
+            description: "Document allowed port ranges per worker class before automating forwards.",
+            blockedBy: [],
+            blocks: [{ id: "inf-06", label: "INF-06" }],
+            activity: [
+              { type: "status", actor: "Peter", from: "Backlog", to: "Ready for agent", time: "May 21" },
+            ],
+          },
+          {
+            id: "inf-06",
+            num: "06",
+            title: "Port range allocator service",
+            status: "in-progress",
+            statusLabel: "In progress",
+            assignee: "Peter",
+            created: "May 21",
+            description: "Assigns non-overlapping ranges per thread; prevents 5901 collisions seen in homelab logs.",
+            blockedBy: [{ id: "inf-05", label: "INF-05" }],
+            blocks: [{ id: "inf-07", label: "INF-07" }],
+            activity: [
+              { type: "dependency", actor: "Peter", text: "Blocked by INF-05 (policy audit)", time: "May 21" },
+              { type: "comment", actor: "Agent", text: "Suggested default pool 5900–5999 for dev workers.", time: "May 22" },
+            ],
+          },
+          {
+            id: "inf-07",
+            num: "07",
+            title: "Clear stale port-forward on 5901",
+            status: "in-progress",
+            statusLabel: "In progress",
+            assignee: "Peter",
+            created: "May 22",
+            description: "kubectl forward failed — pid 8842 still listening. Kill or rebind before agent retry.",
+            blockedBy: [{ id: "inf-06", label: "INF-06" }],
+            blocks: [],
+            activity: [
+              { type: "comment", actor: "Agent", text: "bind: address already in use on 0.0.0.0:5901", time: "Today 08:55" },
+              { type: "status", actor: "Agent", from: "Ready for agent", to: "In progress", time: "Today 08:54" },
+            ],
+          },
+        ],
+      },
+    };
+
+    const THREADS = {
+      "invoice-pdf-parser": {
+        title: "invoice-pdf-parser",
+        sub: '<span class="badge badge-waiting"><span class="badge-dot"></span>Waiting</span> Codex · mac-studio-01 · 2h 14m',
+        waiting: true,
+        waitingPrompt: "14 rows scored below 0.85 confidence — approve corrections or skip review?",
+        messages: [
+          { role: "system", text: "Session started · workspace /Users/dev/invoices" },
+          { role: "assistant", text: "I'll extract line items from the scanned PDFs and map them to schema v2. Starting with inv-1042.pdf." },
+          { role: "system", text: "Wrote parsers/pdf_table.py · 14 rows parsed" },
+          { role: "assistant", text: "Parsed 14 rows at 0.91 average confidence. Three amount fields look misaligned — I've queued them for your review before we batch the rest." },
+        ],
+      },
+      "taskyard-ui-wireframe": {
+        title: "taskyard-ui-wireframe",
+        sub: '<span class="badge badge-waiting"><span class="badge-dot"></span>Waiting</span> Cursor · linux-box-02 · 38m',
+        waiting: true,
+        waitingPrompt: "Port 5901 is forwarded. Open VNC to review the dashboard layout, or reply to continue wireframing.",
+        messages: [
+          { role: "system", text: "Session started · workspace /home/dev/taskyard" },
+          { role: "user", text: "Light theme, thin borders, no rounded corners. Capacity dock at the bottom, threads on the right." },
+          { role: "assistant", text: "Got it — I'll bind a high-contrast token set, square badges, and move machine capacity into a bottom dock with per-machine thread buttons." },
+          { role: "system", text: "Updated css/taskyard.css and screens/dashboard.html" },
+          { role: "assistant", text: "Dashboard shell is in place: header with logo, center stream, right rail, bottom tiles. Thread selection syncs between the rail and machine buttons." },
+          { role: "system", text: "Port 5901 was in use — cleared and re-forwarded localhost:5901 → worker:5901" },
+          { role: "assistant", text: "Preview is ready on the worker. Want me to keep iterating on the chat layout, or do you want to check the live preview first?" },
+        ],
+      },
+      "migrate-auth-to-clerk": {
+        title: "migrate-auth-to-clerk",
+        sub: '<span class="badge badge-completed"><span class="badge-dot"></span>Done</span> Kimi · mac-studio-01 · 6h 02m',
+        waiting: false,
+        messages: [
+          { role: "system", text: "Session completed · 06:00:11" },
+          { role: "assistant", text: "Mapped legacy session cookies to Clerk JWT middleware and added migration notes in docs/auth-migration.md." },
+          { role: "system", text: "npm run build · succeeded" },
+          { role: "assistant", text: "Build passed. Middleware is ready for staging — no open questions from my side." },
+        ],
+      },
+      "fix-port-forward-leak": {
+        title: "fix-port-forward-leak",
+        sub: '<span class="badge badge-error"><span class="badge-dot"></span>Error</span> Codex · homelab-03 · 12m',
+        waiting: false,
+        messages: [
+          { role: "system", text: "Session started on homelab-03" },
+          { role: "assistant", text: "Running kubectl port-forward for the agent service on 5901…" },
+          { role: "system", text: "Error · bind: address already in use on 0.0.0.0:5901" },
+          { role: "assistant", text: "Something is still listening on 5901 (pid 8842). I can kill the stale forward if you want me to retry, or you can free the port manually." },
+        ],
+      },
+      "openapi-client-gen": {
+        title: "openapi-client-gen",
+        sub: '<span class="badge badge-waiting"><span class="badge-dot"></span>Waiting</span> Cursor · linux-box-02 · 1h 05m',
+        waiting: true,
+        waitingPrompt: "taskyard.v1.yaml defines two auth schemes — should the client send Bearer only, or support API keys too?",
+        messages: [
+          { role: "system", text: "Session started · openapi/taskyard.v1.yaml" },
+          { role: "assistant", text: "Generating a typed TypeScript client from the OpenAPI spec. Base types are in clients/ts/schema.d.ts." },
+          { role: "system", text: "Wrote clients/ts/index.ts" },
+          { role: "assistant", text: "The spec lists both Bearer JWT and x-api-key. Which auth path should the default client factory use?" },
+        ],
+      },
+      "readme-refresh": {
+        title: "readme-refresh",
+        sub: '<span class="badge badge-completed"><span class="badge-dot"></span>Done</span> Kimi · homelab-03 · 22m',
+        waiting: false,
+        messages: [
+          { role: "system", text: "Session completed · 09:10:44" },
+          { role: "assistant", text: "Updated README with setup steps, env vars, and a short section on the capacity dock + thread rail layout." },
+        ],
+      },
+    };
+
+    const PROJECT_ORDER = ["taskyard", "invoices", "infra"];
+
+    const chatEl = document.getElementById('chat-thread');
+    const headerChat = document.getElementById('header-chat');
+    const headerTask = document.getElementById('header-task');
+    const taskHeaderMain = document.getElementById('task-header-main');
+    const titleEl = document.getElementById('stream-title');
+    const subEl = document.getElementById('stream-sub');
+    const threadRail = document.querySelector('.thread-rail');
+    const capacityDock = document.getElementById('capacity-dock');
+    const viewChat = document.getElementById('view-chat');
+    const viewTaskDetail = document.getElementById('view-task-detail');
+    const tasksListEl = document.getElementById('tasks-list');
+    const taskDetailEl = document.getElementById('task-detail');
+
+    let currentThreadId = 'taskyard-ui-wireframe';
+    let selectedTaskId = null;
+    let centerMode = 'chat';
+
+    function escapeHtml(s) {
+      return s
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function renderChat(id) {
+      const t = THREADS[id];
+      if (!t) return;
+      titleEl.textContent = t.title;
+      subEl.innerHTML = t.sub;
+
+      const msgs = t.messages
+        .map((m) => {
+          const label =
+            m.role === "user" ? "You" : m.role === "assistant" ? "Agent" : "System";
+          return `<article class="chat-msg chat-msg-${m.role}">
+            <header class="chat-msg-head">${label}</header>
+            <div class="chat-msg-body">${escapeHtml(m.text)}</div>
+          </article>`;
+        })
+        .join("");
+
+      const waiting = t.waiting
+        ? `<div class="chat-waiting" role="status">
+            <p class="chat-waiting-label">Waiting for your input</p>
+            <p class="chat-waiting-prompt">${escapeHtml(t.waitingPrompt || "")}</p>
+            <div class="chat-compose">
+              <input type="text" class="chat-compose-input" placeholder="Reply to agent…" aria-label="Reply to agent" />
+              <button type="button" class="btn btn-primary chat-compose-send">Send</button>
+            </div>
+          </div>`
+        : "";
+
+      chatEl.innerHTML = `<div class="chat-scroll">${msgs}</div>${waiting}`;
+    }
+
+    function taskStatusBadge(status, label) {
+      const map = {
+        ready: "badge-task-ready",
+        "in-progress": "badge-task-progress",
+        waiting: "badge-task-waiting",
+        completed: "badge-task-done",
+        backlog: "badge-task-backlog",
+      };
+      const cls = map[status] || "badge-task-backlog";
+      return `<span class="badge ${cls}"><span class="badge-dot"></span>${escapeHtml(label)}</span>`;
+    }
+
+    function showsReadyForAgentAction(task) {
+      return !["ready", "in-progress", "waiting", "completed"].includes(task.status);
+    }
+
+    function readyForAgentButton(task) {
+      if (!showsReadyForAgentAction(task)) return "";
+      return `<button type="button" class="btn btn-primary btn-ready-agent" data-task-id="${escapeHtml(task.id)}" aria-label="Mark ${escapeHtml(task.title)} ready for agent">Ready for agent</button>`;
+    }
+
+    function taskTagsMarkup(task) {
+      const tags = task.tags || [];
+      if (!tags.length) return "";
+      return `<div class="task-item-tags">${tags
+        .map((t) => `<span class="tag-chip tag-chip-sm">${escapeHtml(t)}</span>`)
+        .join("")}</div>`;
+    }
+
+    function markTaskReadyForAgent(taskId) {
+      const found = findTask(taskId);
+      if (!found) return;
+      const { task } = found;
+      if (!showsReadyForAgentAction(task)) return;
+      const prev = task.statusLabel;
+      task.status = "ready";
+      task.statusLabel = "Ready for agent";
+      task.activity = task.activity || [];
+      task.activity.unshift({
+        type: "status",
+        actor: "Peter",
+        from: prev,
+        to: "Ready for agent",
+        time: "Just now",
+      });
+      renderTasksRail();
+      if (selectedTaskId === taskId && centerMode === "task") {
+        renderTaskHeader(task, found.project);
+        renderTaskDetail(task, found.project);
+      }
+    }
+
+    function activityRole(ev) {
+      if (ev.type !== "comment") return "system";
+      const actor = (ev.actor || "").toLowerCase();
+      if (actor === "peter" || actor === "you") return "user";
+      return "assistant";
+    }
+
+    function renderActivity(events) {
+      return events
+        .map((ev) => {
+          if (ev.type === "comment") {
+            const role = activityRole(ev);
+            return `<article class="chat-msg chat-msg-${role}">
+              <header class="chat-msg-head">${escapeHtml(ev.actor)} · ${escapeHtml(ev.time)}</header>
+              <div class="chat-msg-body">${escapeHtml(ev.text)}</div>
+            </article>`;
+          }
+          if (ev.type === "status") {
+            return `<article class="chat-msg chat-msg-system">
+              <div class="chat-msg-body">${escapeHtml(ev.actor)} moved <strong>${escapeHtml(ev.from)}</strong> → <strong>${escapeHtml(ev.to)}</strong> · ${escapeHtml(ev.time)}</div>
+            </article>`;
+          }
+          if (ev.type === "attachment") {
+            return `<article class="chat-msg chat-msg-system">
+              <div class="chat-msg-body">Attached <strong>${escapeHtml(ev.name)}</strong> (${escapeHtml(ev.size)}) · ${escapeHtml(ev.actor)} · ${escapeHtml(ev.time)}</div>
+            </article>`;
+          }
+          if (ev.type === "dependency") {
+            return `<article class="chat-msg chat-msg-system">
+              <div class="chat-msg-body">${escapeHtml(ev.text)} · ${escapeHtml(ev.time)}</div>
+            </article>`;
+          }
+          return "";
+        })
+        .join("");
+    }
+
+    function renderTaskHeader(task, project) {
+      taskHeaderMain.innerHTML = `
+        <div class="stream-task-title-row">
+          <span class="entity-num" aria-hidden="true">${escapeHtml(task.num)}</span>
+          <h2 class="stream-title stream-task-title">${escapeHtml(task.title)}</h2>
+          ${readyForAgentButton(task)}
+          ${taskStatusBadge(task.status, task.statusLabel)}
+        </div>
+        <p class="stream-sub stream-task-sub">
+          <span class="task-header-project">${escapeHtml(project.name)}</span>
+          · ${escapeHtml(task.assignee)}
+          · opened ${escapeHtml(task.created)}
+        </p>`;
+    }
+
+    function renderTaskDetail(task, project) {
+      const depsBlocked =
+        task.blockedBy.length > 0
+          ? `<div class="task-deps-group"><span class="task-deps-label">Blocked by</span>${task.blockedBy
+              .map((d) => `<button type="button" class="task-dep-chip" data-task-id="${d.id}">${escapeHtml(d.label)}</button>`)
+              .join("")}</div>`
+          : "";
+      const depsBlocks =
+        task.blocks.length > 0
+          ? `<div class="task-deps-group"><span class="task-deps-label">Blocks</span>${task.blocks
+              .map((d) => `<button type="button" class="task-dep-chip" data-task-id="${d.id}">${escapeHtml(d.label)}</button>`)
+              .join("")}</div>`
+          : "";
+      const depsSection =
+        depsBlocked || depsBlocks
+          ? `<section class="task-deps" aria-label="Dependencies">${depsBlocked}${depsBlocks}</section>`
+          : "";
+
+      taskDetailEl.innerHTML = `
+        <div class="chat-thread task-detail-feed">
+          <div class="chat-scroll task-detail-scroll">
+            <dl class="task-meta-grid task-meta-grid-compact" aria-label="Task metadata">
+              <div><dt>Project</dt><dd>${escapeHtml(project.name)} <span class="task-meta-mono">${escapeHtml(project.repo)}</span></dd></div>
+              <div><dt>Assignee</dt><dd>${escapeHtml(task.assignee)}</dd></div>
+              <div><dt>Opened</dt><dd>${escapeHtml(task.created)}</dd></div>
+              <div class="task-meta-tags"><dt>Tags</dt><dd>${
+                (task.tags || []).length
+                  ? (task.tags || [])
+                      .map((t) => `<span class="tag-chip tag-chip-sm">${escapeHtml(t)}</span>`)
+                      .join(" ")
+                  : '<span class="task-tags-empty">No tags yet</span>'
+              }</dd></div>
+            </dl>
+            ${depsSection}
+            <article class="chat-msg chat-msg-assistant task-desc-msg">
+              <header class="chat-msg-head">Description</header>
+              <div class="chat-msg-body">${escapeHtml(task.description)}</div>
+            </article>
+            <div class="feed-messages" aria-label="Activity">${renderActivity(task.activity)}</div>
+          </div>
+          <footer class="task-compose-footer">
+            <div class="chat-compose">
+              <label class="visually-hidden" for="task-comment-input">Add comment</label>
+              <input type="text" id="task-comment-input" class="chat-compose-input" placeholder="Add a comment…" />
+              <button type="button" class="btn btn-primary chat-compose-send">Comment</button>
+            </div>
+          </footer>
+        </div>`;
+
+      taskDetailEl.querySelectorAll(".task-dep-chip").forEach((chip) => {
+        chip.addEventListener("click", () => showTaskDetail(chip.dataset.taskId));
+      });
+    }
+
+    function findTask(taskId) {
+      for (const key of PROJECT_ORDER) {
+        const project = PROJECTS[key];
+        const task = project?.tasks.find((t) => t.id === taskId);
+        if (task) return { task, project, projectKey: key };
+      }
+      return null;
+    }
+
+    function isTaskBlocked(task) {
+      if (!task.blockedBy?.length) return false;
+      return task.blockedBy.some((dep) => {
+        const found = findTask(dep.id);
+        if (!found) return true;
+        return found.task.status !== "completed";
+      });
+    }
+
+    /** Tasks currently blocked by this parent — never duplicated at top level. */
+    function getDependentTasks(parentTask) {
+      const all = PROJECT_ORDER.flatMap((key) => PROJECTS[key]?.tasks || []);
+      return all.filter(
+        (t) =>
+          t.id !== parentTask.id &&
+          isTaskBlocked(t) &&
+          t.blockedBy?.some((dep) => dep.id === parentTask.id)
+      );
+    }
+
+    function taskHasOpenDependents(task) {
+      return getDependentTasks(task).length > 0;
+    }
+
+    /** Selected task is this task or any nested dependent in its open-blocker tree. */
+    function isInDependentSubtree(taskId, rootTask) {
+      if (!taskId || taskId === rootTask.id) return taskId === rootTask.id;
+      return getDependentTasks(rootTask).some(
+        (dep) => dep.id === taskId || isInDependentSubtree(taskId, dep)
+      );
+    }
+
+    /** Dependents rail when this blocker is selected or an ancestor of the selection. */
+    function shouldExpandDependents(parentTask) {
+      if (!getDependentTasks(parentTask).length) return false;
+      if (centerMode !== "task" || !selectedTaskId) return false;
+      return isInDependentSubtree(selectedTaskId, parentTask);
+    }
+
+    /** IDs in any expanded nest — excluded from the top-level list. */
+    function collectShownDependentIds() {
+      const ids = new Set();
+      function walk(parentTask) {
+        if (!shouldExpandDependents(parentTask)) return;
+        getDependentTasks(parentTask).forEach((dep) => {
+          ids.add(dep.id);
+          walk(dep);
+        });
+      }
+      PROJECT_ORDER.forEach((key) => {
+        (PROJECTS[key]?.tasks || []).forEach((task) => walk(task));
+      });
+      return ids;
+    }
+
+    function taskBlocksIndicator(task) {
+      if (!taskHasOpenDependents(task)) return "";
+      const count = getDependentTasks(task).length;
+      return `<span class="task-blocks-indicator" title="Blocks ${count} task${count > 1 ? "s" : ""}" aria-label="Blocks ${count} dependent task${count > 1 ? "s" : ""}"></span>`;
+    }
+
+    function renderTaskListItem(task, { related = false, dependent = false } = {}) {
+      const selected = task.id === selectedTaskId;
+      const classes = [
+        "task-item",
+        related ? "task-item-related" : "",
+        dependent ? "task-item-dependent" : "",
+      ]
+        .filter(Boolean)
+        .join(" ");
+      return `<button type="button" class="${classes}" data-task-id="${task.id}" aria-selected="${selected}">
+        <div class="task-item-row">
+          <span class="entity-num" aria-hidden="true">${escapeHtml(task.num)}</span>
+          <div class="task-item-main">
+            <div class="task-item-title-row">
+              <h3 class="task-item-title">${escapeHtml(task.title)}</h3>
+            </div>
+            <div class="task-item-badges">
+              ${taskStatusBadge(task.status, task.statusLabel)}
+            </div>
+            ${taskTagsMarkup(task)}
+          </div>
+        </div>
+        ${taskBlocksIndicator(task)}
+      </button>`;
+    }
+
+    function renderTaskDependents(parentTask, depth = 1) {
+      const dependents = getDependentTasks(parentTask);
+      if (!dependents.length) return "";
+      return `<div class="task-deps-rail" data-depth="${depth}" aria-label="Tasks blocked by ${escapeHtml(parentTask.num)}">
+        ${dependents
+          .map((dep) => {
+            const nested = shouldExpandDependents(dep) ? renderTaskDependents(dep, depth + 1) : "";
+            return `<div class="task-item-wrap task-item-wrap-nested">
+              ${renderTaskListItem(dep, { dependent: true })}
+              ${nested}
+            </div>`;
+          })
+          .join("")}
+      </div>`;
+    }
+
+    function renderTasksRail() {
+      const activeProject = THREAD_PROJECT[currentThreadId] || "taskyard";
+      const shownAsDependent = collectShownDependentIds();
+      const groups = PROJECT_ORDER.filter((key) => PROJECTS[key]?.tasks?.length)
+        .map((key) => {
+          const project = PROJECTS[key];
+          const visibleTasks = project.tasks.filter(
+            (task) =>
+              task.status !== "completed" &&
+              !isTaskBlocked(task) &&
+              !shownAsDependent.has(task.id)
+          );
+          if (!visibleTasks.length) return "";
+          const items = visibleTasks
+            .map((task) => {
+              const related = key === activeProject;
+              const showDeps = shouldExpandDependents(task);
+              return `<div class="task-item-wrap">
+                ${renderTaskListItem(task, { related })}
+                ${showDeps ? renderTaskDependents(task) : ""}
+              </div>`;
+            })
+            .join("");
+          return `<section class="task-project-group" aria-label="${escapeHtml(project.name)}">
+            <div class="task-project-head"><span class="entity-label">${escapeHtml(project.name)}</span></div>
+            <div class="task-project-items">${items}</div>
+          </section>`;
+        })
+        .filter(Boolean)
+        .join("");
+      tasksListEl.innerHTML = groups || '<p class="tasks-empty">No tasks yet.</p>';
+    }
+
+    function setCenterHeader(mode) {
+      const isTask = mode === "task";
+      headerChat.hidden = isTask;
+      headerTask.hidden = !isTask;
+      document.querySelector(".stream-header").setAttribute(
+        "aria-label",
+        isTask ? "Selected task" : "Selected thread"
+      );
+    }
+
+    function showChat() {
+      centerMode = "chat";
+      selectedTaskId = null;
+      setCenterHeader("chat");
+      viewChat.hidden = false;
+      viewTaskDetail.hidden = true;
+      const t = THREADS[currentThreadId];
+      if (t) {
+        titleEl.textContent = t.title;
+        subEl.innerHTML = t.sub;
+      }
+      renderTasksRail();
+      renderChat(currentThreadId);
+    }
+
+    function showTaskDetail(taskId) {
+      const found = findTask(taskId);
+      if (!found) return;
+      const { task, project } = found;
+      selectedTaskId = taskId;
+      centerMode = "task";
+      setCenterHeader("task");
+      renderTaskHeader(task, project);
+      viewChat.hidden = true;
+      viewTaskDetail.hidden = false;
+      renderTasksRail();
+      renderTaskDetail(task, project);
+    }
+
+    function selectTask(taskId) {
+      if (selectedTaskId === taskId && centerMode === "task") {
+        selectedTaskId = null;
+        renderTasksRail();
+        showChat();
+        return;
+      }
+      showTaskDetail(taskId);
+    }
+
+    function selectThread(id) {
+      if (!THREADS[id]) return;
+      currentThreadId = id;
+      selectedTaskId = null;
+      threadRail.querySelectorAll(".thread-item").forEach((el) => {
+        el.setAttribute("aria-selected", el.dataset.thread === id ? "true" : "false");
+      });
+      capacityDock.querySelectorAll(".machine-thread-btn").forEach((el) => {
+        el.setAttribute("aria-pressed", el.dataset.thread === id ? "true" : "false");
+      });
+      showChat();
+    }
+
+    tasksListEl.addEventListener("click", (e) => {
+      const readyBtn = e.target.closest(".btn-ready-agent");
+      if (readyBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        markTaskReadyForAgent(readyBtn.dataset.taskId);
+        return;
+      }
+      const btn = e.target.closest(".task-item");
+      if (!btn) return;
+      selectTask(btn.dataset.taskId);
+    });
+
+    taskHeaderMain.addEventListener("click", (e) => {
+      const readyBtn = e.target.closest(".btn-ready-agent");
+      if (!readyBtn) return;
+      e.preventDefault();
+      markTaskReadyForAgent(readyBtn.dataset.taskId);
+    });
+
+    threadRail.addEventListener("click", (e) => {
+      const btn = e.target.closest(".thread-item");
+      if (!btn) return;
+      selectThread(btn.dataset.thread);
+    });
+
+    capacityDock.addEventListener("click", (e) => {
+      const btn = e.target.closest(".machine-thread-btn");
+      if (!btn) return;
+      selectThread(btn.dataset.thread);
+    });
+
+    renderTasksRail();
+    selectThread("taskyard-ui-wireframe");
+  </script>
+</body>
+</html>

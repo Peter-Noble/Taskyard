@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>taskyard-ui-wireframe — Taskyard</title>
+  <link rel="stylesheet" href="../css/taskyard.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="top-header">
+      <a href="overview.html" class="header-brand">
+        <span class="brand-mark"><img src="../mpmrnv2b-Make_me_an_exact_copy_202605261554.png" alt="" width="28" height="28" /></span>
+        <span class="brand-name">Taskyard</span>
+      </a>
+      <nav class="header-nav" aria-label="Main">
+        <a href="overview.html">Overview</a>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="machines.html">Machines</a>
+        <a href="auto.html">Auto</a>
+      </nav>
+      <span class="header-spacer" aria-hidden="true"></span>
+      <p class="page-title">taskyard-ui-wireframe</p>
+      <div class="header-actions">
+        <button type="button" class="user-session" aria-label="Signed in as Peter">
+          <img src="../mpgwd29b-unnamed.png" alt="" width="32" height="32" />
+        </button>
+        <button type="button" class="btn btn-primary">New Thread</button>
+      </div>
+    </header>
+
+    <main class="main main-padded">
+      <div class="detail-layout">
+        <section class="card" style="padding:var(--space-4);min-height:0;">
+          <div class="filter-tabs" role="tablist" aria-label="Log filters">
+            <button type="button" role="tab" aria-selected="true">All</button>
+            <button type="button" role="tab" aria-selected="false">Thoughts</button>
+            <button type="button" role="tab" aria-selected="false">Files</button>
+            <button type="button" role="tab" aria-selected="false">Commands</button>
+          </div>
+          <div class="terminal" role="log" aria-live="polite" aria-label="Agent output stream" style="min-height:420px;">
+            <span class="term-line term-dim">[09:41:02] session started · workspace /home/dev/taskyard</span>
+            <span class="term-line term-thought">→ Planning dashboard grid: thread cards left, capacity panel right on ≥1024px.</span>
+            <span class="term-line term-file">+ wrote screens/dashboard.html (148 lines)</span>
+            <span class="term-line term-file">+ wrote css/taskyard.css — tokens bound to modern-minimal accent</span>
+            <span class="term-line term-cmd">$ rg "thread-card" screens/ --glob "*.html"</span>
+            <span class="term-line term-dim">screens/dashboard.html:42:    &lt;a class="card thread-card"</span>
+            <span class="term-line term-thought">→ Terminal colors: thought=blue, file=green, cmd=yellow, error=red — wireframe only.</span>
+            <span class="term-line term-cmd">$ curl -s http://127.0.0.1:17573/ | head -5</span>
+            <span class="term-line term-dim">&lt;!doctype html&gt;&lt;html lang="en"&gt;…</span>
+            <span class="term-line term-file">~ patched screens/thread-detail.html — filter tab markup</span>
+            <span class="term-line term-thought">→ Sidebar: expose VNC :5901 and preview :8080 as clickable port chips.</span>
+            <span class="term-line term-cmd">$ git status -sb</span>
+            <span class="term-line term-dim">## feat/taskyard-wireframe</span>
+            <span class="term-line term-dim"> M css/taskyard.css</span>
+            <span class="term-line term-dim"> M screens/dashboard.html</span>
+            <span class="term-line term-file">+ wrote screens/machines.html</span>
+            <span class="term-line term-thought">→ Checking responsive: stack capacity below grid under 1024px — OK.</span>
+            <span class="term-line term-cmd">$ npm run lint 2&gt;&1 | tail -3</span>
+            <span class="term-line term-dim">✓ 0 errors, 2 warnings (unused-vars)</span>
+            <span class="term-line term-error">✗ port 5901 already bound on linux-box-02 — retrying forward…</span>
+            <span class="term-line term-cmd">$ ssh linux-box-02 'fuser -k 5901/tcp'</span>
+            <span class="term-line term-file">+ forwarded localhost:5901 → worker:5901</span>
+            <span class="term-line term-thought">→ Resume: machines list needs segmented port-range bars per row.</span>
+            <span class="term-line term-dim">[09:44:18] awaiting user input…</span>
+          </div>
+        </section>
+
+        <aside class="card detail-sidebar">
+          <h2 class="card-title">Project</h2>
+          <dl class="meta-dl">
+            <dt>Repository</dt>
+            <dd>github.com/peter/taskyard</dd>
+            <dt>Branch</dt>
+            <dd><code style="font-family:var(--font-mono);font-size:12px;">feat/taskyard-wireframe</code></dd>
+            <dt>Agent</dt>
+            <dd><span class="agent-tag">Cursor</span></dd>
+            <dt>Machine</dt>
+            <dd>linux-box-02 · 192.168.1.42</dd>
+            <dt>Started</dt>
+            <dd>Today 09:06 · 38m ago</dd>
+          </dl>
+
+          <h2 class="card-title">Ports</h2>
+          <div class="port-links">
+            <a class="port-chip" href="#">VNC :5901</a>
+            <a class="port-chip" href="#">Web :8080</a>
+            <a class="port-chip" href="#">API :3921</a>
+          </div>
+
+          <div class="action-stack">
+            <button type="button" class="btn btn-danger">Kill thread</button>
+            <button type="button" class="btn btn-ghost">Close</button>
+          </div>
+        </aside>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

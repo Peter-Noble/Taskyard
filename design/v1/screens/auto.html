@@ -1,0 +1,502 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Auto — Taskyard</title>
+  <link rel="stylesheet" href="../css/taskyard.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="top-header">
+      <a href="../index.html" class="header-brand">
+        <span class="brand-mark"><img src="../mpmrnv2b-Make_me_an_exact_copy_202605261554.png" alt="" width="28" height="28" /></span>
+        <span class="brand-name">Taskyard</span>
+      </a>
+      <nav class="header-nav" aria-label="Main">
+        <a href="dashboard.html">Dashboard</a>
+        <a href="machines.html">Machines</a>
+        <a href="auto.html" aria-current="page">Auto</a>
+      </nav>
+      <span class="header-spacer" aria-hidden="true"></span>
+      <div class="header-actions">
+        <button type="button" class="user-session" aria-label="Signed in as Peter">
+          <img src="../mpgwd29b-unnamed.png" alt="" width="32" height="32" />
+        </button>
+      </div>
+    </header>
+
+    <main class="main">
+      <div class="auto-layout">
+        <aside class="auto-rules-rail" aria-label="Automation rules">
+          <header class="auto-rail-head">
+            <span class="auto-rail-label">Rules</span>
+            <button type="button" class="btn btn-primary btn-rail-new" id="btn-new-rule">New rule</button>
+          </header>
+          <ul class="auto-rule-list" id="rule-list" role="listbox" aria-label="Select a rule"></ul>
+        </aside>
+
+        <section class="auto-editor" aria-label="Rule editor">
+          <form id="rule-form" class="auto-form" novalidate>
+            <header class="auto-form-head">
+              <div class="auto-form-title-row">
+                <input type="text" class="form-input form-input-title" id="rule-name" name="name" required
+                  placeholder="Rule name" aria-label="Rule name" />
+                <label class="auto-toggle">
+                  <input type="checkbox" id="rule-enabled" name="enabled" checked />
+                  <span>Enabled</span>
+                </label>
+              </div>
+              <p class="auto-form-hint" id="rule-last-run">Last run: Fri 6:00 PM · created 3 tasks</p>
+            </header>
+
+            <div class="auto-form-section">
+              <h3 class="card-title">Task template</h3>
+              <div class="form-grid">
+                <label class="form-field form-field-full">
+                  <span class="form-label">Title</span>
+                  <input type="text" class="form-input" id="task-title" name="taskTitle"
+                    placeholder="e.g. Review PR — {{repo}}/{{number}}" />
+                </label>
+                <label class="form-field form-field-full">
+                  <span class="form-label">Description</span>
+                  <textarea class="form-textarea" id="task-desc" name="taskDesc" rows="3"
+                    placeholder="Instructions for the agent when this rule fires…"></textarea>
+                </label>
+                <label class="form-field form-field-full">
+                  <span class="form-label">Project</span>
+                  <select class="form-select" id="task-project" name="project">
+                    <option value="taskyard-ui">taskyard-ui</option>
+                    <option value="invoice-pdf-parser">invoice-pdf-parser</option>
+                    <option value="homelab-infra">homelab-infra</option>
+                  </select>
+                </label>
+              </div>
+            </div>
+
+            <div class="auto-form-section">
+              <h3 class="card-title">Default tags</h3>
+              <p class="form-help">Applied to every task this rule creates. Leave empty for no tags.</p>
+              <div class="tag-input-wrap" id="tag-input-wrap">
+                <div class="tag-chips" id="tag-chips" aria-live="polite"></div>
+                <input type="text" class="form-input tag-text-input" id="tag-input"
+                  placeholder="Type a tag and press Enter" aria-label="Add tag" autocomplete="off" />
+              </div>
+            </div>
+
+            <div class="auto-form-section">
+              <h3 class="card-title">Trigger</h3>
+              <div class="filter-tabs trigger-tabs" role="tablist" aria-label="Trigger type">
+                <button type="button" role="tab" data-trigger="event" aria-selected="false">Event</button>
+                <button type="button" role="tab" data-trigger="schedule" aria-selected="false">Schedule</button>
+                <button type="button" role="tab" data-trigger="combined" aria-selected="false">Combined</button>
+              </div>
+
+              <div class="trigger-panel" id="panel-event" hidden>
+                <div class="form-grid">
+                  <label class="form-field">
+                    <span class="form-label">Source</span>
+                    <select class="form-select" id="event-source" name="eventSource">
+                      <option value="github">GitHub</option>
+                      <option value="gitlab">GitLab</option>
+                      <option value="webhook">Custom webhook</option>
+                    </select>
+                  </label>
+                  <label class="form-field">
+                    <span class="form-label">Event</span>
+                    <select class="form-select" id="event-type" name="eventType">
+                      <option value="pr.opened">Pull request opened</option>
+                      <option value="pr.labeled">Pull request labeled</option>
+                      <option value="push">Push to branch</option>
+                      <option value="issue.opened">Issue opened</option>
+                    </select>
+                  </label>
+                  <label class="form-field form-field-full">
+                    <span class="form-label">Repository filter</span>
+                    <input type="text" class="form-input spec-mono" id="event-repo" name="eventRepo"
+                      placeholder="org/repo or org/*" />
+                  </label>
+                </div>
+              </div>
+
+              <div class="trigger-panel" id="panel-schedule" hidden>
+                <div class="form-grid">
+                  <label class="form-field">
+                    <span class="form-label">Frequency</span>
+                    <select class="form-select" id="sched-freq" name="schedFreq">
+                      <option value="daily">Daily</option>
+                      <option value="weekly">Weekly</option>
+                      <option value="weekdays">Weekdays only</option>
+                      <option value="monthly">Monthly</option>
+                    </select>
+                  </label>
+                  <label class="form-field">
+                    <span class="form-label">Day</span>
+                    <select class="form-select" id="sched-day" name="schedDay">
+                      <option value="mon">Monday</option>
+                      <option value="tue">Tuesday</option>
+                      <option value="wed">Wednesday</option>
+                      <option value="thu">Thursday</option>
+                      <option value="fri" selected>Friday</option>
+                      <option value="sat">Saturday</option>
+                      <option value="sun">Sunday</option>
+                    </select>
+                  </label>
+                  <label class="form-field">
+                    <span class="form-label">Time</span>
+                    <input type="time" class="form-input" id="sched-time" name="schedTime" value="18:00" />
+                  </label>
+                  <label class="form-field">
+                    <span class="form-label">Timezone</span>
+                    <select class="form-select" id="sched-tz" name="schedTz">
+                      <option value="America/Los_Angeles">America/Los_Angeles</option>
+                      <option value="America/New_York">America/New_York</option>
+                      <option value="Europe/London">Europe/London</option>
+                      <option value="UTC">UTC</option>
+                    </select>
+                  </label>
+                </div>
+                <p class="schedule-preview spec-mono" id="schedule-preview">Every Friday at 6:00 PM PT</p>
+              </div>
+
+              <div class="trigger-panel" id="panel-combined" hidden>
+                <p class="form-help">Runs on a schedule, but only creates tasks when the condition is met.</p>
+                <fieldset class="auto-fieldset">
+                  <legend class="form-label">Schedule (same as above)</legend>
+                  <div class="form-grid">
+                    <label class="form-field">
+                      <span class="form-label">Frequency</span>
+                      <select class="form-select" id="combo-freq" name="comboFreq">
+                        <option value="daily" selected>Daily</option>
+                        <option value="weekly">Weekly</option>
+                      </select>
+                    </label>
+                    <label class="form-field">
+                      <span class="form-label">Time</span>
+                      <input type="time" class="form-input" id="combo-time" name="comboTime" value="18:00" />
+                    </label>
+                  </div>
+                </fieldset>
+                <fieldset class="auto-fieldset">
+                  <legend class="form-label">Condition</legend>
+                  <label class="form-field form-field-full">
+                    <span class="form-label">Only if</span>
+                    <select class="form-select" id="combo-condition" name="comboCondition">
+                      <option value="commits">New commits since last run (per project)</option>
+                      <option value="open-prs">Open pull requests exist</option>
+                      <option value="stale-threads">Stale threads older than 48h</option>
+                    </select>
+                  </label>
+                  <label class="form-field form-field-full">
+                    <span class="form-label">Scope</span>
+                    <select class="form-select" id="combo-scope" name="comboScope">
+                      <option value="each-project">Each linked project separately</option>
+                      <option value="workspace">Once per workspace</option>
+                    </select>
+                  </label>
+                </fieldset>
+              </div>
+            </div>
+
+            <footer class="auto-form-actions">
+              <button type="button" class="btn btn-danger" id="btn-delete-rule">Delete rule</button>
+              <span class="auto-form-actions-spacer"></span>
+              <button type="button" class="btn btn-ghost" id="btn-duplicate-rule">Duplicate</button>
+              <button type="submit" class="btn btn-primary">Save rule</button>
+            </footer>
+          </form>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    (function () {
+      const RULES = [
+        {
+          id: "pr-review",
+          name: "PR review on open",
+          enabled: true,
+          trigger: "event",
+          lastRun: "Today 2:14 PM · 1 task",
+          taskTitle: "Review PR — {{repo}}/{{number}}",
+          taskDesc: "Read the diff, leave inline comments on risky changes, and summarize blockers.",
+          project: "taskyard-ui",
+          tags: ["review", "github"],
+          eventSource: "github",
+          eventType: "pr.opened",
+          eventRepo: "acme/*",
+        },
+        {
+          id: "friday-standup",
+          name: "Friday standup prep",
+          enabled: true,
+          trigger: "schedule",
+          lastRun: "Fri 6:00 PM · 1 task",
+          taskTitle: "Weekly standup notes",
+          taskDesc: "Summarize merged PRs, open blockers, and capacity for next week.",
+          project: "taskyard-ui",
+          tags: ["standup"],
+          schedFreq: "weekly",
+          schedDay: "fri",
+          schedTime: "18:00",
+          schedTz: "America/Los_Angeles",
+        },
+        {
+          id: "daily-digest",
+          name: "Daily commit digest",
+          enabled: false,
+          trigger: "combined",
+          lastRun: "Yesterday 6:00 PM · 2 tasks (homelab-infra, taskyard-ui)",
+          taskTitle: "Digest — {{project}} commits",
+          taskDesc: "List commits since last run with author and one-line summary.",
+          project: "homelab-infra",
+          tags: ["digest", "auto"],
+          comboFreq: "daily",
+          comboTime: "18:00",
+          comboCondition: "commits",
+          comboScope: "each-project",
+        },
+      ];
+
+      let rules = structuredClone(RULES);
+      let selectedId = rules[0].id;
+      let tags = [];
+
+      const $ = (sel) => document.querySelector(sel);
+      const $$ = (sel) => document.querySelectorAll(sel);
+
+      const ruleList = $("#rule-list");
+      const form = $("#rule-form");
+      const tagChips = $("#tag-chips");
+      const tagInput = $("#tag-input");
+
+      function triggerLabel(rule) {
+        if (rule.trigger === "event") {
+          const ev = rule.eventType === "pr.opened" ? "PR opened" : rule.eventType;
+          return `GitHub · ${ev}`;
+        }
+        if (rule.trigger === "schedule") {
+          const day = { fri: "Fri", mon: "Mon", tue: "Tue", wed: "Wed", thu: "Thu", sat: "Sat", sun: "Sun" }[rule.schedDay] || rule.schedDay;
+          return `Schedule · ${day} ${rule.schedTime || "18:00"}`;
+        }
+        return "Schedule + commits";
+      }
+
+      function renderRuleList() {
+        ruleList.innerHTML = "";
+        rules.forEach((rule) => {
+          const li = document.createElement("li");
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "auto-rule-item";
+          btn.setAttribute("role", "option");
+          btn.dataset.id = rule.id;
+          btn.setAttribute("aria-selected", rule.id === selectedId ? "true" : "false");
+          btn.innerHTML = `
+            <div class="auto-rule-item-row">
+              <span class="entity-num" aria-hidden="true">${String(rules.indexOf(rule) + 1).padStart(2, "0")}</span>
+              <div class="auto-rule-item-main">
+                <div class="auto-rule-item-title-row">
+                  <h3>${escapeHtml(rule.name)}</h3>
+                  <span class="badge ${rule.enabled ? "badge-completed" : "badge-waiting"}">
+                    <span class="badge-dot"></span>${rule.enabled ? "On" : "Paused"}
+                  </span>
+                </div>
+                <div class="auto-rule-item-meta spec-mono">${escapeHtml(triggerLabel(rule))}</div>
+                ${rule.tags.length ? `<div class="auto-rule-tags">${rule.tags.map((t) => `<span class="tag-chip tag-chip-sm">${escapeHtml(t)}</span>`).join("")}</div>` : ""}
+              </div>
+            </div>`;
+          btn.addEventListener("click", () => selectRule(rule.id));
+          li.appendChild(btn);
+          ruleList.appendChild(li);
+        });
+      }
+
+      function escapeHtml(s) {
+        return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+      }
+
+      function selectRule(id) {
+        selectedId = id;
+        const rule = rules.find((r) => r.id === id);
+        if (!rule) return;
+        renderRuleList();
+        loadForm(rule);
+      }
+
+      function loadForm(rule) {
+        $("#rule-name").value = rule.name;
+        $("#rule-enabled").checked = rule.enabled;
+        $("#rule-last-run").textContent = `Last run: ${rule.lastRun || "—"}`;
+        $("#task-title").value = rule.taskTitle || "";
+        $("#task-desc").value = rule.taskDesc || "";
+        $("#task-project").value = rule.project || "taskyard-ui";
+        tags = [...(rule.tags || [])];
+        renderTags();
+
+        setTriggerType(rule.trigger);
+        $("#event-source").value = rule.eventSource || "github";
+        $("#event-type").value = rule.eventType || "pr.opened";
+        $("#event-repo").value = rule.eventRepo || "";
+        $("#sched-freq").value = rule.schedFreq || "weekly";
+        $("#sched-day").value = rule.schedDay || "fri";
+        $("#sched-time").value = rule.schedTime || "18:00";
+        $("#sched-tz").value = rule.schedTz || "America/Los_Angeles";
+        $("#combo-freq").value = rule.comboFreq || "daily";
+        $("#combo-time").value = rule.comboTime || "18:00";
+        $("#combo-condition").value = rule.comboCondition || "commits";
+        $("#combo-scope").value = rule.comboScope || "each-project";
+        updateSchedulePreview();
+      }
+
+      function readForm() {
+        const rule = rules.find((r) => r.id === selectedId);
+        if (!rule) return;
+        rule.name = $("#rule-name").value.trim() || "Untitled rule";
+        rule.enabled = $("#rule-enabled").checked;
+        rule.taskTitle = $("#task-title").value;
+        rule.taskDesc = $("#task-desc").value;
+        rule.project = $("#task-project").value;
+        rule.tags = [...tags];
+        rule.eventSource = $("#event-source").value;
+        rule.eventType = $("#event-type").value;
+        rule.eventRepo = $("#event-repo").value;
+        rule.schedFreq = $("#sched-freq").value;
+        rule.schedDay = $("#sched-day").value;
+        rule.schedTime = $("#sched-time").value;
+        rule.schedTz = $("#sched-tz").value;
+        rule.comboFreq = $("#combo-freq").value;
+        rule.comboTime = $("#combo-time").value;
+        rule.comboCondition = $("#combo-condition").value;
+        rule.comboScope = $("#combo-scope").value;
+        renderRuleList();
+      }
+
+      function setTriggerType(type) {
+        const rule = rules.find((r) => r.id === selectedId);
+        if (rule) rule.trigger = type;
+        $$(".trigger-tabs button").forEach((btn) => {
+          const on = btn.dataset.trigger === type;
+          btn.setAttribute("aria-selected", on ? "true" : "false");
+        });
+        $("#panel-event").hidden = type !== "event";
+        $("#panel-schedule").hidden = type !== "schedule";
+        $("#panel-combined").hidden = type !== "combined";
+      }
+
+      function renderTags() {
+        tagChips.innerHTML = tags
+          .map(
+            (t) =>
+              `<span class="tag-chip">${escapeHtml(t)}<button type="button" class="tag-remove" data-tag="${escapeHtml(t)}" aria-label="Remove ${escapeHtml(t)}">×</button></span>`
+          )
+          .join("");
+        tagChips.querySelectorAll(".tag-remove").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            tags = tags.filter((x) => x !== btn.dataset.tag);
+            renderTags();
+          });
+        });
+      }
+
+      function addTag(raw) {
+        const t = raw.trim().toLowerCase().replace(/\s+/g, "-");
+        if (!t || tags.includes(t)) return;
+        tags.push(t);
+        renderTags();
+        tagInput.value = "";
+      }
+
+      function updateSchedulePreview() {
+        const day = $("#sched-day").selectedOptions[0]?.textContent || "Friday";
+        const time = $("#sched-time").value || "18:00";
+        const [h, m] = time.split(":");
+        const hour = parseInt(h, 10);
+        const ampm = hour >= 12 ? "PM" : "AM";
+        const h12 = hour % 12 || 12;
+        const tz = $("#sched-tz").value.split("/").pop().replace("_", " ");
+        $("#schedule-preview").textContent = `Every ${day} at ${h12}:${m} ${ampm} (${tz})`;
+      }
+
+      function newRule() {
+        const id = "rule-" + Date.now();
+        const rule = {
+          id,
+          name: "New automation rule",
+          enabled: true,
+          trigger: "event",
+          lastRun: "Never run",
+          taskTitle: "",
+          taskDesc: "",
+          project: "taskyard-ui",
+          tags: [],
+          eventSource: "github",
+          eventType: "pr.opened",
+          eventRepo: "",
+        };
+        rules.push(rule);
+        selectedId = id;
+        renderRuleList();
+        loadForm(rule);
+        $("#rule-name").focus();
+        $("#rule-name").select();
+      }
+
+      $$(".trigger-tabs button").forEach((btn) => {
+        btn.addEventListener("click", () => setTriggerType(btn.dataset.trigger));
+      });
+
+      tagInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === ",") {
+          e.preventDefault();
+          addTag(tagInput.value);
+        }
+        if (e.key === "Backspace" && !tagInput.value && tags.length) {
+          tags.pop();
+          renderTags();
+        }
+      });
+
+      ["sched-day", "sched-time", "sched-tz", "sched-freq"].forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener("change", updateSchedulePreview);
+      });
+
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        readForm();
+      });
+
+      form.addEventListener("input", () => readForm());
+
+      $("#btn-delete-rule").addEventListener("click", () => {
+        if (rules.length <= 1) return;
+        rules = rules.filter((r) => r.id !== selectedId);
+        selectedId = rules[0].id;
+        renderRuleList();
+        loadForm(rules[0]);
+      });
+
+      $("#btn-duplicate-rule").addEventListener("click", () => {
+        const src = rules.find((r) => r.id === selectedId);
+        if (!src) return;
+        readForm();
+        const copy = structuredClone(src);
+        copy.id = "rule-" + Date.now();
+        copy.name = src.name + " (copy)";
+        copy.lastRun = "Never run";
+        rules.push(copy);
+        selectedId = copy.id;
+        renderRuleList();
+        loadForm(copy);
+      });
+
+      $("#btn-new-rule").addEventListener("click", newRule);
+
+      renderRuleList();
+      loadForm(rules[0]);
+    })();
+  </script>
+</body>
+</html>

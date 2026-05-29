@@ -1,0 +1,163 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Overview — Taskyard</title>
+  <link rel="stylesheet" href="../css/taskyard.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="top-header">
+      <a href="overview.html" class="header-brand">
+        <span class="brand-mark"><img src="../mpmrnv2b-Make_me_an_exact_copy_202605261554.png" alt="" width="28" height="28" /></span>
+        <span class="brand-name">Taskyard</span>
+      </a>
+      <nav class="header-nav" aria-label="Main">
+        <a href="overview.html" aria-current="page">Overview</a>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="machines.html">Machines</a>
+        <a href="auto.html">Auto</a>
+      </nav>
+      <span class="header-spacer" aria-hidden="true"></span>
+      <div class="header-actions">
+        <button type="button" class="user-session" aria-label="Signed in as Peter">
+          <img src="../mpgwd29b-unnamed.png" alt="" width="32" height="32" />
+        </button>
+      </div>
+    </header>
+
+    <main class="main main-padded">
+      <div class="overview-page">
+        <header class="overview-intro">
+          <h1 class="overview-title">Overview</h1>
+          <p class="overview-lede">What needs you now, and what finished recently.</p>
+        </header>
+
+        <section class="overview-section" aria-labelledby="needs-you-heading">
+          <h2 id="needs-you-heading" class="overview-section-label">Needs your input</h2>
+          <ul class="overview-list">
+            <li class="overview-item">
+              <a class="overview-item-link" href="dashboard.html">
+                <div class="overview-item-body">
+                  <p class="overview-item-kind">Task · TY-15</p>
+                  <h3 class="overview-item-title">VNC preview gate before visual polish</h3>
+                  <p class="overview-item-meta">Agent forwarded port 5901 — open VNC or reply to continue wireframing.</p>
+                </div>
+                <span class="badge badge-waiting overview-item-badge"><span class="badge-dot"></span>Waiting for user</span>
+              </a>
+            </li>
+            <li class="overview-item">
+              <a class="overview-item-link" href="dashboard.html">
+                <div class="overview-item-body">
+                  <p class="overview-item-kind">Task · TY-16</p>
+                  <h3 class="overview-item-title">OpenAPI client — default auth scheme</h3>
+                  <p class="overview-item-meta">Agent asked: Bearer JWT only, or support x-api-key in the factory too?</p>
+                </div>
+                <span class="badge badge-waiting overview-item-badge"><span class="badge-dot"></span>Waiting for user</span>
+              </a>
+            </li>
+            <li class="overview-item">
+              <a class="overview-item-link" href="dashboard.html">
+                <div class="overview-item-body">
+                  <p class="overview-item-kind">Thread · invoice-pdf-parser</p>
+                  <h3 class="overview-item-title">Low-confidence invoice rows</h3>
+                  <p class="overview-item-meta">14 rows scored below 0.85 — approve corrections or skip review.</p>
+                </div>
+                <span class="badge badge-waiting overview-item-badge"><span class="badge-dot"></span>Waiting</span>
+              </a>
+            </li>
+            <li class="overview-item">
+              <a class="overview-item-link" href="thread-detail.html">
+                <div class="overview-item-body">
+                  <p class="overview-item-kind">Thread · taskyard-ui-wireframe</p>
+                  <h3 class="overview-item-title">Dashboard layout review</h3>
+                  <p class="overview-item-meta">Port 5901 is forwarded on linux-box-02 — VNC in or reply to continue.</p>
+                </div>
+                <span class="badge badge-waiting overview-item-badge"><span class="badge-dot"></span>Waiting</span>
+              </a>
+            </li>
+            <li class="overview-item">
+              <a class="overview-item-link" href="dashboard.html">
+                <div class="overview-item-body">
+                  <p class="overview-item-kind">Thread · openapi-client-gen</p>
+                  <h3 class="overview-item-title">Auth scheme for generated client</h3>
+                  <p class="overview-item-meta">taskyard.v1.yaml defines two schemes — pick the default before codegen merges.</p>
+                </div>
+                <span class="badge badge-waiting overview-item-badge"><span class="badge-dot"></span>Waiting</span>
+              </a>
+            </li>
+            <li class="overview-item">
+              <a class="overview-item-link" href="thread-detail.html">
+                <div class="overview-item-body">
+                  <p class="overview-item-kind">Thread · fix-port-forward-leak</p>
+                  <h3 class="overview-item-title">Port forward not released after thread exit</h3>
+                  <p class="overview-item-meta">homelab-03 · slot 5907 still bound — kill stale forward or restart worker agent.</p>
+                </div>
+                <span class="badge badge-error overview-item-badge"><span class="badge-dot"></span>Error</span>
+              </a>
+            </li>
+            <li class="overview-item">
+              <a class="overview-item-link" href="machines.html">
+                <div class="overview-item-body">
+                  <p class="overview-item-kind">Machine · homelab-03</p>
+                  <h3 class="overview-item-title">Worker heartbeat missed</h3>
+                  <p class="overview-item-meta">Last ping 4m ago — thread fix-port-forward-leak may be stuck; check agent service.</p>
+                </div>
+                <span class="badge badge-error overview-item-badge"><span class="badge-dot"></span>Issue</span>
+              </a>
+            </li>
+          </ul>
+        </section>
+
+        <section class="overview-section" aria-labelledby="finished-heading">
+          <h2 id="finished-heading" class="overview-section-label">Finished — for your awareness</h2>
+          <ul class="overview-list overview-list-muted">
+            <li class="overview-item">
+              <a class="overview-item-link" href="dashboard.html">
+                <div class="overview-item-body">
+                  <p class="overview-item-kind">Task · TY-11</p>
+                  <h3 class="overview-item-title">Shared CSS tokens — light theme, zero radius</h3>
+                  <p class="overview-item-meta">Marked completed yesterday · unblocks TY-14 dashboard work.</p>
+                </div>
+                <span class="badge badge-completed overview-item-badge"><span class="badge-dot"></span>Completed</span>
+              </a>
+            </li>
+            <li class="overview-item">
+              <a class="overview-item-link" href="dashboard.html">
+                <div class="overview-item-body">
+                  <p class="overview-item-kind">Thread · migrate-auth-to-clerk</p>
+                  <h3 class="overview-item-title">Clerk migration PR merged</h3>
+                  <p class="overview-item-meta">Kimi on mac-studio-01 · finished 6h ago · 3 tasks created from summary.</p>
+                </div>
+                <span class="badge badge-completed overview-item-badge"><span class="badge-dot"></span>Done</span>
+              </a>
+            </li>
+            <li class="overview-item">
+              <a class="overview-item-link" href="dashboard.html">
+                <div class="overview-item-body">
+                  <p class="overview-item-kind">Thread · readme-refresh</p>
+                  <h3 class="overview-item-title">README and onboarding copy updated</h3>
+                  <p class="overview-item-meta">Kimi on homelab-03 · finished 22m ago · no follow-up tasks.</p>
+                </div>
+                <span class="badge badge-completed overview-item-badge"><span class="badge-dot"></span>Done</span>
+              </a>
+            </li>
+            <li class="overview-item">
+              <a class="overview-item-link" href="auto.html">
+                <div class="overview-item-body">
+                  <p class="overview-item-kind">Auto · PR review on open</p>
+                  <h3 class="overview-item-title">Created TY-07 from GitHub pull_request.opened</h3>
+                  <p class="overview-item-meta">taskyard-core · acme/widget-api#142 · tagged review, github · Today 08:12.</p>
+                </div>
+                <span class="badge badge-completed overview-item-badge"><span class="badge-dot"></span>Ran</span>
+              </a>
+            </li>
+          </ul>
+        </section>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

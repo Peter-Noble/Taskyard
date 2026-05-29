@@ -1,0 +1,243 @@
+{
+  "schema": "open-design.design-manifest.v1",
+  "title": "038e06ea-52a8-4fd7-968e-cd97208a4668",
+  "entryFile": "index.html",
+  "sourceFiles": {
+    "all": [
+      "css/taskyard.css",
+      "index.html",
+      "mpgtcqk5-Copy_of_logo_8_202605221056.jpeg",
+      "mpgu2rpa-in-search-of-a-high-contrast-light-theme-v0-p2y32vq4wd1g1.webp",
+      "mpguorig-image.png",
+      "mpguxjk1-download.jpg",
+      "mpguy4fg-ZED.jfif",
+      "mpguycba-download.jpg",
+      "mpgv5ejx-download.png",
+      "mpgwd29b-unnamed.png",
+      "mpmrmwui-Make_me_an_exact_copy_202605261554.jpeg",
+      "mpmrney5-update_logo.jpeg",
+      "mpmrnv2b-Make_me_an_exact_copy_202605261554.png",
+      "screens/auto.html",
+      "screens/dashboard.html",
+      "screens/machines.html",
+      "screens/overview.html",
+      "screens/thread-detail.html",
+      "taskyard-overview-2.html",
+      "taskyard-overview.html"
+    ],
+    "html": [
+      "index.html",
+      "screens/auto.html",
+      "screens/dashboard.html",
+      "screens/machines.html",
+      "screens/overview.html",
+      "screens/thread-detail.html",
+      "taskyard-overview-2.html",
+      "taskyard-overview.html"
+    ],
+    "css": [
+      "css/taskyard.css"
+    ],
+    "scriptsAndComponents": [],
+    "assets": [
+      "mpgtcqk5-Copy_of_logo_8_202605221056.jpeg",
+      "mpgu2rpa-in-search-of-a-high-contrast-light-theme-v0-p2y32vq4wd1g1.webp",
+      "mpguorig-image.png",
+      "mpguxjk1-download.jpg",
+      "mpguy4fg-ZED.jfif",
+      "mpguycba-download.jpg",
+      "mpgv5ejx-download.png",
+      "mpgwd29b-unnamed.png",
+      "mpmrmwui-Make_me_an_exact_copy_202605261554.jpeg",
+      "mpmrney5-update_logo.jpeg",
+      "mpmrnv2b-Make_me_an_exact_copy_202605261554.png"
+    ]
+  },
+  "screens": [
+    {
+      "file": "index.html",
+      "role": "launcher-overview",
+      "implementationNote": "Use this as the navigation/overview entry only; implement each linked screen file as its own route/surface."
+    },
+    {
+      "file": "screens/auto.html",
+      "role": "product-screen",
+      "implementationNote": "Preserve visual hierarchy, responsive behavior, and interactive states from this screen."
+    },
+    {
+      "file": "screens/dashboard.html",
+      "role": "product-screen",
+      "implementationNote": "Preserve visual hierarchy, responsive behavior, and interactive states from this screen."
+    },
+    {
+      "file": "screens/machines.html",
+      "role": "product-screen",
+      "implementationNote": "Preserve visual hierarchy, responsive behavior, and interactive states from this screen."
+    },
+    {
+      "file": "screens/overview.html",
+      "role": "product-screen",
+      "implementationNote": "Preserve visual hierarchy, responsive behavior, and interactive states from this screen."
+    },
+    {
+      "file": "screens/thread-detail.html",
+      "role": "product-screen",
+      "implementationNote": "Preserve visual hierarchy, responsive behavior, and interactive states from this screen."
+    },
+    {
+      "file": "taskyard-overview-2.html",
+      "role": "screen",
+      "implementationNote": "Preserve visual hierarchy, responsive behavior, and interactive states from this screen."
+    },
+    {
+      "file": "taskyard-overview.html",
+      "role": "screen",
+      "implementationNote": "Preserve visual hierarchy, responsive behavior, and interactive states from this screen."
+    }
+  ],
+  "screenFilePolicy": {
+    "mode": "screen-file-first",
+    "entryFileRole": "launcher-overview",
+    "rules": [
+      "Each distinct user-facing screen or surface must be delivered and implemented as its own file/route.",
+      "If a landing page is present or requested, keep it in landing.html and do not merge it into the product app screen.",
+      "When multiple HTML screens exist, index.html is a launcher/overview only; it must not be treated as the combined final UI.",
+      "Keep product app screens, landing pages, platform screens, and OS widget surfaces separate in production code."
+    ]
+  },
+  "appModules": [
+    "Identify domain-specific in-app modules from the exported UI; do not reduce them to generic cards.",
+    "For each major module, implement purpose, default/loading/empty/error/success states, and responsive behavior.",
+    "Keep app modules separate from OS home-screen widgets in the production component model."
+  ],
+  "osWidgets": [
+    "If the export includes home-screen, lock-screen, Live Activity, tablet glance, or Android widget surfaces, implement them as platform quick-access surfaces outside the app UI.",
+    "If none are present, do not invent OS widgets unless the product requirements request them."
+  ],
+  "landingPage": {
+    "detection": "Inspect files and screen names for a marketing/landing page surface. If present, keep it separate from product app screens.",
+    "requiredSections": [
+      "hero",
+      "value props",
+      "product proof/screenshots",
+      "feature proof",
+      "CTA"
+    ]
+  },
+  "tokens": {
+    "source": [
+      "css/taskyard.css"
+    ],
+    "required": [
+      "background",
+      "surface",
+      "foreground",
+      "muted text",
+      "border",
+      "accent",
+      "radius",
+      "shadow",
+      "spacing",
+      "type scale",
+      "motion"
+    ],
+    "note": "Extract/freeze tokens before framework implementation so coding tools do not substitute default theme colors or typography."
+  },
+  "interactions": {
+    "source": [
+      "index.html"
+    ],
+    "requiredStates": [
+      "default",
+      "hover",
+      "focus",
+      "active",
+      "disabled",
+      "loading",
+      "empty",
+      "error",
+      "success"
+    ],
+    "requiredBehaviors": [
+      "forms/validation where present",
+      "tabs/filters where present",
+      "dialogs/sheets/drawers where present",
+      "copy/generate/share actions where present",
+      "player or quick controls where present"
+    ],
+    "note": "If the prototype is static, derive missing behavior from visible controls and document it before coding."
+  },
+  "responsiveViewports": [
+    {
+      "name": "mobile-compact",
+      "width": 360,
+      "height": 800,
+      "category": "mobile",
+      "mustAvoidHorizontalScroll": true
+    },
+    {
+      "name": "mobile-standard",
+      "width": 390,
+      "height": 844,
+      "category": "mobile",
+      "mustAvoidHorizontalScroll": true
+    },
+    {
+      "name": "mobile-large",
+      "width": 430,
+      "height": 932,
+      "category": "mobile",
+      "mustAvoidHorizontalScroll": true
+    },
+    {
+      "name": "foldable-small-tablet",
+      "width": 600,
+      "height": 960,
+      "category": "foldable-tablet",
+      "mustAvoidHorizontalScroll": true
+    },
+    {
+      "name": "tablet-portrait",
+      "width": 820,
+      "height": 1180,
+      "category": "tablet",
+      "mustAvoidHorizontalScroll": true
+    },
+    {
+      "name": "tablet-landscape",
+      "width": 1024,
+      "height": 768,
+      "category": "tablet",
+      "mustAvoidHorizontalScroll": true
+    },
+    {
+      "name": "laptop",
+      "width": 1366,
+      "height": 768,
+      "category": "desktop",
+      "mustAvoidHorizontalScroll": true
+    },
+    {
+      "name": "desktop",
+      "width": 1440,
+      "height": 900,
+      "category": "desktop",
+      "mustAvoidHorizontalScroll": true
+    },
+    {
+      "name": "wide",
+      "width": 1920,
+      "height": 1080,
+      "category": "wide",
+      "mustAvoidHorizontalScroll": true
+    }
+  ],
+  "implementationChecklist": [
+    "Open entryFile first and map screens, modules, tokens, and interactions.",
+    "Extract tokens before writing framework components.",
+    "Implement app-specific modules with real states instead of generic card grids.",
+    "Preserve or rebuild JS interactions for meaningful UX actions.",
+    "Validate screenshots at desktop/tablet/mobile viewports with no horizontal overflow.",
+    "Keep landing pages, in-app modules, and OS widgets as separate implementation surfaces."
+  ]
+}

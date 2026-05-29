@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Machines — Taskyard</title>
+  <link rel="stylesheet" href="../css/taskyard.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="top-header">
+      <a href="../index.html" class="header-brand">
+        <span class="brand-mark"><img src="../mpmrnv2b-Make_me_an_exact_copy_202605261554.png" alt="" width="28" height="28" /></span>
+        <span class="brand-name">Taskyard</span>
+      </a>
+      <nav class="header-nav" aria-label="Main">
+        <a href="dashboard.html">Dashboard</a>
+        <a href="machines.html" aria-current="page">Machines</a>
+        <a href="auto.html">Auto</a>
+      </nav>
+      <span class="header-spacer" aria-hidden="true"></span>
+      <div class="header-actions">
+        <button type="button" class="user-session" aria-label="Signed in as Peter">
+          <img src="../mpgwd29b-unnamed.png" alt="" width="32" height="32" />
+        </button>
+      </div>
+    </header>
+
+    <main class="main main-padded">
+      <div class="card" style="padding:0;overflow:hidden;">
+        <table class="machines-table">
+          <thead>
+            <tr>
+              <th>Machine</th>
+              <th>Address</th>
+              <th>Hardware</th>
+              <th>Threads</th>
+              <th>Port range (5900–5999)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td data-label="Machine"><strong>mac-studio-01</strong></td>
+              <td data-label="Address" class="spec-mono">192.168.1.10</td>
+              <td data-label="Hardware" class="spec-mono">12 cores · 64 GB RAM · —</td>
+              <td data-label="Threads">2 active</td>
+              <td data-label="Ports">
+                <div class="port-bar" aria-label="12 of 20 slots used">
+                  <span class="port-seg used"></span><span class="port-seg used"></span><span class="port-seg used"></span><span class="port-seg used"></span>
+                  <span class="port-seg used"></span><span class="port-seg used"></span><span class="port-seg used"></span><span class="port-seg used"></span>
+                  <span class="port-seg used"></span><span class="port-seg used"></span><span class="port-seg used"></span><span class="port-seg used"></span>
+                  <span class="port-seg"></span><span class="port-seg"></span><span class="port-seg"></span><span class="port-seg"></span>
+                  <span class="port-seg"></span><span class="port-seg"></span><span class="port-seg"></span><span class="port-seg"></span>
+                </div>
+                <span class="spec-mono" style="display:block;margin-top:6px;">5900–5911 in use</span>
+              </td>
+            </tr>
+            <tr>
+              <td data-label="Machine"><strong>linux-box-02</strong></td>
+              <td data-label="Address" class="spec-mono">192.168.1.42</td>
+              <td data-label="Hardware" class="spec-mono">8 cores · 32 GB RAM · RTX 4060</td>
+              <td data-label="Threads">3 active</td>
+              <td data-label="Ports">
+                <div class="port-bar" aria-label="8 used, 2 reserved">
+                  <span class="port-seg used"></span><span class="port-seg used"></span><span class="port-seg used"></span><span class="port-seg used"></span>
+                  <span class="port-seg used"></span><span class="port-seg used"></span><span class="port-seg used"></span><span class="port-seg used"></span>
+                  <span class="port-seg reserved"></span><span class="port-seg reserved"></span>
+                  <span class="port-seg"></span><span class="port-seg"></span><span class="port-seg"></span><span class="port-seg"></span>
+                  <span class="port-seg"></span><span class="port-seg"></span><span class="port-seg"></span><span class="port-seg"></span>
+                  <span class="port-seg"></span><span class="port-seg"></span>
+                </div>
+                <span class="spec-mono" style="display:block;margin-top:6px;">5900–5909 · 5910–5911 reserved</span>
+              </td>
+            </tr>
+            <tr>
+              <td data-label="Machine"><strong>homelab-03</strong></td>
+              <td data-label="Address" class="spec-mono">10.0.0.23</td>
+              <td data-label="Hardware" class="spec-mono">4 cores · 16 GB RAM · —</td>
+              <td data-label="Threads">2 active</td>
+              <td data-label="Ports">
+                <div class="port-bar" aria-label="4 of 20 slots used">
+                  <span class="port-seg used"></span><span class="port-seg used"></span><span class="port-seg used"></span><span class="port-seg used"></span>
+                  <span class="port-seg"></span><span class="port-seg"></span><span class="port-seg"></span><span class="port-seg"></span>
+                  <span class="port-seg"></span><span class="port-seg"></span><span class="port-seg"></span><span class="port-seg"></span>
+                  <span class="port-seg"></span><span class="port-seg"></span><span class="port-seg"></span><span class="port-seg"></span>
+                  <span class="port-seg"></span><span class="port-seg"></span><span class="port-seg"></span><span class="port-seg"></span>
+                </div>
+                <span class="spec-mono" style="display:block;margin-top:6px;">5900–5903 in use</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

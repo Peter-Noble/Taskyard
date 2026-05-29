@@ -12,7 +12,7 @@
     "@taskyard/core": "workspace:*",
     "@taskyard/db": "workspace:*",
     "@taskyard/protocol": "workspace:*",
-    "better-sqlite3": "^11.7.0",
+    "better-sqlite3": "^12.10.0",
     "drizzle-orm": "^0.38.0",
     "next": "^15.1.0",
     "react": "^18.3.0",

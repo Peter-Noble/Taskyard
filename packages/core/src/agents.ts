@@ -3,15 +3,17 @@ import path from 'node:path';
 import type { AgentManifest } from '@taskyard/protocol';
 import { agentsDir } from './paths.js';
 
-export function listAgents(): AgentManifest[] {
+export type AgentInfo = AgentManifest & { id: string };
+
+export function listAgents(): AgentInfo[] {
   const dir = agentsDir();
   if (!fs.existsSync(dir)) return [];
 
-  const manifests: AgentManifest[] = [];
+  const manifests: AgentInfo[] = [];
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     if (!entry.isDirectory()) continue;
     const manifest = readAgentManifest(entry.name);
-    if (manifest) manifests.push(manifest);
+    if (manifest) manifests.push({ ...manifest, id: entry.name });
   }
   return manifests;
 }

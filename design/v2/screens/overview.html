@@ -1,0 +1,349 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Overview — Taskyard</title>
+  <link rel="stylesheet" href="../css/taskyard.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="top-header">
+      <a href="overview.html" class="header-brand">
+        <span class="brand-mark"><img src="../mpmrnv2b-Make_me_an_exact_copy_202605261554.png" alt="" width="28" height="28" /></span>
+        <span class="brand-name">Taskyard</span>
+      </a>
+      <nav class="header-nav" aria-label="Main">
+        <a href="overview.html" aria-current="page">Overview</a>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="machines.html">Machines</a>
+        <a href="auto.html">Auto</a>
+      </nav>
+      <span class="header-spacer" aria-hidden="true"></span>
+      <div class="header-actions">
+        <button type="button" class="user-session" aria-label="Signed in as Peter">
+          <img src="../mpgwd29b-unnamed.png" alt="" width="32" height="32" />
+        </button>
+      </div>
+    </header>
+
+    <main class="main main-padded">
+      <div class="overview-page">
+        <div class="overview-grid">
+        <section class="overview-section overview-section-actions" aria-labelledby="needs-you-heading">
+          <h2 id="needs-you-heading" class="overview-section-label">Needs your input</h2>
+          <ul class="overview-list">
+            <li class="overview-item">
+              <button type="button" class="overview-item-trigger" aria-expanded="false" aria-controls="overview-detail-ty15">
+                <span class="overview-item-body">
+                  <span class="overview-item-kind">Task · TY-15</span>
+                  <span class="overview-item-title">VNC preview gate before visual polish</span>
+                  <span class="overview-item-meta">Agent forwarded port 5901 — open VNC or reply to continue wireframing.</span>
+                </span>
+                <span class="overview-item-end">
+                  <span class="badge badge-waiting overview-item-badge"><span class="badge-dot"></span>Waiting for user</span>
+                  <span class="overview-chevron" aria-hidden="true"></span>
+                </span>
+              </button>
+              <div id="overview-detail-ty15" class="overview-item-detail" hidden>
+                <dl class="overview-detail-facts">
+                  <div><dt>Project</dt><dd>Taskyard</dd></div>
+                  <div><dt>Agent</dt><dd>Kimi · linux-box-02</dd></div>
+                  <div><dt>Waiting since</dt><dd>Today 09:41</dd></div>
+                  <div><dt>Preview</dt><dd>localhost:5901 → wireframe session</dd></div>
+                </dl>
+                <p class="overview-detail-note">Agent paused after forwarding VNC — review the live UI before approving the next polish pass.</p>
+                <div class="overview-item-actions">
+                  <a href="dashboard.html" class="btn btn-primary">Open task</a>
+                  <button type="button" class="btn btn-ghost">Open VNC preview</button>
+                  <button type="button" class="btn btn-ghost">Reply on task</button>
+                </div>
+              </div>
+            </li>
+            <li class="overview-item">
+              <button type="button" class="overview-item-trigger" aria-expanded="false" aria-controls="overview-detail-ty16">
+                <span class="overview-item-body">
+                  <span class="overview-item-kind">Task · TY-16</span>
+                  <span class="overview-item-title">OpenAPI client — default auth scheme</span>
+                  <span class="overview-item-meta">Agent asked: Bearer JWT only, or support x-api-key in the factory too?</span>
+                </span>
+                <span class="overview-item-end">
+                  <span class="badge badge-waiting overview-item-badge"><span class="badge-dot"></span>Waiting for user</span>
+                  <span class="overview-chevron" aria-hidden="true"></span>
+                </span>
+              </button>
+              <div id="overview-detail-ty16" class="overview-item-detail" hidden>
+                <dl class="overview-detail-facts">
+                  <div><dt>Project</dt><dd>taskyard-core</dd></div>
+                  <div><dt>Spec</dt><dd>taskyard.v1.yaml</dd></div>
+                  <div><dt>Schemes</dt><dd>BearerAuth, ApiKeyAuth</dd></div>
+                </dl>
+                <p class="overview-detail-note">Codegen is blocked until you pick the default security scheme for the generated TypeScript client.</p>
+                <div class="overview-item-actions">
+                  <a href="dashboard.html" class="btn btn-primary">Open task</a>
+                  <button type="button" class="btn btn-ghost">Bearer JWT only</button>
+                  <button type="button" class="btn btn-ghost">Support both schemes</button>
+                </div>
+              </div>
+            </li>
+            <li class="overview-item">
+              <button type="button" class="overview-item-trigger" aria-expanded="false" aria-controls="overview-detail-invoice">
+                <span class="overview-item-body">
+                  <span class="overview-item-kind">Thread · invoice-pdf-parser</span>
+                  <span class="overview-item-title">Low-confidence invoice rows</span>
+                  <span class="overview-item-meta">14 rows scored below 0.85 — approve corrections or skip review.</span>
+                </span>
+                <span class="overview-item-end">
+                  <span class="badge badge-waiting overview-item-badge"><span class="badge-dot"></span>Waiting</span>
+                  <span class="overview-chevron" aria-hidden="true"></span>
+                </span>
+              </button>
+              <div id="overview-detail-invoice" class="overview-item-detail" hidden>
+                <dl class="overview-detail-facts">
+                  <div><dt>Machine</dt><dd>mac-studio-01</dd></div>
+                  <div><dt>Rows flagged</dt><dd>14 of 128</dd></div>
+                  <div><dt>Threshold</dt><dd>&lt; 0.85 confidence</dd></div>
+                </dl>
+                <p class="overview-detail-note">Parser finished; human review needed before posting totals to the ledger export.</p>
+                <div class="overview-item-actions">
+                  <a href="dashboard.html" class="btn btn-primary">Open thread</a>
+                  <button type="button" class="btn btn-ghost">Review flagged rows</button>
+                  <button type="button" class="btn btn-ghost">Approve all corrections</button>
+                </div>
+              </div>
+            </li>
+            <li class="overview-item">
+              <button type="button" class="overview-item-trigger" aria-expanded="false" aria-controls="overview-detail-wireframe">
+                <span class="overview-item-body">
+                  <span class="overview-item-kind">Thread · taskyard-ui-wireframe</span>
+                  <span class="overview-item-title">Dashboard layout review</span>
+                  <span class="overview-item-meta">Port 5901 is forwarded on linux-box-02 — VNC in or reply to continue.</span>
+                </span>
+                <span class="overview-item-end">
+                  <span class="badge badge-waiting overview-item-badge"><span class="badge-dot"></span>Waiting</span>
+                  <span class="overview-chevron" aria-hidden="true"></span>
+                </span>
+              </button>
+              <div id="overview-detail-wireframe" class="overview-item-detail" hidden>
+                <dl class="overview-detail-facts">
+                  <div><dt>Machine</dt><dd>linux-box-02</dd></div>
+                  <div><dt>Agent</dt><dd>Kimi</dd></div>
+                  <div><dt>Forward</dt><dd>5901 → session desktop</dd></div>
+                </dl>
+                <p class="overview-detail-note">Thread is idle until you inspect the wireframe in VNC or send layout feedback in the thread stream.</p>
+                <div class="overview-item-actions">
+                  <a href="thread-detail.html" class="btn btn-primary">Open thread</a>
+                  <button type="button" class="btn btn-ghost">Open VNC</button>
+                  <button type="button" class="btn btn-ghost">Reply in thread</button>
+                </div>
+              </div>
+            </li>
+            <li class="overview-item">
+              <button type="button" class="overview-item-trigger" aria-expanded="false" aria-controls="overview-detail-openapi">
+                <span class="overview-item-body">
+                  <span class="overview-item-kind">Thread · openapi-client-gen</span>
+                  <span class="overview-item-title">Auth scheme for generated client</span>
+                  <span class="overview-item-meta">taskyard.v1.yaml defines two schemes — pick the default before codegen merges.</span>
+                </span>
+                <span class="overview-item-end">
+                  <span class="badge badge-waiting overview-item-badge"><span class="badge-dot"></span>Waiting</span>
+                  <span class="overview-chevron" aria-hidden="true"></span>
+                </span>
+              </button>
+              <div id="overview-detail-openapi" class="overview-item-detail" hidden>
+                <dl class="overview-detail-facts">
+                  <div><dt>Related task</dt><dd>TY-16</dd></div>
+                  <div><dt>Branch</dt><dd>feat/openapi-client</dd></div>
+                  <div><dt>Blocked</dt><dd>Client factory merge</dd></div>
+                </dl>
+                <p class="overview-detail-note">Same decision as TY-16 — thread will resume codegen after you confirm the default scheme.</p>
+                <div class="overview-item-actions">
+                  <a href="dashboard.html" class="btn btn-primary">Open thread</a>
+                  <button type="button" class="btn btn-ghost">Open related task</button>
+                </div>
+              </div>
+            </li>
+            <li class="overview-item">
+              <button type="button" class="overview-item-trigger" aria-expanded="false" aria-controls="overview-detail-port-leak">
+                <span class="overview-item-body">
+                  <span class="overview-item-kind">Thread · fix-port-forward-leak</span>
+                  <span class="overview-item-title">Port forward not released after thread exit</span>
+                  <span class="overview-item-meta">homelab-03 · slot 5907 still bound — kill stale forward or restart worker agent.</span>
+                </span>
+                <span class="overview-item-end">
+                  <span class="badge badge-error overview-item-badge"><span class="badge-dot"></span>Error</span>
+                  <span class="overview-chevron" aria-hidden="true"></span>
+                </span>
+              </button>
+              <div id="overview-detail-port-leak" class="overview-item-detail" hidden>
+                <dl class="overview-detail-facts">
+                  <div><dt>Machine</dt><dd>homelab-03</dd></div>
+                  <div><dt>Stale slot</dt><dd>5907</dd></div>
+                  <div><dt>Thread exited</dt><dd>12m ago</dd></div>
+                </dl>
+                <p class="overview-detail-note">Worker did not tear down the forward — new threads may fail to bind preview ports until this is cleared.</p>
+                <div class="overview-item-actions">
+                  <a href="thread-detail.html" class="btn btn-primary">Open thread</a>
+                  <button type="button" class="btn btn-danger">Kill stale forward</button>
+                  <button type="button" class="btn btn-ghost">Restart worker on homelab-03</button>
+                </div>
+              </div>
+            </li>
+            <li class="overview-item">
+              <button type="button" class="overview-item-trigger" aria-expanded="false" aria-controls="overview-detail-homelab">
+                <span class="overview-item-body">
+                  <span class="overview-item-kind">Machine · homelab-03</span>
+                  <span class="overview-item-title">Worker heartbeat missed</span>
+                  <span class="overview-item-meta">Last ping 4m ago — thread fix-port-forward-leak may be stuck; check agent service.</span>
+                </span>
+                <span class="overview-item-end">
+                  <span class="badge badge-error overview-item-badge"><span class="badge-dot"></span>Issue</span>
+                  <span class="overview-chevron" aria-hidden="true"></span>
+                </span>
+              </button>
+              <div id="overview-detail-homelab" class="overview-item-detail" hidden>
+                <dl class="overview-detail-facts">
+                  <div><dt>Last ping</dt><dd>4m ago (expected &lt; 60s)</dd></div>
+                  <div><dt>Active threads</dt><dd>1 · fix-port-forward-leak</dd></div>
+                  <div><dt>Worker</dt><dd>taskyard-agent.service</dd></div>
+                </dl>
+                <p class="overview-detail-note">May be related to the stale port on 5907 — verify the agent process before starting new work on this host.</p>
+                <div class="overview-item-actions">
+                  <a href="machines.html" class="btn btn-primary">Open machine</a>
+                  <button type="button" class="btn btn-ghost">Restart worker agent</button>
+                  <a href="thread-detail.html" class="btn btn-ghost">Open stuck thread</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </section>
+
+        <section class="overview-section overview-section-finished" aria-labelledby="finished-heading">
+          <h2 id="finished-heading" class="overview-section-label">Finished</h2>
+          <ul class="overview-list overview-list-muted">
+            <li class="overview-item">
+              <button type="button" class="overview-item-trigger" aria-expanded="false" aria-controls="overview-detail-ty11">
+                <span class="overview-item-body">
+                  <span class="overview-item-kind">Task · TY-11</span>
+                  <span class="overview-item-title">Shared CSS tokens — light theme, zero radius</span>
+                  <span class="overview-item-meta">Marked completed yesterday · unblocks TY-14 dashboard work.</span>
+                </span>
+                <span class="overview-item-end">
+                  <span class="badge badge-completed overview-item-badge"><span class="badge-dot"></span>Completed</span>
+                  <span class="overview-chevron" aria-hidden="true"></span>
+                </span>
+              </button>
+              <div id="overview-detail-ty11" class="overview-item-detail" hidden>
+                <dl class="overview-detail-facts">
+                  <div><dt>Completed</dt><dd>Yesterday 16:20</dd></div>
+                  <div><dt>Unblocks</dt><dd>TY-14</dd></div>
+                </dl>
+                <p class="overview-detail-note">No action required — kept here so you know the token pass landed before dashboard polish continues.</p>
+                <div class="overview-item-actions">
+                  <a href="dashboard.html" class="btn btn-primary">Open task</a>
+                  <button type="button" class="btn btn-ghost">Dismiss from overview</button>
+                </div>
+              </div>
+            </li>
+            <li class="overview-item">
+              <button type="button" class="overview-item-trigger" aria-expanded="false" aria-controls="overview-detail-clerk">
+                <span class="overview-item-body">
+                  <span class="overview-item-kind">Thread · migrate-auth-to-clerk</span>
+                  <span class="overview-item-title">Clerk migration PR merged</span>
+                  <span class="overview-item-meta">Kimi on mac-studio-01 · finished 6h ago · 3 tasks created from summary.</span>
+                </span>
+                <span class="overview-item-end">
+                  <span class="badge badge-completed overview-item-badge"><span class="badge-dot"></span>Done</span>
+                  <span class="overview-chevron" aria-hidden="true"></span>
+                </span>
+              </button>
+              <div id="overview-detail-clerk" class="overview-item-detail" hidden>
+                <dl class="overview-detail-facts">
+                  <div><dt>Finished</dt><dd>6h ago</dd></div>
+                  <div><dt>Tasks spawned</dt><dd>TY-20, TY-21, TY-22</dd></div>
+                </dl>
+                <p class="overview-detail-note">Follow-up tasks are in Backlog — review if you want any moved to Ready for agent.</p>
+                <div class="overview-item-actions">
+                  <a href="dashboard.html" class="btn btn-primary">Open thread</a>
+                  <button type="button" class="btn btn-ghost">Dismiss from overview</button>
+                </div>
+              </div>
+            </li>
+            <li class="overview-item">
+              <button type="button" class="overview-item-trigger" aria-expanded="false" aria-controls="overview-detail-readme">
+                <span class="overview-item-body">
+                  <span class="overview-item-kind">Thread · readme-refresh</span>
+                  <span class="overview-item-title">README and onboarding copy updated</span>
+                  <span class="overview-item-meta">Kimi on homelab-03 · finished 22m ago · no follow-up tasks.</span>
+                </span>
+                <span class="overview-item-end">
+                  <span class="badge badge-completed overview-item-badge"><span class="badge-dot"></span>Done</span>
+                  <span class="overview-chevron" aria-hidden="true"></span>
+                </span>
+              </button>
+              <div id="overview-detail-readme" class="overview-item-detail" hidden>
+                <dl class="overview-detail-facts">
+                  <div><dt>Finished</dt><dd>22m ago</dd></div>
+                  <div><dt>Output</dt><dd>README.md, docs/onboarding.md</dd></div>
+                </dl>
+                <p class="overview-detail-note">Clean completion — nothing waiting on you.</p>
+                <div class="overview-item-actions">
+                  <a href="dashboard.html" class="btn btn-primary">Open thread</a>
+                  <button type="button" class="btn btn-ghost">Dismiss from overview</button>
+                </div>
+              </div>
+            </li>
+            <li class="overview-item">
+              <button type="button" class="overview-item-trigger" aria-expanded="false" aria-controls="overview-detail-auto-pr">
+                <span class="overview-item-body">
+                  <span class="overview-item-kind">Auto · PR review on open</span>
+                  <span class="overview-item-title">Created TY-07 from GitHub pull_request.opened</span>
+                  <span class="overview-item-meta">taskyard-core · acme/widget-api#142 · tagged review, github · Today 08:12.</span>
+                </span>
+                <span class="overview-item-end">
+                  <span class="badge badge-completed overview-item-badge"><span class="badge-dot"></span>Ran</span>
+                  <span class="overview-chevron" aria-hidden="true"></span>
+                </span>
+              </button>
+              <div id="overview-detail-auto-pr" class="overview-item-detail" hidden>
+                <dl class="overview-detail-facts">
+                  <div><dt>Created</dt><dd>TY-07 · Today 08:12</dd></div>
+                  <div><dt>Repo</dt><dd>acme/widget-api#142</dd></div>
+                  <div><dt>Tags applied</dt><dd>review, github</dd></div>
+                </dl>
+                <p class="overview-detail-note">Rule ran successfully — new task is on the dashboard if you want to triage it.</p>
+                <div class="overview-item-actions">
+                  <a href="auto.html" class="btn btn-primary">Open rule</a>
+                  <a href="dashboard.html" class="btn btn-ghost">Open task TY-07</a>
+                </div>
+              </div>
+            </li>
+          </ul>
+        </section>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script>
+    (function () {
+      var triggers = document.querySelectorAll(".overview-item-trigger");
+      triggers.forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          var item = btn.closest(".overview-item");
+          var panel = document.getElementById(btn.getAttribute("aria-controls"));
+          if (!panel) return;
+          var willExpand = btn.getAttribute("aria-expanded") !== "true";
+          btn.setAttribute("aria-expanded", willExpand ? "true" : "false");
+          panel.hidden = !willExpand;
+          item.classList.toggle("is-expanded", willExpand);
+        });
+      });
+      document.querySelectorAll(".overview-item-actions").forEach(function (actions) {
+        actions.addEventListener("click", function (e) {
+          e.stopPropagation();
+        });
+      });
+    })();
+  </script>
+</body>
+</html>
