@@ -13,6 +13,7 @@
     "start": "node dist/main.js"
   },
   "dependencies": {
+    "@taskyard/core": "workspace:*",
     "@taskyard/protocol": "workspace:*",
     "chalk": "^5.4.0",
     "commander": "^12.1.0",

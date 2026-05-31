@@ -63,7 +63,7 @@ export async function createThread(db: TaskyardDb, req: CreateThreadRequest) {
 
   const machineId = pickMachine(db, req.machine_id);
   const threadId = randomUUID();
-  const { web, vnc } = allocatePorts(db, machineId, threadId);
+  const { web, rustdesk } = allocatePorts(db, machineId, threadId);
   const env = getEnvForAgent(db, req.agent_type);
 
   db.insert(threads)
@@ -76,7 +76,7 @@ export async function createThread(db: TaskyardDb, req: CreateThreadRequest) {
       prompt: req.prompt,
       status: 'pending',
       webPort: web,
-      vncPort: vnc,
+      rustdeskPort: rustdesk,
     })
     .run();
 
@@ -90,7 +90,7 @@ export async function createThread(db: TaskyardDb, req: CreateThreadRequest) {
         branch: req.branch || project.defaultBranch || 'main',
         agent_type: req.agent_type,
         prompt: req.prompt,
-        ports: { web, vnc },
+        ports: { web, rustdesk },
         env,
       },
       machineId,

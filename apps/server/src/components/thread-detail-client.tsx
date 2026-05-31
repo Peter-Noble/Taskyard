@@ -128,7 +128,8 @@ export function ThreadDetailClient({ initialThread, demoThreadId }: ThreadDetail
   const canClose = !isDemo && ['completed', 'error'].includes(thread.status);
 
   const webUrl = thread.web_port && machineIp ? `http://${machineIp}:${thread.web_port}` : null;
-  const vncUrl = thread.vnc_port && machineIp ? `vnc://${machineIp}:${thread.vnc_port}` : null;
+  const rustdeskConnect =
+    thread.rustdesk_port && machineIp ? `${machineIp}:${thread.rustdesk_port}` : null;
   const terminalEvents = isDemo ? thread.events : events.length ? events : thread.events;
 
   return (
@@ -182,15 +183,23 @@ export function ThreadDetailClient({ initialThread, demoThreadId }: ThreadDetail
 
             <h2 className="card-title">Ports</h2>
             <div className="port-links">
-              {thread.vnc_port ? (
+              {thread.rustdesk_port ? (
                 <a
                   className="port-chip"
-                  href={vncUrl ?? '#'}
+                  href="#"
+                  title={
+                    rustdeskConnect
+                      ? `Connect via RustDesk to ${rustdeskConnect} (configure hbbs/hbbr for your network)`
+                      : undefined
+                  }
                   onClick={(e) => {
-                    if (!vncUrl) e.preventDefault();
+                    e.preventDefault();
+                    if (rustdeskConnect) {
+                      void navigator.clipboard?.writeText(rustdeskConnect);
+                    }
                   }}
                 >
-                  VNC :{thread.vnc_port}
+                  RustDesk :{thread.rustdesk_port}
                 </a>
               ) : null}
               {thread.web_port ? (
@@ -206,7 +215,7 @@ export function ThreadDetailClient({ initialThread, demoThreadId }: ThreadDetail
                   Web :{thread.web_port}
                 </a>
               ) : null}
-              {!thread.web_port && !thread.vnc_port ? (
+              {!thread.web_port && !thread.rustdesk_port ? (
                 <span className="spec-mono">—</span>
               ) : null}
             </div>

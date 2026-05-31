@@ -38,7 +38,7 @@ export type ServerMessage =
       branch: string;
       agent_type: string;
       prompt: string;
-      ports: { web: number; vnc: number };
+      ports: { web: number; rustdesk: number };
       env: Record<string, string>;
     }
   | { type: 'kill_thread'; thread_id: string }

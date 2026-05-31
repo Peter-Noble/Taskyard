@@ -38,7 +38,7 @@ export type Thread = {
   worktree_path: string | null;
   container_id: string | null;
   web_port: number | null;
-  vnc_port: number | null;
+  rustdesk_port: number | null;
   created_at: string;
   started_at: string | null;
   completed_at: string | null;

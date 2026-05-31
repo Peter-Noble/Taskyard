@@ -21,7 +21,7 @@ pnpm db:push
 # Terminal 1 — Next.js server (port 3000)
 pnpm dev:server
 
-# Terminal 2 — WebSocket hub (port 3001, control API on 3002)
+# Terminal 2 — WebSocket hub (workers ws://127.0.0.1:3001, control API http://127.0.0.1:3002)
 pnpm dev:hub
 
 # Terminal 3 — worker daemon (Linux with Docker)
@@ -82,6 +82,18 @@ pnpm dev:worker -- --hub ws://localhost:3001 --name local --ports 30000-31000
 # Worker clones the repo mirror, creates a worktree, runs agents/codex in Docker,
 # and streams JSON events back to the hub.
 ```
+
+## Tests
+
+```bash
+pnpm test
+```
+
+Uses a temp SQLite DB and `agents/stub` for zero-token checks. See [PLAN.md](./PLAN.md) §15.
+
+## Remote desktop
+
+GUI preview uses **RustDesk** (not VNC). Thread detail shows a RustDesk host port; connect with the RustDesk client. See [docs/agent-authoring.md](./docs/agent-authoring.md).
 
 See [PLAN.md](./PLAN.md) for the full implementation plan.
 

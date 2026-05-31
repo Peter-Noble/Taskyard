@@ -37,7 +37,7 @@ export const threads = sqliteTable('threads', {
   worktreePath: text('worktree_path'),
   containerId: text('container_id'),
   webPort: integer('web_port'),
-  vncPort: integer('vnc_port'),
+  rustdeskPort: integer('rustdesk_port'),
   createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
   startedAt: integer('started_at', { mode: 'timestamp' }),
   completedAt: integer('completed_at', { mode: 'timestamp' }),
@@ -56,7 +56,7 @@ export const portAllocations = sqliteTable('port_allocations', {
   port: integer('port').primaryKey(),
   machineId: text('machine_id').references(() => machines.id),
   threadId: text('thread_id').references(() => threads.id),
-  purpose: text('purpose', { enum: ['web', 'vnc'] }),
+  purpose: text('purpose', { enum: ['web', 'rustdesk'] }),
   allocatedAt: integer('allocated_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
 });
 

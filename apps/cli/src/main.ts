@@ -1,5 +1,8 @@
 #!/usr/bin/env node
+import { loadTaskyardEnv } from '@taskyard/core';
 import { Command } from 'commander';
+
+loadTaskyardEnv();
 import { runTui } from './tui.js';
 import { runWorker } from './worker.js';
 

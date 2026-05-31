@@ -18,9 +18,11 @@
   "dependencies": {
     "@taskyard/db": "workspace:*",
     "@taskyard/protocol": "workspace:*",
+    "dotenv": "^16.4.7",
     "drizzle-orm": "^0.38.0"
   },
   "devDependencies": {
+    "@taskyard/test-utils": "workspace:*",
     "typescript": "^5.4.0"
   }
 }

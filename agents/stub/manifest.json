@@ -1,0 +1,8 @@
+{
+  "name": "Stub",
+  "description": "Deterministic test agent (no AI, no network)",
+  "version": "1.0.0",
+  "entrypoint": "run.ts",
+  "language": "typescript",
+  "env_vars": []
+}

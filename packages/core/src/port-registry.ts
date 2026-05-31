@@ -14,7 +14,7 @@ export function allocatePorts(
   db: TaskyardDb,
   machineId: string,
   threadId: string,
-): { web: number; vnc: number } {
+): { web: number; rustdesk: number } {
   const machine = getMachineById(db, machineId);
   if (!machine) throw new Error(`Machine not found: ${machineId}`);
 
@@ -29,18 +29,18 @@ export function allocatePorts(
     );
 
     let web: number | undefined;
-    let vnc: number | undefined;
+    let rustdesk: number | undefined;
 
     for (let p = machine.portRangeStart; p <= machine.portRangeEnd; p++) {
       if (used.has(p)) continue;
       if (web === undefined) web = p;
       else {
-        vnc = p;
+        rustdesk = p;
         break;
       }
     }
 
-    if (web === undefined || vnc === undefined) {
+    if (web === undefined || rustdesk === undefined) {
       throw new PortExhaustedError(machineId);
     }
 
@@ -49,10 +49,10 @@ export function allocatePorts(
       .values({ port: web, machineId, threadId, purpose: 'web', allocatedAt: now })
       .run();
     db.insert(portAllocations)
-      .values({ port: vnc, machineId, threadId, purpose: 'vnc', allocatedAt: now })
+      .values({ port: rustdesk, machineId, threadId, purpose: 'rustdesk', allocatedAt: now })
       .run();
 
-    return { web, vnc };
+    return { web, rustdesk };
   });
 }
 

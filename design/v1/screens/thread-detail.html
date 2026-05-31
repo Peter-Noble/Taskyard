@@ -48,7 +48,7 @@
             <span class="term-line term-cmd">$ curl -s http://127.0.0.1:17573/ | head -5</span>
             <span class="term-line term-dim">&lt;!doctype html&gt;&lt;html lang="en"&gt;…</span>
             <span class="term-line term-file">~ patched screens/thread-detail.html — filter tab markup</span>
-            <span class="term-line term-thought">→ Sidebar: expose VNC :5901 and preview :8080 as clickable port chips.</span>
+            <span class="term-line term-thought">→ Sidebar: expose RustDesk :21116 and preview :8080 as clickable port chips.</span>
             <span class="term-line term-cmd">$ git status -sb</span>
             <span class="term-line term-dim">## feat/taskyard-wireframe</span>
             <span class="term-line term-dim"> M css/taskyard.css</span>
@@ -57,9 +57,9 @@
             <span class="term-line term-thought">→ Checking responsive: stack capacity below grid under 1024px — OK.</span>
             <span class="term-line term-cmd">$ npm run lint 2&gt;&1 | tail -3</span>
             <span class="term-line term-dim">✓ 0 errors, 2 warnings (unused-vars)</span>
-            <span class="term-line term-error">✗ port 5901 already bound on linux-box-02 — retrying forward…</span>
-            <span class="term-line term-cmd">$ ssh linux-box-02 'fuser -k 5901/tcp'</span>
-            <span class="term-line term-file">+ forwarded localhost:5901 → worker:5901</span>
+            <span class="term-line term-error">✗ port 21116 already bound on linux-box-02 — retrying forward…</span>
+            <span class="term-line term-cmd">$ ssh linux-box-02 'fuser -k 21116/tcp'</span>
+            <span class="term-line term-file">+ forwarded localhost:21116 → worker:21116</span>
             <span class="term-line term-thought">→ Resume: machines list needs segmented port-range bars per row.</span>
             <span class="term-line term-dim">[09:44:18] awaiting user input…</span>
           </div>
@@ -82,7 +82,7 @@
 
           <h2 class="card-title">Ports</h2>
           <div class="port-links">
-            <a class="port-chip" href="#">VNC :5901</a>
+            <a class="port-chip" href="#">RustDesk :21116</a>
             <a class="port-chip" href="#">Web :8080</a>
             <a class="port-chip" href="#">API :3921</a>
           </div>

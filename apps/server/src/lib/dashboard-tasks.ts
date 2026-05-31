@@ -143,20 +143,20 @@ export const PROJECTS: Record<string, DashboardProject> = {
       {
         id: 'ty-15',
         num: '15',
-        title: 'VNC preview gate before visual polish',
+        title: 'RustDesk preview gate before visual polish',
         status: 'waiting',
         statusLabel: 'Waiting for user',
         assignee: 'Peter',
         created: 'May 20',
         description:
-          'Agent forwarded port 5901. User must confirm layout on worker VNC before agent continues wireframe iterations.',
+          'Agent forwarded port 21116. User must confirm layout on worker RustDesk before agent continues wireframe iterations.',
         blockedBy: [{ id: 'ty-14', label: 'TY-14' }],
         blocks: [{ id: 'ty-17', label: 'TY-17' }],
         activity: [
           {
             type: 'comment',
             actor: 'Agent',
-            text: 'Port 5901 is live on linux-box-02. Open VNC or reply to continue.',
+            text: 'Port 21116 is live on linux-box-02. Open RustDesk or reply to continue.',
             time: 'Today 09:05',
           },
           { type: 'status', actor: 'Agent', from: 'In progress', to: 'Waiting for user', time: 'Today 09:04' },
@@ -177,11 +177,11 @@ export const PROJECTS: Record<string, DashboardProject> = {
         assignee: '—',
         created: 'May 23',
         description:
-          'Playwright suite against local stack: thread selection, task dependency expand, machine dock thread buttons. Runs after VNC sign-off.',
+          'Playwright suite against local stack: thread selection, task dependency expand, machine dock thread buttons. Runs after RustDesk sign-off.',
         blockedBy: [{ id: 'ty-15', label: 'TY-15' }],
         blocks: [],
         activity: [
-          { type: 'dependency', actor: 'Peter', text: 'Blocked by TY-15 (VNC gate)', time: 'May 23' },
+          { type: 'dependency', actor: 'Peter', text: 'Blocked by TY-15 (RustDesk gate)', time: 'May 23' },
           { type: 'status', actor: 'Peter', from: 'Backlog', to: 'Ready for agent', time: 'May 23' },
         ],
       },
@@ -371,7 +371,7 @@ export const PROJECTS: Record<string, DashboardProject> = {
         statusLabel: 'In progress',
         assignee: 'Peter',
         created: 'May 21',
-        description: 'Assigns non-overlapping ranges per thread; prevents 5901 collisions seen in homelab logs.',
+        description: 'Assigns non-overlapping ranges per thread; prevents 21116 collisions seen in homelab logs.',
         blockedBy: [{ id: 'inf-05', label: 'INF-05' }],
         blocks: [{ id: 'inf-07', label: 'INF-07' }],
         activity: [
@@ -387,7 +387,7 @@ export const PROJECTS: Record<string, DashboardProject> = {
       {
         id: 'inf-07',
         num: '07',
-        title: 'Clear stale port-forward on 5901',
+        title: 'Clear stale port-forward on 21116',
         status: 'in-progress',
         statusLabel: 'In progress',
         assignee: 'Peter',
@@ -396,7 +396,7 @@ export const PROJECTS: Record<string, DashboardProject> = {
         blockedBy: [{ id: 'inf-06', label: 'INF-06' }],
         blocks: [],
         activity: [
-          { type: 'comment', actor: 'Agent', text: 'bind: address already in use on 0.0.0.0:5901', time: 'Today 08:55' },
+          { type: 'comment', actor: 'Agent', text: 'bind: address already in use on 0.0.0.0:21116', time: 'Today 08:55' },
           { type: 'status', actor: 'Agent', from: 'Ready for agent', to: 'In progress', time: 'Today 08:54' },
         ],
       },

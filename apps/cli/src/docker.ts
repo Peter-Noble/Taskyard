@@ -3,6 +3,7 @@ import type { ContainerCreateOptions } from 'dockerode';
 import Dockerode from 'dockerode';
 import type { AgentManifest } from '@taskyard/protocol';
 import type { ServerMessage } from '@taskyard/protocol';
+import { RUSTDESK_CONTAINER_PORT } from '@taskyard/protocol';
 import { DOCKER_IMAGE, containerName, getAgentsDir } from './config.js';
 import { buildContainerCmd } from './manifest.js';
 import { createLineBuffer, parseLogLine } from './events.js';
@@ -41,7 +42,7 @@ export async function spawnContainer(opts: SpawnContainerOptions): Promise<strin
     HostConfig: {
       Binds: [`${worktreeAbs}:/workspace`, `${agentMount}:/agent:ro`],
       PortBindings: {
-        '5900/tcp': [{ HostPort: String(msg.ports.vnc) }],
+        [`${RUSTDESK_CONTAINER_PORT}/tcp`]: [{ HostPort: String(msg.ports.rustdesk) }],
         '8080/tcp': [{ HostPort: String(msg.ports.web) }],
       },
       AutoRemove: true,

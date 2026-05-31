@@ -36,7 +36,9 @@ export function createDb(dbPath?: string): {
   path: string;
 } {
   const resolved = resolveDbPath(dbPath);
-  fs.mkdirSync(path.dirname(resolved), { recursive: true });
+  if (resolved !== ':memory:') {
+    fs.mkdirSync(path.dirname(resolved), { recursive: true });
+  }
 
   const sqlite = new Database(resolved);
   sqlite.pragma('journal_mode = WAL');

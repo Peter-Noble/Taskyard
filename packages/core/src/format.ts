@@ -55,7 +55,7 @@ export function formatThread(
     worktree_path: row.worktreePath,
     container_id: row.containerId,
     web_port: row.webPort,
-    vnc_port: row.vncPort,
+    rustdesk_port: row.rustdeskPort,
     created_at: iso(row.createdAt) ?? new Date().toISOString(),
     started_at: iso(row.startedAt),
     completed_at: iso(row.completedAt),

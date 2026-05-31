@@ -24,10 +24,37 @@ function isAuthorized(req: http.IncomingMessage): boolean {
   return header === CONTROL_TOKEN;
 }
 
+function healthPayload(port: number) {
+  return {
+    ok: true,
+    service: 'taskyard-hub-control',
+    port,
+    websocket: `ws://127.0.0.1:${process.env.HUB_PORT ?? 3001}`,
+    endpoints: {
+      'GET /health': 'This status response',
+      'POST /spawn': 'Forward spawn_thread to a worker (requires X-Hub-Token if HUB_CONTROL_TOKEN is set)',
+      'POST /kill': 'Kill thread on worker',
+      'POST /close': 'Close thread on worker',
+      'POST /ping': 'Ping all connected workers',
+    },
+  };
+}
+
 export function startControlServer(port: number): http.Server {
   const server = http.createServer(async (req, res) => {
-    if (req.method !== 'POST') {
-      json(res, 405, { error: 'Method not allowed' });
+    const url = req.url ?? '/';
+    const method = req.method ?? 'GET';
+
+    if (method === 'GET' && (url === '/' || url === '/health')) {
+      json(res, 200, healthPayload(port));
+      return;
+    }
+
+    if (method !== 'POST') {
+      json(res, 405, {
+        error: 'Method not allowed',
+        hint: 'Workers use WebSocket on HUB_PORT (default 3001). This HTTP API accepts POST only; try GET /health.',
+      });
       return;
     }
 
@@ -36,7 +63,6 @@ export function startControlServer(port: number): http.Server {
       return;
     }
 
-    const url = req.url ?? '/';
     let body: Record<string, unknown> = {};
     try {
       const raw = await readBody(req);
