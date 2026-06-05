@@ -1,4 +1,4 @@
-import type { Machine, Thread, ThreadDetail, ThreadEvent } from '@taskyard/protocol';
+import type { Machine, Project, Thread, ThreadDetail, ThreadEvent } from '@taskyard/protocol';
 
 const isoMinutesAgo = (mins: number) => new Date(Date.now() - mins * 60_000).toISOString();
 
@@ -48,12 +48,68 @@ export type TestAutoRule = {
   comboScope?: string;
 };
 
+const MACHINE_POLICY_DEFAULTS = {
+  scheduling_mode: 'auto' as const,
+  pool: 'default',
+  is_local: false,
+  max_concurrent_threads: null,
+  allowed_agent_types: null,
+  allowed_project_ids: null,
+  priority: 0,
+};
+
+export const TEST_PROJECTS: Project[] = [
+  {
+    id: 'demo-proj-taskyard',
+    name: 'Taskyard',
+    repo_url: 'https://github.com/example/taskyard.git',
+    default_branch: 'main',
+    archived: false,
+    archived_at: null,
+    created_at: isoMinutesAgo(60 * 24 * 30),
+    active_threads: 2,
+  },
+  {
+    id: 'demo-proj-invoices',
+    name: 'Invoice Parser',
+    repo_url: 'https://github.com/example/invoice-tools.git',
+    default_branch: 'develop',
+    archived: false,
+    archived_at: null,
+    created_at: isoMinutesAgo(60 * 24 * 14),
+    active_threads: 1,
+  },
+  {
+    id: 'demo-proj-planning',
+    name: 'Q3 Planning',
+    repo_url: null,
+    default_branch: 'main',
+    archived: false,
+    archived_at: null,
+    created_at: isoMinutesAgo(60 * 24 * 3),
+    active_threads: 0,
+  },
+  {
+    id: 'demo-proj-legacy',
+    name: 'Legacy Monolith',
+    repo_url: 'https://github.com/example/legacy-app.git',
+    default_branch: 'main',
+    archived: true,
+    archived_at: isoMinutesAgo(60 * 24 * 90),
+    created_at: isoMinutesAgo(60 * 24 * 400),
+    active_threads: 0,
+  },
+];
+
 export const TEST_MACHINES: Array<
   Machine & { port_utilization?: { used: number; total: number; reserved?: number } }
 > = [
   {
+    ...MACHINE_POLICY_DEFAULTS,
     id: 'demo-mac-studio-01',
     name: 'mac-studio-01',
+    is_local: true,
+    pool: 'local',
     ip_address: '192.168.1.10',
     port_range_start: 5900,
     port_range_end: 5919,
@@ -68,8 +124,11 @@ export const TEST_MACHINES: Array<
     port_utilization: { used: 12, total: 20 },
   },
   {
+    ...MACHINE_POLICY_DEFAULTS,
     id: 'demo-linux-box-02',
     name: 'linux-box-02',
+    pool: 'homelab',
+    scheduling_mode: 'auto',
     ip_address: '192.168.1.42',
     port_range_start: 5900,
     port_range_end: 5919,
@@ -84,8 +143,11 @@ export const TEST_MACHINES: Array<
     port_utilization: { used: 8, total: 20, reserved: 2 },
   },
   {
+    ...MACHINE_POLICY_DEFAULTS,
     id: 'demo-homelab-03',
     name: 'homelab-03',
+    pool: 'homelab',
+    scheduling_mode: 'manual_only',
     ip_address: '10.0.0.23',
     port_range_start: 5900,
     port_range_end: 5919,

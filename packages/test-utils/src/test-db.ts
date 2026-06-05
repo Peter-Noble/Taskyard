@@ -71,6 +71,13 @@ export function seedOnlineMachine(
     cpuPercent: overrides.cpuPercent ?? 10,
     ramUsedGb: overrides.ramUsedGb ?? 4,
     lastHeartbeat: overrides.lastHeartbeat ?? new Date(),
+    schedulingMode: overrides.schedulingMode ?? 'auto',
+    pool: overrides.pool ?? 'default',
+    isLocal: overrides.isLocal ?? false,
+    maxConcurrentThreads: overrides.maxConcurrentThreads ?? null,
+    allowedAgentTypes: overrides.allowedAgentTypes ?? null,
+    allowedProjectIds: overrides.allowedProjectIds ?? null,
+    priority: overrides.priority ?? 0,
     createdAt: overrides.createdAt ?? new Date(),
   };
 

@@ -13,14 +13,25 @@ export const machines = sqliteTable('machines', {
   cpuPercent: real('cpu_percent'),
   ramUsedGb: real('ram_used_gb'),
   lastHeartbeat: integer('last_heartbeat', { mode: 'timestamp' }),
+  schedulingMode: text('scheduling_mode', {
+    enum: ['auto', 'manual_only', 'disabled'],
+  }).default('auto'),
+  pool: text('pool').default('default'),
+  isLocal: integer('is_local', { mode: 'boolean' }).default(false),
+  maxConcurrentThreads: integer('max_concurrent_threads'),
+  allowedAgentTypes: text('allowed_agent_types'),
+  allowedProjectIds: text('allowed_project_ids'),
+  priority: integer('priority').default(0),
   createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
 });
 
 export const projects = sqliteTable('projects', {
   id: text('id').primaryKey(),
   name: text('name').notNull().unique(),
-  repoUrl: text('repo_url').notNull(),
+  repoUrl: text('repo_url'),
   defaultBranch: text('default_branch').default('main'),
+  archived: integer('archived', { mode: 'boolean' }).default(false),
+  archivedAt: integer('archived_at', { mode: 'timestamp' }),
   createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
 });
 

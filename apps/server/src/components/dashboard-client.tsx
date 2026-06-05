@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import type { Machine, Thread } from '@taskyard/protocol';
 import { AppShell } from '@/components/app-shell';
@@ -16,7 +17,7 @@ import {
 import { useEventStream } from '@/lib/hooks/use-event-stream';
 import { useJsonFetch } from '@/lib/hooks/use-json-fetch';
 import { isDemoThreadId, useTestData } from '@/lib/hooks/use-test-data';
-import { threadTitle } from '@/lib/format-ui';
+import { rustdeskConnectString, threadTitle } from '@/lib/format-ui';
 import {
   DEFAULT_TEST_THREAD_ID,
   TEST_MACHINES,
@@ -123,6 +124,13 @@ export function DashboardClient() {
         ? threadTitle(selectedThread)
         : 'Select a thread';
 
+  const selectedMachineIp = selectedThread?.machine_id
+    ? (machines.find((m) => m.id === selectedThread.machine_id)?.ip_address ?? null)
+    : null;
+  const rustdeskConnect = selectedThread
+    ? rustdeskConnectString(selectedThread.rustdesk_port, selectedMachineIp)
+    : null;
+
   return (
     <AppShell>
       <div className="workspace">
@@ -154,25 +162,26 @@ export function DashboardClient() {
                   <div className="stream-header-actions">
                     <button
                       type="button"
-                      className="btn-editor"
-                      aria-label="Open in Cursor"
-                      title="Open in Cursor"
-                      onClick={() => router.push(`/threads/${selectedThread.id}`)}
+                      className="btn-editor btn-rustdesk"
+                      aria-label="Open in RustDesk"
+                      title="Open in RustDesk"
+                      disabled={!rustdeskConnect}
+                      onClick={() => {
+                        if (rustdeskConnect) {
+                          void navigator.clipboard?.writeText(rustdeskConnect);
+                        }
+                      }}
                     >
-                      <span className="spec-mono" style={{ fontSize: 11 }}>
-                        Cursor
-                      </span>
+                      <Image src="/editor-rustdesk.png" alt="" width={28} height={28} />
                     </button>
                     <button
                       type="button"
-                      className="btn-editor"
-                      aria-label="Open thread detail"
-                      title="Open thread detail"
+                      className="btn-editor btn-zed"
+                      aria-label="Open in ZED"
+                      title="Open in ZED"
                       onClick={() => router.push(`/threads/${selectedThread.id}`)}
                     >
-                      <span className="spec-mono" style={{ fontSize: 11 }}>
-                        Detail
-                      </span>
+                      <Image src="/editor-zed.jpg" alt="" width={28} height={28} />
                     </button>
                   </div>
                 ) : null}

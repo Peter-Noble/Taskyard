@@ -12,6 +12,7 @@ export type HubConnectionOptions = {
   portRange: { start: number; end: number };
   machineId?: string;
   agentsDir?: string;
+  local?: boolean;
 };
 
 const MAX_BACKOFF_MS = 30_000;
@@ -85,8 +86,10 @@ export async function connectToHub(opts: HubConnectionOptions): Promise<never> {
       hostname,
       specs,
       port_range: opts.portRange,
+      is_local: opts.local ?? false,
     });
-    console.log(chalk.green(`Registered with hub as ${hostname} (${machineId})`));
+    const localTag = opts.local ? chalk.cyan(' [local]') : '';
+    console.log(chalk.green(`Registered with hub as ${hostname} (${machineId})${localTag}`));
   };
 
   const startHeartbeat = () => {

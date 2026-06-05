@@ -4,7 +4,9 @@ import {
   getDb,
   listThreads,
   NoMachineAvailableError,
+  PlacementError,
   PortExhaustedError,
+  ProjectError,
 } from '@taskyard/core';
 import { jsonError, jsonOk } from '@/lib/api-response';
 
@@ -29,20 +31,20 @@ export async function POST(req: Request) {
 
   const db = getDb();
   try {
-    const thread = await createThread(db, {
-      project_id: body.project_id,
-      agent_type: body.agent_type,
-      branch: body.branch ?? 'main',
-      prompt: body.prompt,
-      machine_id: body.machine_id,
-    });
+    const thread = await createThread(db, body);
     return jsonOk({ thread }, 201);
   } catch (err) {
+    if (err instanceof PlacementError) {
+      return jsonError(err.message, 503, { code: err.code, hint: err.hint });
+    }
     if (err instanceof NoMachineAvailableError) {
-      return jsonError(err.message, 503);
+      return jsonError(err.message, 503, { code: 'NO_MACHINE_AVAILABLE' });
     }
     if (err instanceof PortExhaustedError) {
-      return jsonError(err.message, 503);
+      return jsonError(err.message, 503, { code: 'PORT_EXHAUSTED' });
+    }
+    if (err instanceof ProjectError) {
+      return jsonError(err.message, 400, { code: 'PROJECT_ERROR' });
     }
     return jsonError(err instanceof Error ? err.message : 'Failed to create thread', 500);
   }

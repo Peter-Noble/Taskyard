@@ -85,7 +85,7 @@ export function startControlServer(port: number): http.Server {
       const msg = body as Extract<ServerMessage, { type: 'spawn_thread' }> & {
         machine_id?: string;
       };
-      if (!machineId || !msg.thread_id || !msg.project) {
+      if (!machineId || !msg.thread_id || !msg.project_id || !msg.project) {
         json(res, 400, { error: 'machine_id and spawn fields required' });
         return;
       }

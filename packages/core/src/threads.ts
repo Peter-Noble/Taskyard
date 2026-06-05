@@ -4,10 +4,10 @@ import { randomUUID } from 'node:crypto';
 import type { TaskyardDb } from '@taskyard/db';
 import type { CreateThreadRequest, ThreadState } from '@taskyard/protocol';
 import { formatThread } from './format.js';
-import { pickMachine, NoMachineAvailableError } from './machine-picker.js';
+import { normalizePlacement, resolvePlacement } from './placement.js';
 import { allocatePorts, releasePorts, PortExhaustedError } from './port-registry.js';
 import { getEnvForAgent } from './vault.js';
-import { getProjectById } from './projects.js';
+import { getProjectById, ProjectError } from './projects.js';
 import { hubSpawn, hubKill, hubClose, HubUnreachableError } from './hub-client.js';
 import { listThreadEvents } from './events.js';
 import { readAgentManifest } from './agents.js';
@@ -57,11 +57,18 @@ export function getThreadDetail(db: TaskyardDb, id: string) {
 export async function createThread(db: TaskyardDb, req: CreateThreadRequest) {
   const project = getProjectById(db, req.project_id);
   if (!project) throw new Error(`Project not found: ${req.project_id}`);
+  if (project.archived) throw new ProjectError('Project is archived');
+  if (!project.repoUrl) throw new ProjectError('Project has no repository configured');
 
   const manifest = readAgentManifest(req.agent_type);
   if (!manifest) throw new Error(`Unknown agent type: ${req.agent_type}`);
 
-  const machineId = pickMachine(db, req.machine_id);
+  const placement = normalizePlacement(req);
+  const machineId = resolvePlacement(db, {
+    projectId: project.id,
+    agentType: req.agent_type,
+    placement,
+  });
   const threadId = randomUUID();
   const { web, rustdesk } = allocatePorts(db, machineId, threadId);
   const env = getEnvForAgent(db, req.agent_type);
@@ -85,6 +92,7 @@ export async function createThread(db: TaskyardDb, req: CreateThreadRequest) {
       {
         type: 'spawn_thread',
         thread_id: threadId,
+        project_id: project.id,
         project: project.name,
         repo_url: project.repoUrl,
         branch: req.branch || project.defaultBranch || 'main',
@@ -179,5 +187,3 @@ export function updateThreadState(
     // Keep ports until explicit close for completed/error.
   }
 }
-
-export { NoMachineAvailableError, PortExhaustedError };

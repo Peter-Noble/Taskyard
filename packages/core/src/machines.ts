@@ -1,5 +1,6 @@
 import { machines, threads } from '@taskyard/db';
-import { and, eq, inArray, sql } from 'drizzle-orm';
+import { and, eq, inArray, ne, sql } from 'drizzle-orm';
+import type { UpdateMachineRequest } from '@taskyard/protocol';
 import type { TaskyardDb } from '@taskyard/db';
 import type { Machine, WorkerMessage } from '@taskyard/protocol';
 import { formatMachine } from './format.js';
@@ -13,6 +14,13 @@ const ACTIVE_THREAD_STATUSES = ['pending', 'spawning', 'running', 'paused'] as c
 
 export function getMachineById(db: TaskyardDb, id: string) {
   return db.select().from(machines).where(eq(machines.id, id)).get();
+}
+
+function clearOtherLocalFlags(db: TaskyardDb, exceptId: string): void {
+  db.update(machines)
+    .set({ isLocal: false })
+    .where(and(eq(machines.isLocal, true), ne(machines.id, exceptId)))
+    .run();
 }
 
 export function upsertMachineOnRegister(
@@ -32,6 +40,7 @@ export function upsertMachineOnRegister(
     gpuInfo: msg.specs.gpu,
     status: 'online' as const,
     lastHeartbeat: new Date(),
+    ...(msg.is_local ? { isLocal: true } : {}),
   };
 
   if (existing) {
@@ -39,6 +48,41 @@ export function upsertMachineOnRegister(
   } else {
     db.insert(machines).values(values).run();
   }
+
+  if (msg.is_local) {
+    clearOtherLocalFlags(db, msg.id);
+  }
+}
+
+export function updateMachinePolicy(
+  db: TaskyardDb,
+  id: string,
+  patch: UpdateMachineRequest,
+): MachineWithUtilization | null {
+  const existing = getMachineById(db, id);
+  if (!existing) return null;
+
+  const values: Partial<typeof machines.$inferInsert> = {};
+  if (patch.scheduling_mode !== undefined) values.schedulingMode = patch.scheduling_mode;
+  if (patch.pool !== undefined) values.pool = patch.pool.trim() || 'default';
+  if (patch.max_concurrent_threads !== undefined) {
+    values.maxConcurrentThreads = patch.max_concurrent_threads;
+  }
+  if (patch.allowed_agent_types !== undefined) {
+    values.allowedAgentTypes =
+      patch.allowed_agent_types === null ? null : JSON.stringify(patch.allowed_agent_types);
+  }
+  if (patch.allowed_project_ids !== undefined) {
+    values.allowedProjectIds =
+      patch.allowed_project_ids === null ? null : JSON.stringify(patch.allowed_project_ids);
+  }
+  if (patch.priority !== undefined) values.priority = patch.priority;
+
+  if (Object.keys(values).length > 0) {
+    db.update(machines).set(values).where(eq(machines.id, id)).run();
+  }
+
+  return listMachines(db).find((m) => m.id === id) ?? null;
 }
 
 export function updateMachineHeartbeat(

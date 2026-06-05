@@ -30,8 +30,8 @@ export function cacheDir(): string {
   return path.join(os.homedir(), '.cache', 'taskyard');
 }
 
-export function mirrorPath(projectName: string): string {
-  const safe = projectName.replace(/[^a-zA-Z0-9._-]/g, '_');
+export function mirrorPath(projectId: string): string {
+  const safe = projectId.replace(/[^a-zA-Z0-9._-]/g, '_');
   return path.join(cacheDir(), 'repos', `${safe}.git`);
 }
 

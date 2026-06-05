@@ -17,9 +17,17 @@ program
   .option('--name <name>', 'Display name for this machine')
   .option('--ports <range>', 'Host port range (e.g. 30000-31000)', '30000-31000')
   .option('--id <id>', 'Override machine ID')
+  .option('--local', 'Mark this worker as the local machine (for "Run on this computer")')
   .option('--agents-dir <path>', 'Path to agents/ directory')
   .action(
-    async (opts: { hub: string; name?: string; ports: string; id?: string; agentsDir?: string }) => {
+    async (opts: {
+      hub: string;
+      name?: string;
+      ports: string;
+      id?: string;
+      agentsDir?: string;
+      local?: boolean;
+    }) => {
       await runWorker(opts);
     },
   );

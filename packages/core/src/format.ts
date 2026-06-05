@@ -14,8 +14,10 @@ export function formatProject(row: ProjectRow): Project {
   return {
     id: row.id,
     name: row.name,
-    repo_url: row.repoUrl,
+    repo_url: row.repoUrl ?? null,
     default_branch: row.defaultBranch ?? 'main',
+    archived: row.archived ?? false,
+    archived_at: iso(row.archivedAt),
     created_at: iso(row.createdAt) ?? new Date().toISOString(),
   };
 }
@@ -35,7 +37,25 @@ export function formatMachine(row: MachineRow, activeThreads = 0): Machine {
     cpu_percent: row.cpuPercent ?? undefined,
     ram_used_gb: row.ramUsedGb ?? undefined,
     active_threads: activeThreads,
+    scheduling_mode: (row.schedulingMode ?? 'auto') as Machine['scheduling_mode'],
+    pool: row.pool ?? 'default',
+    is_local: row.isLocal ?? false,
+    max_concurrent_threads: row.maxConcurrentThreads ?? null,
+    allowed_agent_types: parseMachineJsonList(row.allowedAgentTypes),
+    allowed_project_ids: parseMachineJsonList(row.allowedProjectIds),
+    priority: row.priority ?? 0,
   };
+}
+
+function parseMachineJsonList(raw: string | null | undefined): string[] | null {
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) return null;
+    return parsed.filter((x): x is string => typeof x === 'string');
+  } catch {
+    return null;
+  }
 }
 
 export function formatThread(

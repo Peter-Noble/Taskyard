@@ -13,6 +13,7 @@ import {
   type EventFilter,
   formatAgentLabel,
   formatDuration,
+  rustdeskConnectString,
   threadTitle,
 } from '@/lib/format-ui';
 import { TEST_MACHINES, getTestThreadDetail } from '@/lib/test-data/fixtures';
@@ -128,8 +129,7 @@ export function ThreadDetailClient({ initialThread, demoThreadId }: ThreadDetail
   const canClose = !isDemo && ['completed', 'error'].includes(thread.status);
 
   const webUrl = thread.web_port && machineIp ? `http://${machineIp}:${thread.web_port}` : null;
-  const rustdeskConnect =
-    thread.rustdesk_port && machineIp ? `${machineIp}:${thread.rustdesk_port}` : null;
+  const rustdeskConnect = rustdeskConnectString(thread.rustdesk_port, machineIp);
   const terminalEvents = isDemo ? thread.events : events.length ? events : thread.events;
 
   return (

@@ -85,14 +85,27 @@ export function MachineDock({
             ? (machine.ram_used_gb / machine.ram_gb) * 100
             : undefined;
 
+        const tileClass = [
+          'machine-tile',
+          machine.is_local ? 'machine-tile-local' : '',
+          machine.scheduling_mode === 'disabled' ? 'machine-tile-disabled' : '',
+        ]
+          .filter(Boolean)
+          .join(' ');
+
         return (
-          <div key={machine.id} className="machine-tile" data-machine={machine.name}>
+          <div key={machine.id} className={tileClass} data-machine={machine.name}>
             <div className="machine-tile-top">
               <div className="machine-title-row">
                 <span className="entity-num" aria-hidden="true">
                   {String(idx + 1).padStart(2, '0')}
                 </span>
-                <h3 className="machine-name">{machine.name}</h3>
+                <h3 className="machine-name">
+                  {machine.name}
+                  {machine.is_local ? (
+                    <span className="machine-badge machine-badge-local">Local</span>
+                  ) : null}
+                </h3>
               </div>
               <div className="machine-loads">
                 <LoadCells label="CPU" percent={cpuPct} />

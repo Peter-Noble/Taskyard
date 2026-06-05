@@ -9,7 +9,7 @@ import { mirrorPath } from './config.js';
 type SendFn = (msg: WorkerMessage) => void;
 
 type ThreadMeta = {
-  project: string;
+  projectId: string;
   mirror: string;
   worktreePath: string;
 };
@@ -51,11 +51,15 @@ export async function handleSpawn(
       );
     }
 
-    const mirror = await ensureMirror(message.project, message.repo_url);
+    const mirror = await ensureMirror(message.project_id, message.repo_url);
     const wtPath = await createWorktree(mirror, threadId, message.branch);
     const manifest = readAgentManifest(message.agent_type, ctx.agentsDir);
 
-    threadMeta.set(threadId, { project: message.project, mirror, worktreePath: wtPath });
+    threadMeta.set(threadId, {
+      projectId: message.project_id,
+      mirror,
+      worktreePath: wtPath,
+    });
 
     await spawnContainer({
       message,
@@ -78,7 +82,7 @@ export async function handleSpawn(
     console.error(chalk.red(`Spawn failed: ${msg}`));
     sendEvent(send, threadId, { type: 'error', message: msg });
     sendState(send, threadId, 'error');
-    await cleanupThread(threadId, true, message.project).catch(() => {});
+    await cleanupThread(threadId, true, message.project_id).catch(() => {});
   }
 }
 
@@ -105,10 +109,10 @@ export async function handleClose(
 async function cleanupThread(
   threadId: string,
   force: boolean,
-  projectName?: string,
+  projectId?: string,
 ): Promise<void> {
   const entry = threadMeta.get(threadId);
-  const mirror = entry?.mirror ?? (projectName ? mirrorPath(projectName) : null);
+  const mirror = entry?.mirror ?? (projectId ? mirrorPath(projectId) : null);
   if (mirror) await removeWorktree(mirror, threadId, force);
   threadMeta.delete(threadId);
 }

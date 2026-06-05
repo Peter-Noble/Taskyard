@@ -9,6 +9,7 @@ export type WorkerOptions = {
   ports: string;
   id?: string;
   agentsDir?: string;
+  local?: boolean;
 };
 
 export async function runWorker(opts: WorkerOptions): Promise<void> {
@@ -37,5 +38,6 @@ export async function runWorker(opts: WorkerOptions): Promise<void> {
     portRange,
     machineId: opts.id,
     agentsDir,
+    local: opts.local,
   });
 }

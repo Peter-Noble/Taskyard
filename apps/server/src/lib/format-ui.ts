@@ -115,6 +115,14 @@ export function eventToTermLine(payload: AgentEvent, timestamp: string): TermLin
   }
 }
 
+export function rustdeskConnectString(
+  rustdeskPort: number | null | undefined,
+  machineIp: string | null | undefined,
+): string | null {
+  if (!rustdeskPort || !machineIp) return null;
+  return `${machineIp}:${rustdeskPort}`;
+}
+
 export function isActiveThread(status: ThreadState): boolean {
   return ['pending', 'spawning', 'running', 'paused'].includes(status);
 }

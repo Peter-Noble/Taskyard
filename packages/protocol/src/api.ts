@@ -4,9 +4,35 @@ import type { MachineSpecs } from './websocket.js';
 export type Project = {
   id: string;
   name: string;
-  repo_url: string;
+  repo_url: string | null;
   default_branch: string;
+  archived: boolean;
+  archived_at: string | null;
   created_at: string;
+  active_threads?: number;
+};
+
+export type CreateProjectRequest = {
+  name: string;
+  repo_url?: string | null;
+  default_branch?: string;
+};
+
+export type UpdateProjectRequest = {
+  name?: string;
+  repo_url?: string | null;
+  default_branch?: string;
+  archived?: boolean;
+};
+
+export type SchedulingMode = 'auto' | 'manual_only' | 'disabled';
+
+export type PlacementMode = 'auto' | 'machine' | 'pool' | 'local';
+
+export type ThreadPlacement = {
+  mode: PlacementMode;
+  machine_id?: string;
+  pool?: string;
 };
 
 export type Machine = {
@@ -23,6 +49,13 @@ export type Machine = {
   cpu_percent?: number;
   ram_used_gb?: number;
   active_threads?: number;
+  scheduling_mode: SchedulingMode;
+  pool: string;
+  is_local: boolean;
+  max_concurrent_threads: number | null;
+  allowed_agent_types: string[] | null;
+  allowed_project_ids: string[] | null;
+  priority: number;
 };
 
 export type Thread = {
@@ -71,7 +104,9 @@ export type CreateThreadRequest = {
   agent_type: string;
   branch: string;
   prompt: string;
+  /** @deprecated Use `placement.mode: "machine"` */
   machine_id?: string;
+  placement?: ThreadPlacement;
 };
 
 export type CreateThreadResponse = {
@@ -80,6 +115,15 @@ export type CreateThreadResponse = {
 
 export type ListThreadsQuery = {
   status?: ThreadState;
+};
+
+export type UpdateMachineRequest = {
+  scheduling_mode?: SchedulingMode;
+  pool?: string;
+  max_concurrent_threads?: number | null;
+  allowed_agent_types?: string[] | null;
+  allowed_project_ids?: string[] | null;
+  priority?: number;
 };
 
 export type MachineRegisterPayload = {

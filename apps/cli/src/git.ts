@@ -3,15 +3,15 @@ import path from 'node:path';
 import { simpleGit } from 'simple-git';
 import { mirrorPath, worktreePath } from './config.js';
 
-export async function ensureMirror(projectName: string, repoUrl: string): Promise<string> {
-  const mirror = mirrorPath(projectName);
+export async function ensureMirror(projectId: string, repoUrl: string): Promise<string> {
+  const mirror = mirrorPath(projectId);
   fs.mkdirSync(path.dirname(mirror), { recursive: true });
 
   if (!fs.existsSync(mirror)) {
-    console.log(`Cloning mirror for ${projectName}...`);
+    console.log(`Cloning mirror for ${projectId}...`);
     await simpleGit().clone(repoUrl, mirror, ['--mirror']);
   } else {
-    console.log(`Updating mirror for ${projectName}...`);
+    console.log(`Updating mirror for ${projectId}...`);
     await simpleGit(mirror).remote(['update']);
   }
 

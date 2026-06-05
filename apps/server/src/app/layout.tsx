@@ -6,6 +6,9 @@ import { Providers } from '@/components/providers';
 export const metadata: Metadata = {
   title: 'Taskyard',
   description: 'Self-hosted AI agent orchestrator',
+  icons: {
+    icon: '/favicon.png',
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

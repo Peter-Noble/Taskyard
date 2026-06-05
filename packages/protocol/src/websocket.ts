@@ -18,6 +18,7 @@ export type WorkerMessage =
       hostname: string;
       specs: MachineSpecs;
       port_range: PortRange;
+      is_local?: boolean;
     }
   | {
       type: 'heartbeat';
@@ -33,6 +34,7 @@ export type ServerMessage =
   | {
       type: 'spawn_thread';
       thread_id: string;
+      project_id: string;
       project: string;
       repo_url: string;
       branch: string;

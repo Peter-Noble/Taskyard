@@ -119,6 +119,12 @@ A self-hosted orchestrator that runs AI coding agents inside isolated **SmolVM**
 4. **Architecture match** — `.smolmachine` is arch-specific; workers on `arm64` vs `amd64` need matching base builds.
 5. **Transitional period** — Phase 6 implements SmolVM behind a feature flag (`TASKYARD_SANDBOX=smolvm|docker`) until E2E passes, then remove Docker path.
 
+### 2.2 Thread placement (Option A — implemented)
+
+Per-machine scheduling metadata: `scheduling_mode` (`auto` \| `manual_only` \| `disabled`), `pool`, `is_local`, `max_concurrent_threads`, `allowed_agent_types`, `allowed_project_ids`, `priority`.
+
+`POST /api/threads` accepts `placement: { mode: 'auto' \| 'local' \| 'pool' \| 'machine', ... }`. Worker `--local` sets `is_local` on register (only one local worker at a time). `PATCH /api/machines/:id` edits policy. UI: placement radios in New Thread modal; policy table on `/machines`.
+
 ---
 
 ## 3. Monorepo Structure
@@ -204,7 +210,7 @@ taskyard/
     "test:unit": "vitest run --project unit",
     "test:integration": "vitest run --project integration",
     "test:ui": "vitest run --project ui",
-    "test:e2e:docker": "cross-env DOCKER_E2E=1 vitest run --project docker-e2e"
+    "test:e2e:sandbox": "cross-env SMOLVM_E2E=1 vitest run --project sandbox-e2e"
   },
   "devDependencies": {
     "typescript": "^5.4.0"
@@ -425,7 +431,7 @@ export type WorkerMessage =
   | { type: 'state_change'; thread_id: string; state: ThreadState };
 
 export type ServerMessage =
-  | { type: 'spawn_thread'; thread_id: string; project: string; repo_url: string; branch: string; agent_type: string; prompt: string; ports: { web: number; rustdesk: number }; env: Record<string, string> }
+  | { type: 'spawn_thread'; thread_id: string; project: string; repo_url: string; branch: string; agent_type: string; prompt: string; ports: { web: number }; env: Record<string, string> }
   | { type: 'kill_thread'; thread_id: string }
   | { type: 'close_thread'; thread_id: string }
   | { type: 'ping' };
@@ -437,6 +443,7 @@ export type AgentEvent =
   | { type: 'file_read'; path: string }
   | { type: 'file_write'; path: string; size_bytes?: number }
   | { type: 'command_run'; command: string; exit_code: number; output?: string }
+  | { type: 'artifact'; path: string; name: string; platform?: string; size_bytes?: number }
   | { type: 'error'; message: string };
 
 export type ThreadState = 'pending' | 'spawning' | 'running' | 'paused' | 'completed' | 'error' | 'closed';
@@ -495,9 +502,9 @@ export const threads = sqliteTable('threads', {
   prompt: text('prompt').notNull(),
   status: text('status', { enum: ['pending', 'spawning', 'running', 'paused', 'completed', 'error', 'closed'] }).default('pending'),
   worktreePath: text('worktree_path'),
-  containerId: text('container_id'),
+  sandboxId: text('sandbox_id'),       // smolvm instance id (was container_id)
   webPort: integer('web_port'),
-  rustdeskPort: integer('rustdesk_port'),
+  // rustdesk_port removed — use artifacts for native GUI deliverables
   createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
   startedAt: integer('started_at', { mode: 'timestamp' }),
   completedAt: integer('completed_at', { mode: 'timestamp' }),
@@ -516,7 +523,7 @@ export const portAllocations = sqliteTable('port_allocations', {
   port: integer('port').primaryKey(),
   machineId: text('machine_id').references(() => machines.id),
   threadId: text('thread_id').references(() => threads.id),
-  purpose: text('purpose', { enum: ['web', 'rustdesk'] }),
+  purpose: text('purpose', { enum: ['web'] }),
   allocatedAt: integer('allocated_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
 });
 
@@ -549,32 +556,32 @@ Server sends `spawn_thread` to worker via WebSocket
 Worker sets status: spawning
 Worker clones/updates bare mirror (simple-git)
 Worker creates git worktree
-Worker runs `dockerode.createContainer()` + `start()`
+Worker starts SmolVM + agent process
 Worker sets status: running
         │
         ▼
-Agent script runs inside container
-Emits JSON events → container stdout → Worker attach stream → Server → Web UI
+Agent script runs inside sandbox VM
+Emits JSON events → guest stdout → Worker stream → Server → Web UI
         │
         ▼
 Script exits (success or error)
-Worker detects container exit via Docker events
+Worker detects VM/process exit
 Worker sets status: completed or error
 Worker sends final state_change
         │
         ▼
 User clicks "Close Thread"
-Worker removes container (if still present)
-Worker removes git worktree (simple-git)
+Worker stops/removes VM (if still present)
+Worker removes git worktree (simple-git); may retain artifacts until user downloads
 Server frees ports
 Server sets status: closed
 ```
 
 **Kill Flow:**
-User clicks "Kill" → Server sends `kill_thread` → Worker `container.stop()` then `container.remove()` → Worker removes worktree → Status: `error`.
+User clicks "Kill" → Server sends `kill_thread` → Worker stops VM → Worker removes worktree → Status: `error`.
 
 **Close Flow:**
-User clicks "Close" on a completed/error thread → Server sends `close_thread` → Worker removes container (if present) → Worker removes worktree → Server frees ports → Status: `closed`.
+User clicks "Close" on a completed/error thread → Server sends `close_thread` → Worker removes VM (if present) → Worker removes worktree → Server frees ports → Status: `closed`.
 
 ---
 
@@ -582,13 +589,15 @@ User clicks "Close" on a completed/error thread → Server sends `close_thread` 
 
 - Each machine declares a range in its worker config (e.g., `30000-31000`).
 - Server maintains `port_allocations` table.
-- On spawn: server finds 2 free ports in that machine's range (`web`, `rustdesk`), inserts rows, includes them in `spawn_thread` message.
+- On spawn: server finds **1** free port in that machine's range (`web`), inserts a row, includes it in `spawn_thread` message.
 - On close/kill: server deletes port rows.
-- Inside container:
-  - Agent's dev server binds to port 8080.
-  - Worker maps `web_port:8080` via Docker PortBindings.
-  - RustDesk listens on 21116 inside container. Worker maps `rustdesk_port:21116`.
-- Web UI shows: `http://{machine_ip}:{web_port}` and RustDesk host port (connect via RustDesk client).
+- Inside sandbox VM:
+  - Agent's dev server binds to port **8080**.
+  - Worker forwards guest `8080` → host `web_port` (smolvm port-forward; exact flag TBD in Phase 6).
+- Web UI shows: `http://{machine_ip}:{web_port}` for web apps.
+- **Native GUI:** no port — user downloads artifact(s) from thread detail after agent emits `artifact`.
+
+**Capacity win:** port range supports ~2× as many concurrent threads vs the old 2-port model.
 
 ---
 
@@ -605,21 +614,33 @@ User clicks "Close" on a completed/error thread → Server sends `close_thread` 
 4. **Cleanup:**
    `git worktree remove /tmp/taskyard-wt-{thread_id}` (with `--force` if dirty)
 5. **Authentication:**
-   - HTTPS with PAT token injected via `GIT_ASKPASS` script or `.netrc` file inside container.
-   - Server stores PAT in the vault table, passes it in `spawn_thread.env` as `GIT_PAT`. The worker forwards it to the container as `TASKYARD_GIT_PAT`.
+   - HTTPS with PAT via `GIT_ASKPASS` or `.netrc` inside the sandbox VM, **or** SSH agent forward (preferred when smolvm supports it).
+   - Server stores PAT in the vault table, passes it in `spawn_thread.env` as `GIT_PAT`. The worker forwards it as `TASKYARD_GIT_PAT`.
 
 ---
 
-## 9. GUI Preview
+## 9. Preview & Deliverables
 
-Every container runs a virtual display and RustDesk for remote desktop:
-- `Xvfb :99 -screen 0 1920x1080x24` (virtual framebuffer for GUI apps)
-- `fluxbox` (lightweight window manager)
-- **RustDesk** client (replaces legacy x11vnc) — user connects with the RustDesk app to `worker-ip:rustdesk_port` (maps container port 21116). Configure self-hosted `hbbs` / `hbbr` on your LAN as needed.
+### Web apps (unchanged intent)
 
-Web UI shows a **RustDesk** port chip (click to copy `host:port`). Embedded RustDesk web client is deferred to v2.
+Agent runs a dev server on **8080** inside the sandbox. Worker forwards to host `web_port`. Web UI shows **Open preview** → `http://{machine_ip}:{web_port}`.
 
-For web apps, the agent's dev server binds to its normal port. The worker forwards `web_port` to it. Web UI shows a direct link.
+### Desktop / native GUI apps (new — replaces RustDesk)
+
+RustDesk and in-VM remote desktop are **out of scope**. Flow:
+
+1. Agent builds the app inside the sandbox (e.g. `cargo build --release`, `npm run tauri build`).
+2. Agent emits `artifact` with guest path and optional `platform` hint.
+3. Worker copies file(s) to `~/.cache/taskyard/artifacts/{thread_id}/` on the worker host.
+4. Server stores artifact metadata (path on worker, size, name); UI lists **Download** links.
+5. User runs the binary on their desktop (same OS/arch as build, or documented cross-compile).
+
+**v1 limitation:** artifacts live on the worker machine that ran the thread; remote download may require a small `GET /api/threads/:id/artifacts/:name` proxy from server → worker (Phase 6). LAN users can also SCP from worker if proxy is deferred.
+
+### Optional later (v2)
+
+- Signed artifact bundles + checksum in event payload.
+- Automated “open on host” helper for localhost workers only.
 
 ---
 
@@ -654,13 +675,13 @@ The v2 dashboard replaces the original single-grid dashboard with a **three-pane
 
 - Live events via `useEventStream` → SSE `GET /api/threads/:id/events` (initial snapshot from `GET /api/threads/:id`).
 - `EventTerminal` + `FilterTabs`: All / Thoughts / Files / Commands.
-- Metadata sidebar: project, branch, machine, web / RustDesk port chips.
+- Metadata sidebar: project, branch, machine, web preview link, **artifacts** list (when present).
 - Actions: Kill (running), Close (completed/error).
 
 ### 10.4 Test-data mode (dev / UI testing without live stack)
 
 - **`TestDataToggle`** in the shell toggles `useTestData`.
-- When on, pages read from `lib/test-data/fixtures.ts` instead of API routes — no hub, worker, Docker, or SQLite writes required.
+- When on, pages read from `lib/test-data/fixtures.ts` instead of API routes — no hub, worker, SmolVM, or SQLite writes required.
 - Demo thread IDs are namespaced (`isDemoThreadId`) so toggling off never sends live API calls for fixture rows.
 - Intended for design QA and future **automated UI tests** (see §15); not a substitute for integration tests against the real API.
 
@@ -672,6 +693,7 @@ The v2 dashboard replaces the original single-grid dashboard with a **three-pane
 - [ ] Dedicated **`/history`** archive page with search (optional — history is partially inline in the thread rail).
 - [ ] Live E2E smoke: create thread from modal → SSE updates on `/dashboard` and `/threads/:id` with test-data off.
 - [ ] Touch targets (min 44px) audit on primary actions.
+- [ ] **SmolVM UI:** remove RustDesk port chips; add artifact download section; update design fixtures (dashboard/overview copy still references RustDesk).
 
 **Mobile:**
 - Responsive rules ported from `design/v2/css/taskyard.css`; not yet verified on all breakpoints.
@@ -718,7 +740,7 @@ Using `ink` (React for terminals):
 - [x] Initialize `apps/server` with `create-next-app`; configure `serverExternalPackages: ['better-sqlite3']`.
 - [x] Initialize `apps/hub` with TypeScript + `tsx` + `ws` setup.
 - [x] Initialize `apps/cli` with TypeScript + `tsx` setup.
-- [x] Create base `Dockerfile.base`.
+- [x] Create base `Dockerfile.base` (to be superseded by `sandbox/taskyard-base.smolmachine`).
 - [x] Create `agents/cursor/`, `agents/codex/`, `agents/kimi/` stubs with `manifest.json`.
 - [x] Add root scripts: `dev:server`, `dev:hub`, `dev:worker`, `dev:tui`, `db:push`.
 
@@ -726,7 +748,7 @@ Using `ink` (React for terminals):
 - [x] Drizzle schema push to SQLite (WAL mode).
 - [x] REST API: projects (seeded from `projects.json`), threads, machines, agents list.
 - [x] Standalone WebSocket hub (`apps/hub`) on port 3001: accepts worker connections, handles register/heartbeat/event/state_change, routes spawn/kill/close.
-- [x] Port registry logic (2 ports per thread).
+- [x] Port registry logic (2 ports per thread — **migrate to 1** in Phase 6).
 - [x] Vault API: store/retrieve API keys by agent type.
 - [x] Dead worker detection: 90s timeout → mark offline, threads → error.
 - [x] Simple dashboard page with static data.
@@ -757,7 +779,7 @@ Using `ink` (React for terminals):
 - [x] Machine list page with port utilization bars.
 - [x] Three-pane dashboard (`MachineDock`, `TaskRail`, center chat/task pane).
 - [x] Test-data mode for UI development without live backend (`fixtures.ts`, `TestDataToggle`).
-- [x] RustDesk / web port chips on thread detail (links only; RustDesk runtime in Phase 6).
+- [x] Web / RustDesk port chips on thread detail (RustDesk **to be removed** in Phase 6).
 - [ ] Responsive viewport validation (see §10.5).
 - [ ] Live UI smoke test with test-data off (document in README).
 - [ ] Decide fate of `/auto` and dashboard task rail (wire up or defer).
@@ -769,20 +791,38 @@ Using `ink` (React for terminals):
 - [ ] TUI uses SSE (`GET /api/events`) for real-time dashboard.
 - [ ] End-to-end test: create from TUI, watch in Web UI, kill from either.
 
-### Phase 6: RustDesk & GUI Preview (Days 18–19)
-- [ ] Start Xvfb + fluxbox + RustDesk in container entrypoint (RustDesk package in image today).
-- [ ] Verify RustDesk + Xvfb in base image; wire `hbbs` / `hbbr` env for your network.
-- [ ] Test GUI app launch inside container.
-- [x] Web UI RustDesk port chip on thread detail (copy host:port).
-- [ ] Port link for web apps (verify against running dev server in container).
+### Phase 6: SmolVM sandbox & artifacts (Days 18–22)
 
-### Phase 7: Cleanup & Hardening (Days 20–21)
+Replaces Docker + RustDesk. Can run in parallel with Phase 5 if needed.
+
+**6a — Base machine & worker**
+- [ ] Install/pin `smolvm` on worker machines; document KVM (Linux) / Hypervisor (macOS) prerequisites.
+- [ ] Add `sandbox/build-base.sh` → produce `taskyard-base.smolmachine` (git, node, python, agent deps; no desktop stack).
+- [ ] Implement `apps/cli/src/sandbox.ts`: spawn, exec agent, stream logs, stop/destroy, port-forward :8080.
+- [ ] Feature flag `TASKYARD_SANDBOX=docker|smolvm` during migration; default `smolvm` when base machine exists.
+
+**6b — Protocol & core**
+- [ ] `spawn_thread.ports`: drop `rustdesk`; port registry allocates **one** port per thread.
+- [ ] DB migration: `container_id` → `sandbox_id`; drop `rustdesk_port`; add `thread_artifacts` table (or JSON on thread row).
+- [ ] `AgentEvent` + protocol: `artifact` type; persist on worker copy-out.
+
+**6c — UI & docs**
+- [ ] Thread detail: remove RustDesk chip; add artifacts list + download (or worker-path hint for v1 LAN).
+- [ ] Update `docs/agent-authoring.md`, README (no `docker build`; `smolvm` + base machine build).
+- [ ] Refresh design fixtures / dashboard mock copy away from RustDesk gates.
+
+**6d — Validation**
+- [ ] E2E: stub agent in SmolVM → events in DB → web preview link works.
+- [ ] Manual: agent builds a small native binary → `artifact` → file on worker → user runs locally.
+- [ ] Remove `dockerode`, `Dockerfile.base`, `docker.ts` after green E2E.
+
+### Phase 7: Cleanup & Hardening (Days 23–24)
 - [x] Worktree cleanup on thread close/kill.
 - [x] Container removal verification (inspect-before-remove to avoid AutoRemove race).
 - [x] Error handling: worker spawn/kill/close rejections caught and forwarded as events.
 - [x] Hub control API auth (`HUB_CONTROL_TOKEN` / `X-Hub-Token`).
 - [x] Root `README.md` with local dev and E2E curl examples.
-- [ ] Error handling: worker disconnect, Docker failure, agent crash, git failure (partial — spawn/kill covered).
+- [ ] Error handling: worker disconnect, sandbox spawn failure, agent crash, git failure (partial — spawn/kill covered).
 - [x] `docs/agent-authoring.md`.
 - [ ] Basic auth for web UI (local-only password via env var).
 - [x] Auto-load `.env` in server, hub, and CLI entrypoints (`dotenv`).
@@ -815,13 +855,14 @@ Goal: **high confidence without AI spend or production DB risk.** See §15 for a
 - [ ] React Testing Library + **`useTestData` on** — dashboard, thread detail, machines, modal open/submit (fetch mocked).
 - [ ] Optional Playwright smoke with test-data off against **`taskyard test-server`** (ephemeral port + temp DB + mock hub) — create thread, see SSE row appear.
 
-**Phase 8e — Opt-in Docker E2E (not default in CI)**
-- [ ] `pnpm test:e2e:docker` — real worker + **`agents/stub`** container; asserts event rows in temp DB.
+**Phase 8e — Opt-in sandbox E2E (not default in CI)**
+- [ ] `pnpm test:e2e:sandbox` — real worker + **`agents/stub`** in SmolVM; asserts event rows in temp DB.
 - [ ] Never mount real vault keys; inject dummy `OPENAI_API_KEY=test-no-network` and assert stub agent ignores it.
-- [ ] Document: safe for local dev; CI runs only when `DOCKER_E2E=1`.
+- [ ] Document: safe for local dev; CI runs only when `SMOLVM_E2E=1` and KVM/Hypervisor available.
+- [ ] Deprecate `DOCKER_E2E` / docker-e2e Vitest project after SmolVM path lands.
 
 **Coverage targets (v1):**
-- `packages/core`, `packages/db`, `apps/hub`, `apps/cli` (non-Docker paths): **≥80%** lines on business logic.
+- `packages/core`, `packages/db`, `apps/hub`, `apps/cli` (non-sandbox paths): **≥80%** lines on business logic.
 - API route handlers: happy path + main error paths for each endpoint.
 - UI: all primary routes render; modal + event terminal filters behave with fixtures.
 
@@ -833,9 +874,9 @@ Goal: **high confidence without AI spend or production DB risk.** See §15 for a
 |----------|--------|
 | Language | TypeScript everywhere (unified stack) |
 | Package manager | pnpm workspaces |
-| Sandbox | Docker containers (pluggable for BoxLite later) |
+| Sandbox | **SmolVM** micro-VMs (`.smolmachine` base); Docker path removed after Phase 6 |
 | Server | Next.js + SQLite + Drizzle ORM |
-| Worker | Node.js/TypeScript CLI (`dockerode`, `ws`, `simple-git`) |
+| Worker | Node.js/TypeScript CLI (`smolvm` CLI, `ws`, `simple-git`) |
 | TUI | Ink (React for terminals) |
 | Agent system | Script-based, one folder per agent in `agents/` |
 | Agent interface | Env vars in, JSON lines to stdout |
@@ -843,8 +884,10 @@ Goal: **high confidence without AI spend or production DB risk.** See §15 for a
 | Client real-time | SSE for browsers and TUI |
 | Git auth | HTTPS with PAT tokens (injected via `GIT_PAT`) |
 | Worktree strategy | Bare mirror + per-thread worktree |
-| Port allocation | Server-managed range per machine (2 ports: web, rustdesk), atomic via SQLite transactions |
-| GUI preview | Xvfb + RustDesk in every container |
+| Port allocation | Server-managed range per machine (**1 port: web**), atomic via SQLite transactions |
+| Web preview | Guest :8080 → host `web_port` |
+| Native / desktop deliverables | `artifact` event + worker copy-out; user runs binary locally |
+| GUI preview (remote desktop) | **Dropped** (was RustDesk + Xvfb) |
 | Real-time UI | SSE for browsers/TUI (server polls DB), WebSocket for workers |
 | Hub auth | `HUB_CONTROL_TOKEN` env var + `X-Hub-Token` header |
 | Approval flow | v1: autonomous (kill switch only) |
@@ -863,11 +906,14 @@ Goal: **high confidence without AI spend or production DB risk.** See §15 for a
 
 1. **Cursor SDK specifics:** Verified — `@cursor/sdk` npm package (TypeScript, public beta as of April 2026). Local mode with `Agent.create({ local: { cwd } })`. Authenticates via `CURSOR_API_KEY`.
 2. **Kimi SDK:** Uses OpenAI-compatible Python client + Moonshot base URL (`https://api.moonshot.cn/v1`); no separate `kimi-sdk` package required.
-3. **Docker image size:** The fat image may be 3–5 GB. Acceptable for local network, but monitor build times.
-4. **Worker deployment:** For v1, workers are deployed via `git clone && pnpm install`. Later, consider bundling `apps/cli` with `esbuild` into a single JS file, or using `pkg` to create a standalone executable.
-5. **Auto-loading `.env`:** Implemented via `loadTaskyardEnv()` in server, hub, and CLI.
-6. **Dashboard task rail + `/auto`:** Design includes task management and automation rules UI; persistence/API not defined for v1 — wire up, simplify nav, or defer.
-7. **TUI vs web-first:** v2 web UI is the primary operator surface; Ink TUI remains Phase 5 unless deprioritized.
+3. **SmolVM CLI surface:** Pin version; document exact spawn/exec/port-forward/copy commands Taskyard depends on.
+4. **Base `.smolmachine` size & rebuild:** Bake once per arch; agents stay mounted — avoid per-thread image rebuilds.
+5. **Artifact download path:** Server proxy vs direct worker fetch for multi-machine UI users — decide in Phase 6c.
+6. **Windows as worker host:** SmolVM targets Linux/macOS hypervisors; Windows dev machines use remote Linux workers or WSL2 worker (validate).
+7. **Worker deployment:** For v1, workers are deployed via `git clone && pnpm install` + `smolvm` install script. Later, bundle `apps/cli` with `esbuild`.
+8. **Auto-loading `.env`:** Implemented via `loadTaskyardEnv()` in server, hub, and CLI.
+9. **Dashboard task rail + `/auto`:** Design includes task management and automation rules UI; persistence/API not defined for v1 — wire up, simplify nav, or defer.
+10. **TUI vs web-first:** v2 web UI is the primary operator surface; Ink TUI remains Phase 5 unless deprioritized.
 
 ---
 
@@ -882,8 +928,8 @@ Automated tests must be **safe by default**: no calls to OpenAI, Cursor, Moonsho
 | AI token spend | Never invoke `agents/codex`, `agents/cursor`, or `agents/kimi` in CI. Use **`agents/stub`** (deterministic stdout script). Unit-test real agents only for **missing-key** and **parse/emit** paths with network **mocked or blocked** (`nock`, `vi.stubGlobal('fetch', …)`). |
 | Production / dev DB corruption | All tests set `process.env.TASKYARD_DB_PATH` to a **unique temp file** (deleted in `afterAll`) or SQLite **`:memory:`**. `packages/test-utils` exports `createTestDb()` that asserts the path is under `os.tmpdir()` or equals `:memory:`. Refactor `packages/core/src/db.ts` to accept an optional injected path so tests bypass the singleton cache. |
 | Accidental vault use | Tests use dummy keys (`sk-test-…`). Vault round-trip tests store nonsense values only in the temp DB. |
-| Docker required in CI | Default CI job: **no Docker**. Docker E2E is a separate script gated by `DOCKER_E2E=1`. |
-| Git / network in worker tests | Mock `simple-git` and `dockerode` in unit tests; integration tests use temp directories and fake remote URLs only where clone is not exercised. |
+| Hypervisor required in CI | Default CI job: **no SmolVM**. Sandbox E2E gated by `SMOLVM_E2E=1`. |
+| Git / network in worker tests | Mock `simple-git` and sandbox CLI in unit tests; integration tests use temp directories and fake remote URLs only where clone is not exercised. |
 
 **Hard guard (implement in `packages/test-utils/env-guard.ts`):**
 
@@ -902,7 +948,7 @@ Call `assertSafeTestEnv()` from a Vitest `setupFiles` entry loaded by every proj
 
 ```
                     ┌─────────────────────┐
-                    │  Docker E2E (opt-in) │  stub agent, real container
+                    │  Sandbox E2E (opt-in) │  stub agent, real SmolVM
                     └──────────┬──────────┘
                ┌───────────────┴───────────────┐
                │  Integration (Vitest)          │  temp DB, mock hub, WS harness
@@ -922,7 +968,7 @@ Add under `agents/stub/`:
 - `manifest.json` — `language: "typescript"`, entrypoint `run.ts`
 - `run.ts` — reads `TASKYARD_PROMPT`, emits a fixed sequence (`system/start`, `thought`, optional `file_write` to a temp file under workspace, `system/complete`), **never calls fetch**
 
-Worker integration tests set `agent_type: "stub"` and assert events land in the temp DB. This validates Docker bind mounts, log parsing, and state transitions without AI.
+Worker integration tests set `agent_type: "stub"` and assert events land in the temp DB. This validates sandbox mounts, log parsing, and state transitions without AI.
 
 ### 15.4 Mock hub worker
 
@@ -933,7 +979,7 @@ Worker integration tests set `agent_type: "stub"` and assert events land in the 
 3. On `spawn_thread`, writes a fake container id, emits scripted `event` messages, sends `state_change: running` → `completed`.
 4. On `kill_thread` / `close_thread`, acks and cleans up.
 
-Allows full server + hub + core path tests without Docker.
+Allows full server + hub + core path tests without SmolVM.
 
 ### 15.5 Refactors to enable testing (small, targeted)
 
@@ -954,12 +1000,12 @@ Root `package.json`:
     "test:integration": "vitest run packages/**/*.integration.test.ts apps/**/*.integration.test.ts",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "test:e2e:docker": "cross-env DOCKER_E2E=1 vitest run --project docker-e2e"
+    "test:e2e:sandbox": "cross-env SMOLVM_E2E=1 vitest run --project sandbox-e2e"
   }
 }
 ```
 
-Run locally before merging: `pnpm install` → `pnpm test` → `pnpm build`. No secrets, no Docker in the default test run.
+Run locally before merging: `pnpm install` → `pnpm test` → `pnpm build`. No secrets, no hypervisor in the default test run.
 
 ### 15.7 What stays manual (v1)
 
