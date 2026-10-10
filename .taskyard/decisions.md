@@ -9,3 +9,8 @@
 
 - Status: accepted
 - Task: TA-23
+
+## D-002 — Thread prompts still include the CLI contract after worktree preparation writes those instructions.
+
+- Status: accepted
+- Task: TA-3
