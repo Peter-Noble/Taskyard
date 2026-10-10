@@ -50,9 +50,6 @@ importers:
       ws:
         specifier: ^8.18.0
         version: 8.20.1
-      zerobox:
-        specifier: ^0.3.3
-        version: 0.3.3
     devDependencies:
       '@types/node':
         specifier: ^22.10.0
@@ -1529,42 +1526,6 @@ packages:
 
   '@vitest/utils@3.2.4':
     resolution: {integrity: sha512-fB2V0JFrQSMsCo9HiSq3Ezpdv4iYaXRG1Sx8edX3MwxfyNn83mKiGzOcH+Fkxt4MHxr3y42fQi1oeAInqgX2QA==}
-
-  '@zerobox/cli-darwin-arm64@0.3.3':
-    resolution: {integrity: sha512-u96DNV3xlOnw66dhykylXn293lXVHs3HOCX7ROKpVpo54KFhoz0ja4q9upfZ25k64stdEwJ3IKAePEHy8i3Sbg==}
-    engines: {node: '>=18'}
-    cpu: [arm64]
-    os: [darwin]
-
-  '@zerobox/cli-darwin-x64@0.3.3':
-    resolution: {integrity: sha512-VC6S3QESg+wEuIYbBfBE0NYyER1IeWDNt+q8zNwMPJHEz+48IBnkJmIS874AaLEkcT4eR7DJtpC0R/CQFzxt7A==}
-    engines: {node: '>=18'}
-    cpu: [x64]
-    os: [darwin]
-
-  '@zerobox/cli-linux-arm64-musl@0.3.3':
-    resolution: {integrity: sha512-nyQ4X0F33evzBKImLQnq0RVxpZAAFSwoZi9xRhji6ZMUaSprYPO/S2M2wpGBySX1r69AoeMoObMjX4pnGvTU/A==}
-    engines: {node: '>=18'}
-    cpu: [arm64]
-    os: [linux]
-
-  '@zerobox/cli-linux-arm64@0.3.3':
-    resolution: {integrity: sha512-YRRGj8rYSje4nR8DhT1Nx83hiQuzU8f9LXD7qxLiH90SHZpsTmFLuxicYoe4TEkkpyx8xZTV9Dj2YjmNyQbXdg==}
-    engines: {node: '>=18'}
-    cpu: [arm64]
-    os: [linux]
-
-  '@zerobox/cli-linux-x64-musl@0.3.3':
-    resolution: {integrity: sha512-o7XqWWoGl+WqRI+1pCetOF0nRS4pu1yVarIsstsFPosZAxFnzZSrOQmGL68lx/o1YvkYA5+uiVTnl7OlYtxmbQ==}
-    engines: {node: '>=18'}
-    cpu: [x64]
-    os: [linux]
-
-  '@zerobox/cli-linux-x64@0.3.3':
-    resolution: {integrity: sha512-SVXh35nEE/NrN6kNx/Uxv3BpeW7URrBt69SVRIvh7RwzKMzzdpUiT2DhXvUw4u+Cw8Yk89SZI1M4S8527b2YmQ==}
-    engines: {node: '>=18'}
-    cpu: [x64]
-    os: [linux]
 
   acorn-jsx@5.3.2:
     resolution: {integrity: sha512-rq9s+JNhf0IChjtDXxllJ7g41oZk5SlXtp0LHwyA5cejwn7vKmKp4pPri6YEePv2PU65sAsegbXtIinmDFDXgQ==}
@@ -3367,11 +3328,6 @@ packages:
   yoga-layout@3.2.1:
     resolution: {integrity: sha512-0LPOt3AxKqMdFBZA3HBAt/t/8vIKq7VaQYbuA8WxCgung+p9TVyKRYdpvCb80HcdTN2NkbIKbhNwKUfm3tQywQ==}
 
-  zerobox@0.3.3:
-    resolution: {integrity: sha512-mVHjqoXiO+oRBixtzI81qARQJztHaghgwDlfl4A5xMVV5co4Qu23DFGs4xq4+LQzappMGAKJK1zRXIOdN0IYzQ==}
-    engines: {node: '>=18'}
-    hasBin: true
-
 snapshots:
 
   '@alcalzone/ansi-tokenize@0.1.3':
@@ -4319,24 +4275,6 @@ snapshots:
       '@vitest/pretty-format': 3.2.4
       loupe: 3.2.1
       tinyrainbow: 2.0.0
-
-  '@zerobox/cli-darwin-arm64@0.3.3':
-    optional: true
-
-  '@zerobox/cli-darwin-x64@0.3.3':
-    optional: true
-
-  '@zerobox/cli-linux-arm64-musl@0.3.3':
-    optional: true
-
-  '@zerobox/cli-linux-arm64@0.3.3':
-    optional: true
-
-  '@zerobox/cli-linux-x64-musl@0.3.3':
-    optional: true
-
-  '@zerobox/cli-linux-x64@0.3.3':
-    optional: true
 
   acorn-jsx@5.3.2(acorn@8.16.0):
     dependencies:
@@ -6485,12 +6423,3 @@ snapshots:
   yocto-queue@0.1.0: {}
 
   yoga-layout@3.2.1: {}
-
-  zerobox@0.3.3:
-    optionalDependencies:
-      '@zerobox/cli-darwin-arm64': 0.3.3
-      '@zerobox/cli-darwin-x64': 0.3.3
-      '@zerobox/cli-linux-arm64': 0.3.3
-      '@zerobox/cli-linux-arm64-musl': 0.3.3
-      '@zerobox/cli-linux-x64': 0.3.3
-      '@zerobox/cli-linux-x64-musl': 0.3.3

@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import type { ServerMessage } from '@taskyard/protocol';
+import { writeAgentsInstructions } from './agents-file.js';
 import { writeProjectFile } from './project-file.js';
 
 function findRepoRoot(start = process.cwd()): string {
@@ -56,6 +57,8 @@ export function buildThreadAgentEnv(
     project_id: message.project_id,
     server_url: env.TASKYARD_SERVER_URL,
   });
+  // D-002
+  writeAgentsInstructions(worktreePath);
 
   for (const [key, value] of Object.entries(extra ?? {})) {
     if (value) env[key] = value;

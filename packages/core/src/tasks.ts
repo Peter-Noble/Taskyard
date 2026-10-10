@@ -119,6 +119,7 @@ export function composeThreadPrompt(
       ? buildPromptFromTask(task)
       : '';
   if (!base) return '';
+  // D-002
   return appendTaskCliContract(base);
 }
 
