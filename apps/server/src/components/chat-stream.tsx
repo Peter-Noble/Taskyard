@@ -1,9 +1,12 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Thread, ThreadEvent } from '@taskyard/protocol';
 import { formatAgentLabel, formatDuration } from '@/lib/format-ui';
+import { extractPendingInteraction } from '@/lib/pending-interaction';
 import { StatusBadge } from '@/components/status-badge';
+import { PendingInteractionWidget } from '@/components/pending-interaction-widget';
+import { ThreadFollowUp, canSendFollowUp } from '@/components/thread-follow-up';
 
 import type { TestChatFixture } from '@/lib/test-data/fixtures';
 
@@ -17,8 +20,17 @@ function eventToChatMessage(ev: ThreadEvent): ChatMessage | null {
   switch (p.type) {
     case 'thought':
       return { role: 'assistant', text: p.content };
-    case 'system':
+    case 'system': {
+      const eventName = typeof p.event === 'string' ? p.event : '';
+      if (
+        eventName === 'pending_question' ||
+        eventName === 'pending_plan' ||
+        eventName === 'acp_pending'
+      ) {
+        return null;
+      }
       return { role: 'system', text: `${p.event}${p.status ? ` · ${String(p.status)}` : ''}` };
+    }
     case 'file_read':
       return { role: 'system', text: `Read ${p.path}` };
     case 'file_write':
@@ -59,22 +71,35 @@ type ChatStreamProps = {
   thread: Thread;
   events: ThreadEvent[];
   demoChat?: TestChatFixture | null;
+  /** When false, follow-up and resolve widgets are disabled (test-data demo). */
+  liveMode?: boolean;
 };
 
-export function ChatStream({ thread, events, demoChat }: ChatStreamProps) {
+export function ChatStream({ thread, events, demoChat, liveMode = true }: ChatStreamProps) {
   const endRef = useRef<HTMLDivElement>(null);
-  const messages = demoChat
-    ? demoChat.messages
-    : buildMessages(thread, events);
-  const waiting = demoChat ? demoChat.waiting : thread.status === 'paused';
-  const waitingPrompt = demoChat?.waitingPrompt
-    ?? (thread.status === 'paused'
-      ? 'Agent is paused — reply to continue or open the thread detail view.'
+  const [dismissedRequestId, setDismissedRequestId] = useState<string | null>(null);
+
+  const messages = demoChat ? demoChat.messages : buildMessages(thread, events);
+  const demoWaiting = demoChat ? demoChat.waiting : false;
+  const waitingPrompt =
+    demoChat?.waitingPrompt ??
+    (thread.status === 'paused'
+      ? 'Agent is paused — reply to continue or answer the prompt below.'
       : '');
+
+  const pending = useMemo(() => {
+    if (demoChat || !liveMode) return null;
+    const found = extractPendingInteraction(events);
+    if (!found || found.request_id === dismissedRequestId) return null;
+    return found;
+  }, [events, demoChat, liveMode, dismissedRequestId]);
+
+  const showFollowUp = liveMode && canSendFollowUp(thread.status);
+  const showDemoWaiting = demoWaiting && !liveMode;
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages.length, waiting]);
+  }, [messages.length, pending, showFollowUp, showDemoWaiting]);
 
   return (
     <div className="chat-thread" role="log" aria-live="polite" aria-label="Thread conversation">
@@ -92,18 +117,38 @@ export function ChatStream({ thread, events, demoChat }: ChatStreamProps) {
           ))
         )}
       </div>
-      {waiting ? (
+
+      {pending ? (
+        <PendingInteractionWidget
+          threadId={thread.id}
+          interaction={pending}
+          onResolved={() => setDismissedRequestId(pending.request_id)}
+        />
+      ) : null}
+
+      {showDemoWaiting ? (
         <div className="chat-waiting" role="status">
           <p className="chat-waiting-label">Waiting for your input</p>
           <p className="chat-waiting-prompt">{waitingPrompt}</p>
           <div className="chat-compose">
-            <input type="text" className="chat-compose-input" placeholder="Reply to agent…" aria-label="Reply to agent" />
-            <button type="button" className="btn btn-primary chat-compose-send">
+            <input
+              type="text"
+              className="chat-compose-input"
+              placeholder="Reply to agent…"
+              aria-label="Reply to agent"
+              disabled
+            />
+            <button type="button" className="btn btn-primary chat-compose-send" disabled>
               Send
             </button>
           </div>
         </div>
+      ) : showFollowUp ? (
+        <footer className="chat-compose-footer">
+          <ThreadFollowUp threadId={thread.id} status={thread.status} />
+        </footer>
       ) : null}
+
       <div ref={endRef} />
     </div>
   );

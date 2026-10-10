@@ -5,12 +5,20 @@ import type { TaskyardDb } from '@taskyard/db';
 import type { CreateThreadRequest, ThreadState } from '@taskyard/protocol';
 import { formatThread } from './format.js';
 import { normalizePlacement, resolvePlacement } from './placement.js';
-import { allocatePorts, releasePorts, PortExhaustedError } from './port-registry.js';
+import { releasePorts } from './port-registry.js';
 import { getEnvForAgent } from './vault.js';
 import { getProjectById, ProjectError } from './projects.js';
-import { hubSpawn, hubKill, hubClose, HubUnreachableError } from './hub-client.js';
+import {
+  hubSpawn,
+  hubKill,
+  hubClose,
+  hubFollowUp,
+  hubResolvePrompt,
+  HubUnreachableError,
+} from './hub-client.js';
 import { listThreadEvents } from './events.js';
-import { readAgentManifest } from './agents.js';
+import { isOfferedAgent, readAgentManifest } from './agents.js';
+import { composeThreadPrompt, getTaskById, TaskError } from './tasks.js';
 
 const TERMINAL_STATUSES: ThreadState[] = ['completed', 'error', 'closed'];
 const KILLABLE_STATUSES: ThreadState[] = ['pending', 'spawning', 'running', 'paused'];
@@ -61,7 +69,23 @@ export async function createThread(db: TaskyardDb, req: CreateThreadRequest) {
   if (!project.repoUrl) throw new ProjectError('Project has no repository configured');
 
   const manifest = readAgentManifest(req.agent_type);
-  if (!manifest) throw new Error(`Unknown agent type: ${req.agent_type}`);
+  if (!manifest || !isOfferedAgent(req.agent_type, manifest)) {
+    throw new Error(`Unknown agent type: ${req.agent_type}`);
+  }
+
+  let taskId: string | null = req.task_id ?? null;
+  let linkedTask: ReturnType<typeof getTaskById> = null;
+  if (taskId) {
+    linkedTask = getTaskById(db, taskId);
+    if (!linkedTask) throw new TaskError(`Task not found: ${taskId}`);
+    if (linkedTask.project_id !== project.id) {
+      throw new TaskError('Task must belong to the same project');
+    }
+    taskId = linkedTask.id;
+  }
+
+  const prompt = composeThreadPrompt(req.prompt, linkedTask);
+  if (!prompt) throw new Error('prompt or task_id is required');
 
   const placement = normalizePlacement(req);
   const machineId = resolvePlacement(db, {
@@ -70,20 +94,18 @@ export async function createThread(db: TaskyardDb, req: CreateThreadRequest) {
     placement,
   });
   const threadId = randomUUID();
-  const { web, rustdesk } = allocatePorts(db, machineId, threadId);
   const env = getEnvForAgent(db, req.agent_type);
 
   db.insert(threads)
     .values({
       id: threadId,
       projectId: project.id,
+      taskId,
       machineId,
       agentType: req.agent_type,
       branch: req.branch || project.defaultBranch || 'main',
-      prompt: req.prompt,
+      prompt,
       status: 'pending',
-      webPort: web,
-      rustdeskPort: rustdesk,
     })
     .run();
 
@@ -97,8 +119,8 @@ export async function createThread(db: TaskyardDb, req: CreateThreadRequest) {
         repo_url: project.repoUrl,
         branch: req.branch || project.defaultBranch || 'main',
         agent_type: req.agent_type,
-        prompt: req.prompt,
-        ports: { web, rustdesk },
+        prompt,
+        ...(taskId ? { task_id: taskId } : {}),
         env,
       },
       machineId,
@@ -141,6 +163,50 @@ export async function killThread(db: TaskyardDb, id: string) {
   releasePorts(db, id);
 
   return getThreadDetail(db, id);
+}
+
+export async function followUpThread(db: TaskyardDb, id: string, prompt: string) {
+  const row = db.select().from(threads).where(eq(threads.id, id)).get();
+  if (!row) return null;
+  if (!KILLABLE_STATUSES.includes(row.status as ThreadState)) {
+    throw new Error(`Thread cannot accept follow-up in status: ${row.status}`);
+  }
+  if (!row.machineId) throw new Error('Thread has no assigned machine');
+  const text = prompt.trim();
+  if (!text) throw new Error('prompt is required');
+
+  try {
+    await hubFollowUp(id, row.machineId, text);
+  } catch (err) {
+    if (err instanceof HubUnreachableError) {
+      throw new Error('No worker connected — start a worker and try again');
+    }
+    throw err;
+  }
+  return { ok: true as const };
+}
+
+/** Forward a UI resolve payload to the worker ACP session as JSON-RPC result. */
+export async function resolveThreadPrompt(
+  db: TaskyardDb,
+  id: string,
+  requestId: string,
+  result: unknown,
+) {
+  const row = db.select().from(threads).where(eq(threads.id, id)).get();
+  if (!row) return null;
+  if (!row.machineId) throw new Error('Thread has no assigned machine');
+  if (!requestId) throw new Error('request_id is required');
+
+  try {
+    await hubResolvePrompt(id, row.machineId, requestId, result);
+  } catch (err) {
+    if (err instanceof HubUnreachableError) {
+      throw new Error('No worker connected — start a worker and try again');
+    }
+    throw err;
+  }
+  return { ok: true as const };
 }
 
 export async function closeThread(db: TaskyardDb, id: string) {

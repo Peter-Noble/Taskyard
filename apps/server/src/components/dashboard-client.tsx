@@ -1,13 +1,15 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import type { Machine, Thread } from '@taskyard/protocol';
+import type { Machine, Project, Thread } from '@taskyard/protocol';
 import { AppShell } from '@/components/app-shell';
 import { ChatStream, StreamHeaderSub } from '@/components/chat-stream';
 import { MachineDock, ThreadRailAside, ThreadRailHead } from '@/components/machine-dock';
 import { NewThreadModal } from '@/components/new-thread-modal';
+import { LiveTaskDetail, LiveTaskRail } from '@/components/live-task-board';
+import { WorkspaceSeams } from '@/components/workspace-seams';
+import { type PanelVisibility } from '@/lib/panel-visibility';
 import {
   TaskDetailHeader,
   TaskDetailPane,
@@ -17,7 +19,7 @@ import {
 import { useEventStream } from '@/lib/hooks/use-event-stream';
 import { useJsonFetch } from '@/lib/hooks/use-json-fetch';
 import { isDemoThreadId, useTestData } from '@/lib/hooks/use-test-data';
-import { rustdeskConnectString, threadTitle } from '@/lib/format-ui';
+import { threadTitle } from '@/lib/format-ui';
 import {
   DEFAULT_TEST_THREAD_ID,
   TEST_MACHINES,
@@ -30,8 +32,9 @@ type MachinesResponse = {
 };
 
 type ThreadsResponse = { threads: Thread[] };
+type ProjectsResponse = { projects: Project[] };
 
-export function DashboardClient() {
+export function DashboardClient({ initialPanels }: { initialPanels?: PanelVisibility }) {
   const router = useRouter();
   const { useTestData: testDataOn, hydrated } = useTestData();
   const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null);
@@ -39,6 +42,9 @@ export function DashboardClient() {
   const [centerMode, setCenterMode] = useState<'chat' | 'task'>('chat');
   const [modalOpen, setModalOpen] = useState(false);
   const [taskTick, setTaskTick] = useState(0);
+  const [selectedTaskUpdatedAt, setSelectedTaskUpdatedAt] = useState<string | null>(null);
+  const [liveProjectId, setLiveProjectId] = useState<string | null>(null);
+  const [composingTask, setComposingTask] = useState(false);
 
   const { data: machinesData } = useJsonFetch<MachinesResponse>(
     '/api/machines',
@@ -50,9 +56,15 @@ export function DashboardClient() {
     5000,
     !testDataOn,
   );
+  const { data: projectsData } = useJsonFetch<ProjectsResponse>(
+    '/api/projects',
+    0,
+    !testDataOn,
+  );
 
   const threads = testDataOn ? TEST_THREADS : (threadsData?.threads ?? []);
   const machines = testDataOn ? TEST_MACHINES : (machinesData?.machines ?? []);
+  const projects = projectsData?.projects ?? [];
 
   useEffect(() => {
     if (!hydrated) return;
@@ -72,10 +84,26 @@ export function DashboardClient() {
     [threads, selectedThreadId],
   );
 
+  useEffect(() => {
+    if (testDataOn) return;
+    if (selectedThread?.project_id) setLiveProjectId(selectedThread.project_id);
+  }, [selectedThread?.id, selectedThread?.project_id, testDataOn]);
+
+  useEffect(() => {
+    if (testDataOn || liveProjectId || projects.length === 0) return;
+    setLiveProjectId(projects[0]?.id ?? null);
+  }, [testDataOn, liveProjectId, projects]);
+
+  const liveTaskOpen = !testDataOn && centerMode === 'task' && !composingTask && Boolean(selectedTaskId);
+
   const useLiveEvents = Boolean(selectedThreadId) && !testDataOn;
   const events = useEventStream(selectedThreadId, useLiveEvents);
   const threadSlug = selectedThread ? threadTitle(selectedThread) : 'taskyard-ui-wireframe';
   const demoChat = testDataOn && selectedThread ? getTestChatForThread(selectedThread) : null;
+
+  const handleSelectedUpdatedAt = useCallback((updatedAt: string | null) => {
+    setSelectedTaskUpdatedAt(updatedAt);
+  }, []);
 
   const handleMarkReady = useCallback(
     (taskId: string) => {
@@ -89,21 +117,28 @@ export function DashboardClient() {
   function showChat() {
     setCenterMode('chat');
     setSelectedTaskId(null);
+    setComposingTask(false);
   }
 
   function showTaskDetail(taskId: string) {
-    if (!testDataOn) return;
+    setComposingTask(false);
     setSelectedTaskId(taskId);
     setCenterMode('task');
   }
 
   function handleSelectTask(taskId: string) {
-    if (!testDataOn) return;
-    if (selectedTaskId === taskId && centerMode === 'task') {
+    if (selectedTaskId === taskId && centerMode === 'task' && !composingTask) {
       showChat();
       return;
     }
     showTaskDetail(taskId);
+  }
+
+  function handleNewTask() {
+    if (testDataOn || !liveProjectId) return;
+    setComposingTask(true);
+    setSelectedTaskId(null);
+    setCenterMode('task');
   }
 
   function handleSelectThread(id: string) {
@@ -124,24 +159,38 @@ export function DashboardClient() {
         ? threadTitle(selectedThread)
         : 'Select a thread';
 
-  const selectedMachineIp = selectedThread?.machine_id
-    ? (machines.find((m) => m.id === selectedThread.machine_id)?.ip_address ?? null)
-    : null;
-  const rustdeskConnect = selectedThread
-    ? rustdeskConnectString(selectedThread.rustdesk_port, selectedMachineIp)
-    : null;
-
-  return (
-    <AppShell>
-      <div className="workspace">
-        <div className="workspace-body">
+  const taskHead = (
           <header className="panel-head task-rail-head">
             <span className="task-rail-head-label">Tasks</span>
-            <button type="button" className="btn btn-primary btn-rail-new" disabled={!testDataOn}>
+            {!testDataOn ? (
+              <div className="task-rail-project-wrap">
+                <select
+                  className="form-select task-rail-project"
+                  aria-label="Project"
+                  value={liveProjectId ?? ''}
+                  onChange={(event) => setLiveProjectId(event.target.value || null)}
+                >
+                  {projects.length === 0 ? <option value="">No projects</option> : null}
+                  {projects.map((project) => (
+                    <option key={project.id} value={project.id}>
+                      {project.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ) : null}
+            <button
+              type="button"
+              className="btn btn-primary btn-rail-new"
+              disabled={testDataOn || !liveProjectId}
+              onClick={handleNewTask}
+            >
               New task
             </button>
           </header>
+  );
 
+  const streamHead = liveTaskOpen ? null : (
           <header
             className="panel-head stream-header"
             aria-label={centerMode === 'task' ? 'Selected task' : 'Selected thread'}
@@ -162,31 +211,15 @@ export function DashboardClient() {
                   <div className="stream-header-actions">
                     <button
                       type="button"
-                      className="btn-editor btn-rustdesk"
-                      aria-label="Open in RustDesk"
-                      title="Open in RustDesk"
-                      disabled={!rustdeskConnect}
-                      onClick={() => {
-                        if (rustdeskConnect) {
-                          void navigator.clipboard?.writeText(rustdeskConnect);
-                        }
-                      }}
-                    >
-                      <Image src="/editor-rustdesk.png" alt="" width={28} height={28} />
-                    </button>
-                    <button
-                      type="button"
-                      className="btn-editor btn-zed"
-                      aria-label="Open in ZED"
-                      title="Open in ZED"
+                      className="btn btn-ghost btn-sm"
                       onClick={() => router.push(`/threads/${selectedThread.id}`)}
                     >
-                      <Image src="/editor-zed.jpg" alt="" width={28} height={28} />
+                      Thread detail
                     </button>
                   </div>
                 ) : null}
               </div>
-            ) : (
+            ) : testDataOn ? (
               <div className="stream-header-view stream-header-task">
                 <div className="stream-header-main">
                   {selectedTaskId ? (
@@ -194,27 +227,55 @@ export function DashboardClient() {
                   ) : null}
                 </div>
               </div>
+            ) : (
+              <div className="stream-header-view stream-header-task">
+                <div className="stream-header-main">
+                  <h2 className="stream-title">{composingTask ? 'New task' : 'Task'}</h2>
+                </div>
+                <div className="stream-header-actions">
+                  <button type="button" className="btn btn-ghost btn-sm" onClick={showChat}>
+                    Back to thread
+                  </button>
+                </div>
+              </div>
             )}
           </header>
+  );
 
-          <ThreadRailHead onNewThread={() => setModalOpen(true)} />
+  const threadHead = <ThreadRailHead onNewThread={() => setModalOpen(true)} />;
 
-          <TaskRail
-            key={taskTick}
-            enabled={testDataOn}
-            threadSlug={threadSlug}
-            selectedTaskId={selectedTaskId}
-            centerMode={centerMode}
-            onSelectTask={handleSelectTask}
-            onMarkReady={handleMarkReady}
-          />
+  const taskBody = testDataOn ? (
+            <TaskRail
+              key={taskTick}
+              useFixtures={testDataOn}
+              threadSlug={threadSlug}
+              projectId={selectedThread?.project_id ?? null}
+              selectedTaskId={selectedTaskId}
+              centerMode={centerMode}
+              onSelectTask={handleSelectTask}
+              onMarkReady={handleMarkReady}
+            />
+          ) : (
+            <LiveTaskRail
+              projectId={liveProjectId}
+              selectedTaskId={selectedTaskId}
+              onSelectTask={handleSelectTask}
+              onSelectedUpdatedAt={handleSelectedUpdatedAt}
+            />
+  );
 
+  const streamBody = (
           <section className="stream-panel" aria-label="Center panel">
             {centerMode === 'chat' ? (
               <div className="center-view">
                 <div className="stream-body">
                   {selectedThread ? (
-                    <ChatStream thread={selectedThread} events={events} demoChat={demoChat} />
+                    <ChatStream
+                      thread={selectedThread}
+                      events={events}
+                      demoChat={demoChat}
+                      liveMode={!testDataOn}
+                    />
                   ) : (
                     <div className="empty-state" style={{ padding: 'var(--space-5)' }}>
                       {testDataOn
@@ -226,27 +287,62 @@ export function DashboardClient() {
               </div>
             ) : (
               <div className="center-view task-detail-view">
-                {selectedTaskId ? (
+                {testDataOn && selectedTaskId ? (
                   <TaskDetailPane taskId={selectedTaskId} onSelectTask={handleSelectTask} />
+                ) : null}
+                {!testDataOn ? (
+                  <LiveTaskDetail
+                    projectId={liveProjectId}
+                    projects={projects}
+                    taskId={selectedTaskId}
+                    composing={composingTask}
+                    refreshKey={taskTick}
+                    remoteUpdatedAt={selectedTaskUpdatedAt}
+                    onSelectTask={handleSelectTask}
+                    onChanged={() => setTaskTick((n) => n + 1)}
+                    onCreated={(id) => {
+                      setComposingTask(false);
+                      setSelectedTaskId(id);
+                      setCenterMode('task');
+                      setTaskTick((n) => n + 1);
+                    }}
+                    onCancelCreate={showChat}
+                  />
                 ) : null}
               </div>
             )}
           </section>
+  );
 
+  const threadBody = (
           <ThreadRailAside
             threads={threads}
             selectedThreadId={selectedThreadId}
             onSelect={handleSelectThread}
           />
-        </div>
+  );
 
+  const workers = (
         <MachineDock
           machines={machines}
           threads={threads}
           selectedThreadId={selectedThreadId}
           onSelectThread={handleSelectThread}
         />
-      </div>
+  );
+
+  return (
+    <AppShell>
+      <WorkspaceSeams
+        initialPanels={initialPanels}
+        taskHead={taskHead}
+        taskBody={taskBody}
+        streamHead={streamHead}
+        streamBody={streamBody}
+        threadHead={threadHead}
+        threadBody={threadBody}
+        workers={workers}
+      />
 
       <NewThreadModal
         open={modalOpen}

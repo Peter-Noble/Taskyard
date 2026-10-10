@@ -4,7 +4,7 @@ import chalk from 'chalk';
 import type { ServerMessage, WorkerMessage } from '@taskyard/protocol';
 import { getMachineId } from './protocol.js';
 import { getMachineSpecs, getUtilization } from './specs.js';
-import { handleSpawn, handleKill, handleClose } from './thread-handler.js';
+import { handleSpawn, handleKill, handleClose, handleFollowUp, handleResolvePrompt } from './thread-handler.js';
 
 export type HubConnectionOptions = {
   hubUrl: string;
@@ -13,6 +13,7 @@ export type HubConnectionOptions = {
   machineId?: string;
   agentsDir?: string;
   local?: boolean;
+  maxConcurrentThreads?: number;
 };
 
 const MAX_BACKOFF_MS = 30_000;
@@ -31,7 +32,11 @@ export async function connectToHub(opts: HubConnectionOptions): Promise<never> {
     }
   };
 
-  const ctx = { send, agentsDir: opts.agentsDir };
+  const ctx = {
+    send,
+    agentsDir: opts.agentsDir,
+    maxConcurrentThreads: opts.maxConcurrentThreads,
+  };
 
   const handleMessage = (data: Buffer | ArrayBuffer | Buffer[]) => {
     let message: ServerMessage;
@@ -73,6 +78,27 @@ export async function connectToHub(opts: HubConnectionOptions): Promise<never> {
     if (message.type === 'close_thread') {
       handleClose(ctx, message).catch((err) => {
         console.error(chalk.red('Close failed:'), err instanceof Error ? err.message : String(err));
+      });
+      return;
+    }
+    if (message.type === 'follow_up') {
+      handleFollowUp(ctx, message).catch((err) => {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.error(chalk.red('Follow-up failed:'), msg);
+        send({
+          type: 'event',
+          thread_id: message.thread_id,
+          payload: { type: 'error', message: `Follow-up failed: ${msg}` },
+        });
+      });
+      return;
+    }
+    if (message.type === 'resolve_prompt') {
+      handleResolvePrompt(ctx, message).catch((err) => {
+        console.error(
+          chalk.red('Resolve failed:'),
+          err instanceof Error ? err.message : String(err),
+        );
       });
       return;
     }

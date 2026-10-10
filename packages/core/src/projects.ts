@@ -1,8 +1,8 @@
-import { projects, threads } from '@taskyard/db';
-import { and, count, eq, ne, notInArray } from 'drizzle-orm';
+import { projects, tasks, threads } from '@taskyard/db';
+import { and, asc, count, eq, max, ne, notInArray } from 'drizzle-orm';
 import { randomUUID } from 'node:crypto';
 import type { TaskyardDb } from '@taskyard/db';
-import type { CreateProjectRequest, UpdateProjectRequest } from '@taskyard/protocol';
+import type { CreateProjectRequest, ProjectTaskCounts, UpdateProjectRequest } from '@taskyard/protocol';
 import { readProjectsJson } from './paths.js';
 import { formatProject } from './format.js';
 
@@ -52,6 +52,37 @@ export function seedProjectsIfEmpty(db: TaskyardDb): void {
   }
 }
 
+const TASK_COUNT_STATUSES = ['backlog', 'ready', 'in_progress', 'review', 'waiting'] as const;
+
+export function emptyTaskCounts(): ProjectTaskCounts {
+  return { backlog: 0, ready: 0, in_progress: 0, review: 0, waiting: 0 };
+}
+
+function isTaskCountStatus(status: string): status is keyof ProjectTaskCounts {
+  return (TASK_COUNT_STATUSES as readonly string[]).includes(status);
+}
+
+function taskCountsByProject(db: TaskyardDb): Map<string, ProjectTaskCounts> {
+  const rows = db
+    .select({
+      projectId: tasks.projectId,
+      status: tasks.status,
+      value: count(),
+    })
+    .from(tasks)
+    .groupBy(tasks.projectId, tasks.status)
+    .all();
+
+  const map = new Map<string, ProjectTaskCounts>();
+  for (const row of rows) {
+    if (!isTaskCountStatus(row.status)) continue;
+    const counts = map.get(row.projectId) ?? emptyTaskCounts();
+    counts[row.status] = row.value;
+    map.set(row.projectId, counts);
+  }
+  return map;
+}
+
 function countActiveThreads(db: TaskyardDb, projectId: string): number {
   const row = db
     .select({ value: count() })
@@ -66,15 +97,30 @@ function countActiveThreads(db: TaskyardDb, projectId: string): number {
   return row?.value ?? 0;
 }
 
-export function listProjects(db: TaskyardDb, opts?: { includeArchived?: boolean }) {
-  const rows = opts?.includeArchived
-    ? db.select().from(projects).all()
-    : db.select().from(projects).where(eq(projects.archived, false)).all();
+function projectOrder() {
+  return [asc(projects.sortOrder), asc(projects.createdAt)] as const;
+}
 
+function presentProjects(db: TaskyardDb, rows: Array<typeof projects.$inferSelect>) {
+  const counts = taskCountsByProject(db);
   return rows.map((row) => ({
     ...formatProject(row),
     active_threads: countActiveThreads(db, row.id),
+    task_counts: counts.get(row.id) ?? emptyTaskCounts(),
   }));
+}
+
+export function listProjects(db: TaskyardDb, opts?: { includeArchived?: boolean }) {
+  const rows = opts?.includeArchived
+    ? db.select().from(projects).orderBy(...projectOrder()).all()
+    : db
+        .select()
+        .from(projects)
+        .where(eq(projects.archived, false))
+        .orderBy(...projectOrder())
+        .all();
+
+  return presentProjects(db, rows);
 }
 
 export function getProjectById(db: TaskyardDb, id: string) {
@@ -100,17 +146,43 @@ export function createProject(db: TaskyardDb, req: CreateProjectRequest) {
   assertUniqueName(db, name);
 
   const id = randomUUID();
+  const maxOrder = db.select({ value: max(projects.sortOrder) }).from(projects).get();
   db.insert(projects)
     .values({
       id,
       name,
       repoUrl,
       defaultBranch: req.default_branch?.trim() || 'main',
+      sortOrder: (maxOrder?.value ?? -1) + 1,
     })
     .run();
 
   const row = getProjectById(db, id)!;
-  return { ...formatProject(row), active_threads: 0 };
+  return presentProjects(db, [row])[0]!;
+}
+
+/** Places `ids` in that order, leaving every other project in its current slot. */
+export function reorderProjects(db: TaskyardDb, ids: string[]) {
+  if (ids.length === 0) throw new ProjectError('ids is required');
+  if (new Set(ids).size !== ids.length) throw new ProjectError('Duplicate project id in order');
+
+  const all = db.select().from(projects).orderBy(...projectOrder()).all();
+  const known = new Set(all.map((row) => row.id));
+  for (const id of ids) {
+    if (!known.has(id)) throw new ProjectError(`Project not found: ${id}`);
+  }
+
+  const moving = new Set(ids);
+  const queue = [...ids];
+  const nextIds = all.map((row) => (moving.has(row.id) ? queue.shift()! : row.id));
+
+  db.transaction((tx) => {
+    nextIds.forEach((id, index) => {
+      tx.update(projects).set({ sortOrder: index }).where(eq(projects.id, id)).run();
+    });
+  });
+
+  return listProjects(db, { includeArchived: true });
 }
 
 export function updateProject(db: TaskyardDb, id: string, req: UpdateProjectRequest) {
@@ -142,16 +214,10 @@ export function updateProject(db: TaskyardDb, id: string, req: UpdateProjectRequ
   }
 
   if (Object.keys(values).length === 0) {
-    return {
-      ...formatProject(existing),
-      active_threads: countActiveThreads(db, id),
-    };
+    return presentProjects(db, [existing])[0]!;
   }
 
   db.update(projects).set(values).where(eq(projects.id, id)).run();
   const row = getProjectById(db, id)!;
-  return {
-    ...formatProject(row),
-    active_threads: countActiveThreads(db, id),
-  };
+  return presentProjects(db, [row])[0]!;
 }

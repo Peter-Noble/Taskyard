@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import type { AgentManifest, Machine, Project, ThreadPlacement } from '@taskyard/protocol';
+import { fetchTasksForProject, type ApiTask } from '@/lib/tasks-api';
 
 type AgentInfo = AgentManifest & { id: string };
 
@@ -27,6 +28,9 @@ export function NewThreadModal({ open, onClose, onCreated }: NewThreadModalProps
   const [agentType, setAgentType] = useState('');
   const [branch, setBranch] = useState('');
   const [prompt, setPrompt] = useState('');
+  const [taskId, setTaskId] = useState('');
+  const [projectTasks, setProjectTasks] = useState<ApiTask[]>([]);
+  const [tasksFromApi, setTasksFromApi] = useState(false);
   const [placementChoice, setPlacementChoice] = useState<PlacementChoice>('auto');
   const [machineId, setMachineId] = useState('');
   const [pool, setPool] = useState('default');
@@ -66,6 +70,40 @@ export function NewThreadModal({ open, onClose, onCreated }: NewThreadModalProps
       if (ags.length && !agentType) setAgentType(ags[0].id);
     });
   }, [open, agentType]);
+
+  useEffect(() => {
+    if (!open || !projectId) {
+      setProjectTasks([]);
+      setTasksFromApi(false);
+      setTaskId('');
+      return;
+    }
+    let cancelled = false;
+    void fetchTasksForProject(projectId).then((tasks) => {
+      if (cancelled) return;
+      if (tasks?.length) {
+        setProjectTasks(tasks);
+        setTasksFromApi(true);
+      } else {
+        setProjectTasks([]);
+        setTasksFromApi(false);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [open, projectId]);
+
+  useEffect(() => {
+    if (!taskId) return;
+    const task = projectTasks.find((t) => t.id === taskId);
+    if (task && !prompt.trim()) {
+      const brief = task.description?.trim()
+        ? `${task.title}\n\n${task.description}`
+        : task.title;
+      setPrompt(brief);
+    }
+  }, [taskId, projectTasks, prompt]);
 
   useEffect(() => {
     if (!open) return;
@@ -131,6 +169,7 @@ export function NewThreadModal({ open, onClose, onCreated }: NewThreadModalProps
           agent_type: agentType,
           branch: branch || 'main',
           prompt,
+          ...(taskId ? { task_id: taskId } : {}),
           placement: buildPlacement(),
         }),
       });
@@ -142,6 +181,7 @@ export function NewThreadModal({ open, onClose, onCreated }: NewThreadModalProps
       onCreated(data.thread.id);
       onClose();
       setPrompt('');
+      setTaskId('');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create thread');
     } finally {
@@ -291,6 +331,24 @@ export function NewThreadModal({ open, onClose, onCreated }: NewThreadModalProps
                   </label>
                   <p className="placement-preview">{placementPreview}</p>
                 </fieldset>
+
+                {tasksFromApi && projectTasks.length > 0 ? (
+                  <label className="form-field form-field-full">
+                    <span className="form-label">Task (optional)</span>
+                    <select
+                      className="form-select"
+                      value={taskId}
+                      onChange={(e) => setTaskId(e.target.value)}
+                    >
+                      <option value="">None — free-form prompt</option>
+                      {projectTasks.map((t) => (
+                        <option key={t.id} value={t.id}>
+                          {t.title} ({t.status})
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                ) : null}
 
                 <label className="form-field form-field-full">
                   <span className="form-label">Prompt</span>

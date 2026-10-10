@@ -77,8 +77,8 @@ function isProjectAllowed(row: MachineRow, projectId: string): boolean {
 }
 
 function isUnderThreadCap(db: TaskyardDb, row: MachineRow): boolean {
-  if (row.maxConcurrentThreads == null) return true;
-  return countActiveThreads(db, row.id) < row.maxConcurrentThreads;
+  const cap = row.maxConcurrentThreads ?? 2;
+  return countActiveThreads(db, row.id) < cap;
 }
 
 function machineScore(row: MachineRow): number {

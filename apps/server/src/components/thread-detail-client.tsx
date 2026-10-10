@@ -6,6 +6,8 @@ import type { Machine, ThreadDetail } from '@taskyard/protocol';
 import { AppShell } from '@/components/app-shell';
 import { EventTerminal, FilterTabs } from '@/components/event-terminal';
 import { NewThreadModal } from '@/components/new-thread-modal';
+import { PendingInteractionWidget } from '@/components/pending-interaction-widget';
+import { ThreadFollowUp, canSendFollowUp } from '@/components/thread-follow-up';
 import { useEventStream } from '@/lib/hooks/use-event-stream';
 import { useJsonFetch } from '@/lib/hooks/use-json-fetch';
 import { useTestData } from '@/lib/hooks/use-test-data';
@@ -13,9 +15,9 @@ import {
   type EventFilter,
   formatAgentLabel,
   formatDuration,
-  rustdeskConnectString,
   threadTitle,
 } from '@/lib/format-ui';
+import { extractPendingInteraction } from '@/lib/pending-interaction';
 import { TEST_MACHINES, getTestThreadDetail } from '@/lib/test-data/fixtures';
 
 type ThreadDetailClientProps = {
@@ -38,6 +40,7 @@ export function ThreadDetailClient({ initialThread, demoThreadId }: ThreadDetail
   const [modalOpen, setModalOpen] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [acting, setActing] = useState(false);
+  const [dismissedRequestId, setDismissedRequestId] = useState<string | null>(null);
 
   useEffect(() => {
     if (isDemo && hydrated) {
@@ -90,6 +93,15 @@ export function ThreadDetailClient({ initialThread, demoThreadId }: ThreadDetail
     }
   }
 
+  const terminalEvents = isDemo ? (thread?.events ?? []) : events.length ? events : (thread?.events ?? []);
+
+  const pending = useMemo(() => {
+    if (isDemo || !thread) return null;
+    const found = extractPendingInteraction(terminalEvents);
+    if (!found || found.request_id === dismissedRequestId) return null;
+    return found;
+  }, [terminalEvents, isDemo, thread, dismissedRequestId]);
+
   if (!hydrated) {
     return (
       <AppShell pageTitle="Thread">
@@ -127,10 +139,8 @@ export function ThreadDetailClient({ initialThread, demoThreadId }: ThreadDetail
 
   const canKill = !isDemo && ['pending', 'spawning', 'running', 'paused'].includes(thread.status);
   const canClose = !isDemo && ['completed', 'error'].includes(thread.status);
-
   const webUrl = thread.web_port && machineIp ? `http://${machineIp}:${thread.web_port}` : null;
-  const rustdeskConnect = rustdeskConnectString(thread.rustdesk_port, machineIp);
-  const terminalEvents = isDemo ? thread.events : events.length ? events : thread.events;
+  const showFollowUp = !isDemo && canSendFollowUp(thread.status);
 
   return (
     <AppShell
@@ -145,7 +155,7 @@ export function ThreadDetailClient({ initialThread, demoThreadId }: ThreadDetail
     >
       <div className="main-padded">
         <div className="detail-layout">
-          <section className="card" style={{ padding: 'var(--space-4)', minHeight: 0 }}>
+          <section className="card thread-detail-main" style={{ padding: 'var(--space-4)', minHeight: 0 }}>
             <FilterTabs filter={filter} onChange={setFilter} />
             <EventTerminal
               events={terminalEvents}
@@ -153,6 +163,18 @@ export function ThreadDetailClient({ initialThread, demoThreadId }: ThreadDetail
               emptyMessage="Waiting for agent events…"
               minHeight={420}
             />
+            {pending ? (
+              <PendingInteractionWidget
+                threadId={thread.id}
+                interaction={pending}
+                onResolved={() => setDismissedRequestId(pending.request_id)}
+              />
+            ) : null}
+            {showFollowUp ? (
+              <footer className="thread-detail-compose">
+                <ThreadFollowUp threadId={thread.id} status={thread.status} />
+              </footer>
+            ) : null}
           </section>
 
           <aside className="card detail-sidebar">
@@ -181,44 +203,16 @@ export function ThreadDetailClient({ initialThread, demoThreadId }: ThreadDetail
               </dd>
             </dl>
 
-            <h2 className="card-title">Ports</h2>
-            <div className="port-links">
-              {thread.rustdesk_port ? (
-                <a
-                  className="port-chip"
-                  href="#"
-                  title={
-                    rustdeskConnect
-                      ? `Connect via RustDesk to ${rustdeskConnect} (configure hbbs/hbbr for your network)`
-                      : undefined
-                  }
-                  onClick={(e) => {
-                    e.preventDefault();
-                    if (rustdeskConnect) {
-                      void navigator.clipboard?.writeText(rustdeskConnect);
-                    }
-                  }}
-                >
-                  RustDesk :{thread.rustdesk_port}
-                </a>
-              ) : null}
-              {thread.web_port ? (
-                <a
-                  className="port-chip"
-                  href={webUrl ?? '#'}
-                  target="_blank"
-                  rel="noreferrer"
-                  onClick={(e) => {
-                    if (!webUrl) e.preventDefault();
-                  }}
-                >
-                  Web :{thread.web_port}
-                </a>
-              ) : null}
-              {!thread.web_port && !thread.rustdesk_port ? (
-                <span className="spec-mono">—</span>
-              ) : null}
-            </div>
+            {thread.web_port ? (
+              <>
+                <h2 className="card-title">Preview</h2>
+                <div className="port-links">
+                  <a className="port-chip" href={webUrl ?? '#'} target="_blank" rel="noreferrer" onClick={(e) => { if (!webUrl) e.preventDefault(); }}>
+                    Web :{thread.web_port}
+                  </a>
+                </div>
+              </>
+            ) : null}
 
             <div className="action-stack">
               {canKill ? (

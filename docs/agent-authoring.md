@@ -1,6 +1,6 @@
 # Agent authoring
 
-Taskyard runs agents as scripts inside Docker containers. Each agent lives in `agents/<id>/` with a `manifest.json` and an entrypoint script.
+Taskyard runs agents as scripts inside [zerobox](https://github.com/afshinm/zerobox) sandboxes. Each agent lives in `agents/<id>/` with a `manifest.json` and an entrypoint script.
 
 ## Manifest (`manifest.json`)
 
@@ -15,19 +15,20 @@ Taskyard runs agents as scripts inside Docker containers. Each agent lives in `a
 }
 ```
 
-- **language**: `python`, `typescript`, or `javascript` — the worker builds the container command from this.
+- **language**: `python`, `typescript`, or `javascript` — the worker builds the sandbox command from this.
 - **env_vars**: keys the server must inject from the vault when spawning a thread.
 
-## Environment inside the container
+## Environment inside the sandbox
 
 | Variable | Description |
 |----------|-------------|
 | `TASKYARD_THREAD_ID` | Thread UUID |
 | `TASKYARD_PROJECT` | Project name |
 | `TASKYARD_PROMPT` | User prompt |
-| `TASKYARD_WORKSPACE` | Git worktree mount (usually `/workspace`) |
+| `TASKYARD_WORKSPACE` | Absolute path to the git worktree |
+| `TASKYARD_WEB_PORT` | Host port allocated for dev-server preview |
 | `TASKYARD_GIT_PAT` | HTTPS PAT for git push (from vault `_global`) |
-| Agent keys | e.g. `OPENAI_API_KEY`, from vault per `env_vars` |
+| Agent keys | e.g. `OPENAI_API_KEY`, injected via zerobox secrets per `env_vars` |
 
 ## Output protocol
 
@@ -54,12 +55,8 @@ Invalid lines are stored as raw stdout events.
 
 ## Testing without AI
 
-Use **`agents/stub`**: deterministic JSON lines, no network, no API keys. Set `agent_type: "stub"` in integration or Docker E2E tests.
-
-## Remote desktop (RustDesk)
-
-The base image includes RustDesk for GUI preview. Agents that launch GUI apps should use `DISPLAY=:99` (Xvfb). Users connect with the RustDesk client to the host-mapped `rustdesk_port` (container port `21116`). Configure your self-hosted `hbbs` / `hbbr` servers via container env when you enable Phase 6 runtime startup.
+Use **`agents/stub`**: deterministic JSON lines, no network, no API keys. Set `agent_type: "stub"` in integration tests.
 
 ## Dev server port
 
-Web apps should listen on **8080** inside the container so the worker can map the allocated `web` host port.
+Web apps should listen on **`TASKYARD_WEB_PORT`** (or `8080` as a fallback) so the worker's allocated `web` host port is reachable.

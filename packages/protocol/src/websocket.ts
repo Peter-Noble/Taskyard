@@ -40,9 +40,17 @@ export type ServerMessage =
       branch: string;
       agent_type: string;
       prompt: string;
-      ports: { web: number; rustdesk: number };
+      task_id?: string | null;
+      ports?: Partial<{ web: number }>;
       env: Record<string, string>;
     }
   | { type: 'kill_thread'; thread_id: string }
   | { type: 'close_thread'; thread_id: string }
+  | { type: 'follow_up'; thread_id: string; prompt: string }
+  | {
+      type: 'resolve_prompt';
+      thread_id: string;
+      request_id: string;
+      result: unknown;
+    }
   | { type: 'ping' };

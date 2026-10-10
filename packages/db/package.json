@@ -14,7 +14,8 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "push": "drizzle-kit push"
+    "push": "drizzle-kit push",
+    "migrate-mvp": "node ./scripts/migrate-mvp.mjs"
   },
   "dependencies": {
     "@taskyard/protocol": "workspace:*",

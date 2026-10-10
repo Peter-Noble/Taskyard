@@ -1,8 +1,11 @@
 {
-  "name": "Kimi",
-  "description": "Moonshot Kimi agent",
+  "name": "Kimi ACP",
+  "description": "Kimi agent via Agent Client Protocol (kimi acp)",
   "version": "1.0.0",
   "entrypoint": "run.py",
   "language": "python",
-  "env_vars": ["KIMI_API_KEY"]
+  "env_vars": [],
+  "runtime": "acp",
+  "command": ["kimi", "acp"],
+  "auth_method": "kimi_login"
 }

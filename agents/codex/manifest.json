@@ -1,8 +1,0 @@
-{
-  "name": "Codex",
-  "description": "OpenAI Codex agent",
-  "version": "1.0.0",
-  "entrypoint": "run.ts",
-  "language": "typescript",
-  "env_vars": ["OPENAI_API_KEY"]
-}

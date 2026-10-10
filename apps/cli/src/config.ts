@@ -2,8 +2,6 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-export const DOCKER_IMAGE = process.env.TASKYARD_IMAGE ?? 'taskyard-base-image';
-
 // NOTE: Canonical findRepoRoot lives in @taskyard/db. This local copy avoids
 // pulling in the DB package just for path resolution.
 function findRepoRoot(start = process.cwd()): string {

@@ -49,6 +49,24 @@ export async function hubClose(threadId: string, machineId: string) {
   await hubPost('/close', { thread_id: threadId, machine_id: machineId });
 }
 
+export async function hubFollowUp(threadId: string, machineId: string, prompt: string) {
+  await hubPost('/follow-up', { thread_id: threadId, machine_id: machineId, prompt });
+}
+
+export async function hubResolvePrompt(
+  threadId: string,
+  machineId: string,
+  requestId: string,
+  result: unknown,
+) {
+  await hubPost('/resolve-prompt', {
+    thread_id: threadId,
+    machine_id: machineId,
+    request_id: requestId,
+    result,
+  });
+}
+
 export async function hubPingWorkers(): Promise<void> {
   await hubPost('/ping', {});
 }

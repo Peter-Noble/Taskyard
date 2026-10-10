@@ -1,8 +1,11 @@
 {
-  "name": "Cursor",
-  "description": "Cursor SDK agent (official @cursor/sdk)",
+  "name": "Cursor ACP",
+  "description": "Cursor agent via Agent Client Protocol (agent acp)",
   "version": "1.0.0",
   "entrypoint": "run.ts",
   "language": "typescript",
-  "env_vars": ["CURSOR_API_KEY"]
+  "env_vars": [],
+  "runtime": "acp",
+  "command": ["agent", "acp"],
+  "auth_method": "cursor_login"
 }

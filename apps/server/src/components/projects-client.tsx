@@ -1,15 +1,109 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AppShell } from '@/components/app-shell';
 import { useTestData } from '@/lib/hooks/use-test-data';
 import { useJsonFetch } from '@/lib/hooks/use-json-fetch';
 import { TEST_PROJECTS } from '@/lib/test-data/fixtures';
-import type { CreateProjectRequest, Project, UpdateProjectRequest } from '@taskyard/protocol';
+import type {
+  CreateProjectRequest,
+  Project,
+  ProjectTaskCounts,
+  UpdateProjectRequest,
+} from '@taskyard/protocol';
 
 function repoMeta(project: Project): string {
   if (!project.repo_url) return 'No repository';
   return project.repo_url;
+}
+
+function taskCounts(project: Project): ProjectTaskCounts {
+  return (
+    project.task_counts ?? { backlog: 0, ready: 0, in_progress: 0, review: 0, waiting: 0 }
+  );
+}
+
+function moveProject(items: Project[], fromId: string, toId: string): Project[] {
+  const from = items.findIndex((item) => item.id === fromId);
+  const to = items.findIndex((item) => item.id === toId);
+  if (from < 0 || to < 0 || from === to) return items;
+  const next = items.slice();
+  const [moved] = next.splice(from, 1);
+  if (!moved) return items;
+  next.splice(to, 0, moved);
+  return next;
+}
+
+function placeSection(all: Project[], nextSection: Project[]): Project[] {
+  const queue = [...nextSection];
+  const moving = new Set(nextSection.map((project) => project.id));
+  return all.map((project) => (moving.has(project.id) ? queue.shift() ?? project : project));
+}
+
+function GripIcon() {
+  return (
+    <svg className="project-grab-icon" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+      <circle cx="4.5" cy="2.5" r="1.15" />
+      <circle cx="9.5" cy="2.5" r="1.15" />
+      <circle cx="4.5" cy="7" r="1.15" />
+      <circle cx="9.5" cy="7" r="1.15" />
+      <circle cx="4.5" cy="11.5" r="1.15" />
+      <circle cx="9.5" cy="11.5" r="1.15" />
+    </svg>
+  );
+}
+
+function ProjectBadges({ project, muted }: { project: Project; muted?: boolean }) {
+  const counts = taskCounts(project);
+  const open =
+    counts.backlog + counts.ready + counts.in_progress + counts.review + counts.waiting;
+  const taskBadges = [
+    counts.ready > 0 ? { key: 'ready', className: 'badge-task-ready', label: `${counts.ready} ready` } : null,
+    counts.in_progress > 0
+      ? { key: 'progress', className: 'badge-task-progress', label: `${counts.in_progress} in progress` }
+      : null,
+    counts.review > 0 ? { key: 'review', className: 'badge-task-review', label: `${counts.review} review` } : null,
+    counts.waiting > 0
+      ? { key: 'waiting', className: 'badge-task-waiting', label: `${counts.waiting} waiting` }
+      : null,
+    counts.backlog > 0
+      ? { key: 'backlog', className: 'badge-task-backlog', label: `${counts.backlog} backlog` }
+      : null,
+  ].filter((badge): badge is { key: string; className: string; label: string } => badge !== null);
+
+  return (
+    <span className="project-badges">
+      {muted ? (
+        <span className="badge badge-task-done overview-item-badge">
+          <span className="badge-dot" />
+          Archived
+        </span>
+      ) : null}
+      {!muted && !project.repo_url ? (
+        <span className="badge badge-waiting overview-item-badge">
+          <span className="badge-dot" />
+          No repo
+        </span>
+      ) : null}
+      <span className="badge badge-running overview-item-badge">
+        <span className="badge-dot" />
+        {project.active_threads ?? 0} active
+      </span>
+      {taskBadges.length > 0 ? (
+        taskBadges.map((badge) => (
+          <span key={badge.key} className={`badge ${badge.className} overview-item-badge`}>
+            <span className="badge-dot" />
+            {badge.label}
+          </span>
+        ))
+      ) : (
+        <span className="badge badge-task-backlog overview-item-badge">
+          <span className="badge-dot" />
+          {open} tasks
+        </span>
+      )}
+    </span>
+  );
 }
 
 function CreateProjectModal({
@@ -149,6 +243,7 @@ function ProjectRow({
   const [defaultBranch, setDefaultBranch] = useState(initial.default_branch);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const counts = taskCounts(initial);
 
   const save = useCallback(async () => {
     if (testDataOn) {
@@ -215,6 +310,26 @@ function ProjectRow({
         <div>
           <dt>Active threads</dt>
           <dd>{initial.active_threads ?? 0}</dd>
+        </div>
+        <div>
+          <dt>Ready</dt>
+          <dd>{counts.ready}</dd>
+        </div>
+        <div>
+          <dt>In progress</dt>
+          <dd>{counts.in_progress}</dd>
+        </div>
+        <div>
+          <dt>Review</dt>
+          <dd>{counts.review}</dd>
+        </div>
+        <div>
+          <dt>Waiting</dt>
+          <dd>{counts.waiting}</dd>
+        </div>
+        <div>
+          <dt>Backlog</dt>
+          <dd>{counts.backlog}</dd>
         </div>
         <div>
           <dt>Created</dt>
@@ -307,6 +422,7 @@ function ProjectSection({
   muted,
   testDataOn,
   onSaved,
+  onReorder,
   emptyMessage,
 }: {
   id: string;
@@ -315,9 +431,12 @@ function ProjectSection({
   muted?: boolean;
   testDataOn: boolean;
   onSaved: () => void;
+  onReorder: (next: Project[]) => void;
   emptyMessage?: string;
 }) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [overId, setOverId] = useState<string | null>(null);
+  const draggingId = useRef<string | null>(null);
 
   return (
     <section className="overview-section" aria-labelledby={id}>
@@ -331,33 +450,62 @@ function ProjectSection({
           {items.map((project) => {
             const expanded = expandedId === project.id;
             return (
-              <li key={project.id} className={`overview-item${expanded ? ' is-expanded' : ''}`}>
-                <button
-                  type="button"
-                  className="overview-item-trigger"
-                  aria-expanded={expanded}
-                  aria-controls={`project-detail-${project.id}`}
-                  onClick={() => setExpandedId(expanded ? null : project.id)}
-                >
-                  <span className="overview-item-body">
-                    <span className="overview-item-kind">Project</span>
-                    <span className="overview-item-title">{project.name}</span>
-                    <span className="overview-item-meta spec-mono">{repoMeta(project)}</span>
-                  </span>
-                  <span className="overview-item-end">
-                    <span
-                      className={`badge ${muted ? 'badge-task-done' : project.repo_url ? 'badge-task-progress' : 'badge-waiting'} overview-item-badge`}
-                    >
-                      <span className="badge-dot" />
-                      {muted
-                        ? 'Archived'
-                        : project.repo_url
-                          ? `${project.active_threads ?? 0} active`
-                          : 'No repo'}
+              <li
+                key={project.id}
+                className={`overview-item project-row${expanded ? ' is-expanded' : ''}${overId === project.id ? ' is-drop-target' : ''}`}
+                onDragOver={(event) => {
+                  if (!draggingId.current) return;
+                  event.preventDefault();
+                  event.dataTransfer.dropEffect = 'move';
+                  setOverId(project.id);
+                }}
+                onDrop={(event) => {
+                  event.preventDefault();
+                  const fromId = draggingId.current || event.dataTransfer.getData('text/plain');
+                  draggingId.current = null;
+                  setOverId(null);
+                  if (!fromId || fromId === project.id) return;
+                  onReorder(moveProject(items, fromId, project.id));
+                }}
+              >
+                <div className="project-row-head">
+                  <button
+                    type="button"
+                    className="project-grab"
+                    draggable={!testDataOn}
+                    aria-label={`Reorder ${project.name}`}
+                    disabled={testDataOn}
+                    onClick={(event) => event.stopPropagation()}
+                    onDragStart={(event) => {
+                      draggingId.current = project.id;
+                      event.dataTransfer.setData('text/plain', project.id);
+                      event.dataTransfer.effectAllowed = 'move';
+                    }}
+                    onDragEnd={() => {
+                      draggingId.current = null;
+                      setOverId(null);
+                    }}
+                  >
+                    <GripIcon />
+                  </button>
+                  <button
+                    type="button"
+                    className="overview-item-trigger"
+                    aria-expanded={expanded}
+                    aria-controls={`project-detail-${project.id}`}
+                    onClick={() => setExpandedId(expanded ? null : project.id)}
+                  >
+                    <span className="overview-item-body">
+                      <span className="overview-item-kind">Project</span>
+                      <span className="overview-item-title">{project.name}</span>
+                      <span className="overview-item-meta spec-mono">{repoMeta(project)}</span>
                     </span>
-                    <span className="overview-chevron" aria-hidden="true" />
-                  </span>
-                </button>
+                    <span className="overview-item-end">
+                      <ProjectBadges project={project} muted={muted} />
+                      <span className="overview-chevron" aria-hidden="true" />
+                    </span>
+                  </button>
+                </div>
                 <div
                   id={`project-detail-${project.id}`}
                   className="overview-item-detail"
@@ -387,10 +535,39 @@ export function ProjectsClient() {
     !testDataOn,
   );
   const [createOpen, setCreateOpen] = useState(false);
+  const [ordered, setOrdered] = useState<Project[] | null>(null);
+  const [reorderError, setReorderError] = useState<string | null>(null);
 
-  const allProjects = testDataOn ? TEST_PROJECTS : (data?.projects ?? []);
+  useEffect(() => {
+    setOrdered(null);
+  }, [data]);
+
+  const allProjects = testDataOn ? TEST_PROJECTS : (ordered ?? data?.projects ?? []);
   const active = useMemo(() => allProjects.filter((p) => !p.archived), [allProjects]);
   const archived = useMemo(() => allProjects.filter((p) => p.archived), [allProjects]);
+
+  const handleReorder = useCallback(
+    async (nextSection: Project[]) => {
+      const nextAll = placeSection(allProjects, nextSection);
+      setOrdered(nextAll);
+      setReorderError(null);
+      if (testDataOn) return;
+      try {
+        const res = await fetch('/api/projects/order', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ids: nextSection.map((project) => project.id) }),
+        });
+        const body = (await res.json()) as { error?: string };
+        if (!res.ok) throw new Error(body.error ?? 'Failed to reorder projects');
+        await refresh();
+      } catch (err) {
+        setOrdered(null);
+        setReorderError(err instanceof Error ? err.message : 'Failed to reorder projects');
+      }
+    },
+    [allProjects, refresh, testDataOn],
+  );
 
   return (
     <AppShell>
@@ -404,6 +581,7 @@ export function ProjectsClient() {
             New project
           </button>
         </div>
+        {reorderError ? <p className="modal-error">{reorderError}</p> : null}
 
         {loading && allProjects.length === 0 && !testDataOn ? (
           <p className="empty-state">Loading projects…</p>
@@ -415,6 +593,7 @@ export function ProjectsClient() {
               items={active}
               testDataOn={testDataOn}
               onSaved={() => void refresh()}
+              onReorder={(next) => void handleReorder(next)}
               emptyMessage={
                 testDataOn
                   ? undefined
@@ -428,6 +607,7 @@ export function ProjectsClient() {
               muted
               testDataOn={testDataOn}
               onSaved={() => void refresh()}
+              onReorder={(next) => void handleReorder(next)}
               emptyMessage="Archived projects are hidden from New Thread."
             />
           </div>

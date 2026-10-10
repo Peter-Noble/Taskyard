@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import {
   type DashboardTask,
   PROJECT_ORDER,
@@ -14,15 +15,74 @@ import {
   taskStatusBadgeClass,
   threadProjectKey,
 } from '@/lib/dashboard-tasks';
+import { fetchTasksForProject, type ApiTask } from '@/lib/tasks-api';
 
 type TaskRailProps = {
-  enabled: boolean;
+  /** When true, render design fixtures from dashboard-tasks.ts */
+  useFixtures: boolean;
   threadSlug: string;
+  projectId: string | null;
   selectedTaskId: string | null;
   centerMode: 'chat' | 'task';
   onSelectTask: (taskId: string) => void;
   onMarkReady: (taskId: string) => void;
 };
+
+function apiStatusLabel(status: ApiTask['status']): string {
+  switch (status) {
+    case 'backlog':
+      return 'Backlog';
+    case 'ready':
+      return 'Ready for agent';
+    case 'in_progress':
+      return 'In progress';
+    case 'review':
+      return 'Ready to review';
+    case 'waiting':
+      return 'Waiting for user';
+    case 'completed':
+      return 'Completed';
+    case 'cancelled':
+      return 'Cancelled';
+    default:
+      return status;
+  }
+}
+
+function apiStatusToRail(status: ApiTask['status']): DashboardTask['status'] {
+  switch (status) {
+    case 'in_progress':
+      return 'in-progress';
+    case 'ready':
+      return 'ready';
+    case 'review':
+      return 'review';
+    case 'waiting':
+      return 'waiting';
+    case 'completed':
+      return 'completed';
+    case 'cancelled':
+      return 'completed';
+    default:
+      return 'backlog';
+  }
+}
+
+function mapApiTask(task: ApiTask, index: number): DashboardTask {
+  return {
+    id: task.id,
+    num: task.id.replace(/^ty-/, '') || String(index + 1),
+    title: task.title,
+    status: apiStatusToRail(task.status),
+    statusLabel: apiStatusLabel(task.status),
+    assignee: task.assignee ?? '—',
+    created: new Date(task.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+    description: task.description,
+    blockedBy: [],
+    blocks: [],
+    activity: [],
+  };
+}
 
 function TaskStatusBadge({ task }: { task: DashboardTask }) {
   return (
@@ -142,14 +202,80 @@ function TaskDependents({
 }
 
 export function TaskRail({
-  enabled,
+  useFixtures,
   threadSlug,
+  projectId,
   selectedTaskId,
   centerMode,
   onSelectTask,
   onMarkReady,
 }: TaskRailProps) {
-  if (!enabled) {
+  const [apiTasks, setApiTasks] = useState<DashboardTask[] | null>(null);
+  const [apiChecked, setApiChecked] = useState(false);
+
+  useEffect(() => {
+    if (useFixtures || !projectId) {
+      setApiTasks(null);
+      setApiChecked(false);
+      return;
+    }
+
+    let cancelled = false;
+    setApiChecked(false);
+    void fetchTasksForProject(projectId).then((tasks) => {
+      if (cancelled) return;
+      setApiChecked(true);
+      if (tasks == null) {
+        // /api/tasks not deployed yet — fixture rail stays empty until backend lands (docs/mvp.md §4.2).
+        setApiTasks(null);
+        return;
+      }
+      setApiTasks(tasks.map(mapApiTask));
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [useFixtures, projectId]);
+
+  if (!useFixtures) {
+    if (!apiChecked && projectId) {
+      return (
+        <aside className="task-rail" aria-label="Tasks">
+          <div className="task-list-scroll">
+            <p className="tasks-empty">Loading tasks…</p>
+          </div>
+        </aside>
+      );
+    }
+
+    if (apiTasks?.length) {
+      const visibleTasks = apiTasks.filter((task) => task.status !== 'completed');
+      return (
+        <aside className="task-rail" aria-label="Tasks">
+          <div className="task-list-scroll">
+            {visibleTasks.length ? (
+              <section className="task-project-group" aria-label="Project tasks">
+                <div className="task-project-items">
+                  {visibleTasks.map((task) => (
+                    <div key={task.id} className="task-item-wrap">
+                      <TaskListItem
+                        task={task}
+                        selected={selectedTaskId === task.id}
+                        onSelect={onSelectTask}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </section>
+            ) : (
+              <p className="tasks-empty">No open tasks.</p>
+            )}
+          </div>
+        </aside>
+      );
+    }
+
     return (
       <aside className="task-rail" aria-label="Tasks">
         <div className="task-list-scroll">

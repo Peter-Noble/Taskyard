@@ -1,4 +1,4 @@
-import { integer, real, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+import { integer, primaryKey, real, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
 
 export const machines = sqliteTable('machines', {
   id: text('id').primaryKey(),
@@ -32,12 +32,84 @@ export const projects = sqliteTable('projects', {
   defaultBranch: text('default_branch').default('main'),
   archived: integer('archived', { mode: 'boolean' }).default(false),
   archivedAt: integer('archived_at', { mode: 'timestamp' }),
+  taskPrefix: text('task_prefix'),
+  nextTaskNumber: integer('next_task_number').notNull().default(0),
+  nextDecisionNumber: integer('next_decision_number').notNull().default(0),
+  sortOrder: integer('sort_order').notNull().default(0),
   createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
+});
+
+export const tasks = sqliteTable(
+  'tasks',
+  {
+    id: text('id').primaryKey(),
+    shortId: text('short_id').notNull(),
+    projectId: text('project_id')
+      .notNull()
+      .references(() => projects.id),
+    parentId: text('parent_id'),
+    title: text('title').notNull(),
+    description: text('description').notNull().default(''),
+    status: text('status', {
+      enum: ['backlog', 'ready', 'in_progress', 'review', 'waiting', 'completed', 'cancelled'],
+    })
+      .notNull()
+      .default('ready'),
+    assignee: text('assignee'),
+    createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
+    updatedAt: integer('updated_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
+  },
+  (table) => [uniqueIndex('tasks_short_id_unique').on(table.shortId)],
+);
+
+export const taskDependencies = sqliteTable(
+  'task_dependencies',
+  {
+    taskId: text('task_id')
+      .notNull()
+      .references(() => tasks.id),
+    dependsOnTaskId: text('depends_on_task_id')
+      .notNull()
+      .references(() => tasks.id),
+  },
+  (table) => [primaryKey({ columns: [table.taskId, table.dependsOnTaskId] })],
+);
+
+export const taskDecisions = sqliteTable(
+  'task_decisions',
+  {
+    id: text('id').primaryKey(),
+    shortId: text('short_id').notNull(),
+    taskId: text('task_id')
+      .notNull()
+      .references(() => tasks.id),
+    projectId: text('project_id')
+      .notNull()
+      .references(() => projects.id),
+    choice: text('choice').notNull(),
+    why: text('why').notNull(),
+    status: text('status', { enum: ['accepted', 'rejected'] }).notNull().default('accepted'),
+    exportedAt: integer('exported_at', { mode: 'timestamp' }),
+    createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
+  },
+  (table) => [uniqueIndex('task_decisions_project_short').on(table.projectId, table.shortId)],
+);
+
+export const taskActivity = sqliteTable('task_activity', {
+  id: integer('id', { mode: 'number' }).primaryKey({ autoIncrement: true }),
+  taskId: text('task_id')
+    .notNull()
+    .references(() => tasks.id),
+  kind: text('kind', { enum: ['status', 'comment', 'change'] }).notNull(),
+  actor: text('actor').notNull(),
+  payload: text('payload').notNull(),
+  timestamp: integer('timestamp', { mode: 'timestamp' }).$defaultFn(() => new Date()),
 });
 
 export const threads = sqliteTable('threads', {
   id: text('id').primaryKey(),
   projectId: text('project_id').references(() => projects.id),
+  taskId: text('task_id').references(() => tasks.id),
   machineId: text('machine_id').references(() => machines.id),
   agentType: text('agent_type').notNull(),
   branch: text('branch').notNull(),

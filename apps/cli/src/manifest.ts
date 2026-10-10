@@ -12,15 +12,14 @@ export function readAgentManifest(agentType: string, agentsDir?: string): AgentM
   return JSON.parse(fs.readFileSync(manifestPath, 'utf8')) as AgentManifest;
 }
 
-export function buildContainerCmd(manifest: AgentManifest): string[] {
-  const entry = `/agent/${manifest.entrypoint}`;
+export function buildSandboxCmd(manifest: AgentManifest, agentEntryPath: string): string[] {
   switch (manifest.language) {
     case 'python':
-      return ['python3', entry];
+      return ['python3', agentEntryPath];
     case 'typescript':
     case 'javascript':
-      return ['npx', 'tsx', entry];
+      return ['npx', 'tsx', agentEntryPath];
     default:
-      return ['python3', entry];
+      return ['python3', agentEntryPath];
   }
 }

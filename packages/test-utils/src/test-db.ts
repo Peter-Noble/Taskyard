@@ -103,6 +103,7 @@ export function seedThread(
     containerId: overrides.containerId ?? null,
     webPort: overrides.webPort ?? null,
     rustdeskPort: overrides.rustdeskPort ?? null,
+    taskId: overrides.taskId ?? null,
     createdAt: overrides.createdAt ?? new Date(),
     startedAt: overrides.startedAt ?? null,
     completedAt: overrides.completedAt ?? null,

@@ -35,6 +35,8 @@ function healthPayload(port: number) {
       'POST /spawn': 'Forward spawn_thread to a worker (requires X-Hub-Token if HUB_CONTROL_TOKEN is set)',
       'POST /kill': 'Kill thread on worker',
       'POST /close': 'Close thread on worker',
+      'POST /follow-up': 'Send follow_up prompt to worker ACP session',
+      'POST /resolve-prompt': 'Resolve pending ACP ask/plan/permission on worker',
       'POST /ping': 'Ping all connected workers',
     },
   };
@@ -106,6 +108,41 @@ export function startControlServer(port: number): http.Server {
       }
       const type = url === '/kill' ? 'kill_thread' : 'close_thread';
       const sent = sendToWorker(machineId, { type, thread_id: threadId });
+      if (!sent) {
+        json(res, 503, { error: 'Worker not reachable' });
+        return;
+      }
+      json(res, 200, { ok: true });
+      return;
+    }
+
+    if (url === '/follow-up') {
+      const prompt = body.prompt as string | undefined;
+      if (!threadId || !machineId || !prompt) {
+        json(res, 400, { error: 'thread_id, machine_id, and prompt required' });
+        return;
+      }
+      const sent = sendToWorker(machineId, { type: 'follow_up', thread_id: threadId, prompt });
+      if (!sent) {
+        json(res, 503, { error: 'Worker not reachable' });
+        return;
+      }
+      json(res, 200, { ok: true });
+      return;
+    }
+
+    if (url === '/resolve-prompt') {
+      const requestId = body.request_id as string | undefined;
+      if (!threadId || !machineId || !requestId || !('result' in body)) {
+        json(res, 400, { error: 'thread_id, machine_id, request_id, and result required' });
+        return;
+      }
+      const sent = sendToWorker(machineId, {
+        type: 'resolve_prompt',
+        thread_id: threadId,
+        request_id: requestId,
+        result: body.result,
+      });
       if (!sent) {
         json(res, 503, { error: 'Worker not reachable' });
         return;

@@ -12,3 +12,4 @@ export * from './events.js';
 export * from './hub-client.js';
 export * from './dead-workers.js';
 export * from './threads.js';
+export * from './tasks.js';

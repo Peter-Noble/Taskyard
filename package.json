@@ -9,6 +9,7 @@
     "dev:tui": "pnpm --filter cli dev:tui",
     "build": "pnpm -r build",
     "db:push": "pnpm --filter db push",
+    "db:migrate-mvp": "pnpm --filter db migrate-mvp",
     "pretest": "pnpm --filter @taskyard/protocol build && pnpm --filter @taskyard/db build && pnpm --filter @taskyard/test-utils build && pnpm --filter @taskyard/core build",
     "test": "vitest run",
     "test:unit": "vitest run packages/**/*.unit.test.ts apps/**/*.unit.test.ts",

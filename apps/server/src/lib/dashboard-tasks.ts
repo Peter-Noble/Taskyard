@@ -1,6 +1,7 @@
 export type TaskStatus =
   | 'ready'
   | 'in-progress'
+  | 'review'
   | 'waiting'
   | 'completed'
   | 'backlog';
@@ -143,20 +144,20 @@ export const PROJECTS: Record<string, DashboardProject> = {
       {
         id: 'ty-15',
         num: '15',
-        title: 'RustDesk preview gate before visual polish',
+        title: 'Layout review before visual polish',
         status: 'waiting',
         statusLabel: 'Waiting for user',
         assignee: 'Peter',
         created: 'May 20',
         description:
-          'Agent forwarded port 21116. User must confirm layout on worker RustDesk before agent continues wireframe iterations.',
+          'Dashboard shell is in place. Confirm layout in the thread chat before the agent continues wireframe iterations.',
         blockedBy: [{ id: 'ty-14', label: 'TY-14' }],
         blocks: [{ id: 'ty-17', label: 'TY-17' }],
         activity: [
           {
             type: 'comment',
             actor: 'Agent',
-            text: 'Port 21116 is live on linux-box-02. Open RustDesk or reply to continue.',
+            text: 'Dashboard shell is ready — reply with layout feedback to continue.',
             time: 'Today 09:05',
           },
           { type: 'status', actor: 'Agent', from: 'In progress', to: 'Waiting for user', time: 'Today 09:04' },
@@ -177,11 +178,11 @@ export const PROJECTS: Record<string, DashboardProject> = {
         assignee: '—',
         created: 'May 23',
         description:
-          'Playwright suite against local stack: thread selection, task dependency expand, machine dock thread buttons. Runs after RustDesk sign-off.',
+          'Playwright suite against local stack: thread selection, task dependency expand, machine dock thread buttons. Runs after layout sign-off.',
         blockedBy: [{ id: 'ty-15', label: 'TY-15' }],
         blocks: [],
         activity: [
-          { type: 'dependency', actor: 'Peter', text: 'Blocked by TY-15 (RustDesk gate)', time: 'May 23' },
+          { type: 'dependency', actor: 'Peter', text: 'Blocked by TY-15 (layout review)', time: 'May 23' },
           { type: 'status', actor: 'Peter', from: 'Backlog', to: 'Ready for agent', time: 'May 23' },
         ],
       },
@@ -484,6 +485,7 @@ export function taskStatusBadgeClass(status: TaskStatus): string {
   const map: Record<TaskStatus, string> = {
     ready: 'badge-task-ready',
     'in-progress': 'badge-task-progress',
+    review: 'badge-task-review',
     waiting: 'badge-task-waiting',
     completed: 'badge-task-done',
     backlog: 'badge-task-backlog',
@@ -492,7 +494,7 @@ export function taskStatusBadgeClass(status: TaskStatus): string {
 }
 
 export function showsReadyForAgentAction(task: DashboardTask): boolean {
-  return !['ready', 'in-progress', 'waiting', 'completed'].includes(task.status);
+  return !['ready', 'in-progress', 'review', 'waiting', 'completed'].includes(task.status);
 }
 
 export function threadProjectKey(threadSlug: string): string {
