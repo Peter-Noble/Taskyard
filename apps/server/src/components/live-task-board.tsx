@@ -8,6 +8,7 @@ const STATUSES: TaskStatus[] = [
   'ready',
   'in_progress',
   'review',
+  'merge',
   'waiting',
   'completed',
   'cancelled',
@@ -23,6 +24,8 @@ function statusLabel(status: TaskStatus): string {
       return 'In progress';
     case 'review':
       return 'Ready to review';
+    case 'merge':
+      return 'Ready to merge';
     case 'waiting':
       return 'Waiting';
     case 'completed':
@@ -40,6 +43,8 @@ function badgeClass(status: TaskStatus): string {
       return 'badge-task-progress';
     case 'review':
       return 'badge-task-review';
+    case 'merge':
+      return 'badge-task-merge';
     case 'waiting':
       return 'badge-task-waiting';
     case 'completed':

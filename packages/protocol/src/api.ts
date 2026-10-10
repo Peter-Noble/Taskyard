@@ -6,6 +6,7 @@ export type ProjectTaskCounts = {
   ready: number;
   in_progress: number;
   review: number;
+  merge: number;
   waiting: number;
 };
 
@@ -77,6 +78,7 @@ export type TaskStatus =
   | 'ready'
   | 'in_progress'
   | 'review'
+  | 'merge'
   | 'waiting'
   | 'completed'
   | 'cancelled';

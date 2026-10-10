@@ -8,6 +8,7 @@ const TASK_STATUSES: TaskStatus[] = [
   'ready',
   'in_progress',
   'review',
+  'merge',
   'waiting',
   'completed',
   'cancelled',

@@ -38,6 +38,8 @@ function apiStatusLabel(status: ApiTask['status']): string {
       return 'In progress';
     case 'review':
       return 'Ready to review';
+    case 'merge':
+      return 'Ready to merge';
     case 'waiting':
       return 'Waiting for user';
     case 'completed':
@@ -57,6 +59,8 @@ function apiStatusToRail(status: ApiTask['status']): DashboardTask['status'] {
       return 'ready';
     case 'review':
       return 'review';
+    case 'merge':
+      return 'merge';
     case 'waiting':
       return 'waiting';
     case 'completed':

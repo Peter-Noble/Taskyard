@@ -52,10 +52,10 @@ export function seedProjectsIfEmpty(db: TaskyardDb): void {
   }
 }
 
-const TASK_COUNT_STATUSES = ['backlog', 'ready', 'in_progress', 'review', 'waiting'] as const;
+const TASK_COUNT_STATUSES = ['backlog', 'ready', 'in_progress', 'review', 'merge', 'waiting'] as const;
 
 export function emptyTaskCounts(): ProjectTaskCounts {
-  return { backlog: 0, ready: 0, in_progress: 0, review: 0, waiting: 0 };
+  return { backlog: 0, ready: 0, in_progress: 0, review: 0, merge: 0, waiting: 0 };
 }
 
 function isTaskCountStatus(status: string): status is keyof ProjectTaskCounts {
