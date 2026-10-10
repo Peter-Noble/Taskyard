@@ -168,7 +168,7 @@ task
 
 task
   .command('next')
-  .description('Oldest ready, unblocked, unclaimed task in the project')
+  .description('Oldest ready or merge, unblocked, unclaimed task in the project; merge tasks go first')
   .option('--project <id>', 'Project id (default: .taskyard/project.json or $TASKYARD_PROJECT_ID)')
   .option('--pretty', 'Human-readable output instead of JSON')
   .action(async (opts: { project?: string; pretty?: boolean }) => {

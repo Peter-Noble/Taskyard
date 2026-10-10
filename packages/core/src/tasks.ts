@@ -1,5 +1,5 @@
 import { projects, taskActivity, taskDecisions, taskDependencies, tasks } from '@taskyard/db';
-import { and, asc, desc, eq, inArray, isNull, or } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray, isNull, or, sql } from 'drizzle-orm';
 import { randomUUID } from 'node:crypto';
 import type { TaskyardDb } from '@taskyard/db';
 import type {
@@ -33,12 +33,20 @@ const TASK_STATUSES: TaskStatus[] = [
   'ready',
   'in_progress',
   'review',
+  'merge',
   'waiting',
   'completed',
   'cancelled',
 ];
 
-const OPEN_DEPENDENCY_STATUSES: TaskStatus[] = ['backlog', 'ready', 'in_progress', 'review', 'waiting'];
+const OPEN_DEPENDENCY_STATUSES: TaskStatus[] = [
+  'backlog',
+  'ready',
+  'in_progress',
+  'review',
+  'merge',
+  'waiting',
+];
 
 export const TASK_CLI_CONTRACT = `## Taskyard
 
@@ -48,10 +56,10 @@ Persist progress with the \`taskyard task\` CLI. It prints JSON on stdout. The p
 
 - \`taskyard task show-thread\` — this thread and its primary task
 - \`taskyard task list [--status ready]\` — tasks in this project
-- \`taskyard task next\` — oldest ready, unblocked, unclaimed task
+- \`taskyard task next\` — oldest ready or merge, unblocked, unclaimed task; merge tasks go first
 - \`taskyard task get <id>\` — task, children, dependencies, decisions, and activity
-- \`taskyard task claim <id>\` — take a ready task; fails if someone else holds it or it is blocked
-- \`taskyard task status <id> <status>\` — backlog, ready, in_progress, review, waiting, completed, cancelled
+- \`taskyard task claim <id>\` — take a ready or merge task; fails if someone else holds it or it is blocked
+- \`taskyard task status <id> <status>\` — backlog, ready, in_progress, review, merge, waiting, completed, cancelled
 - \`taskyard task status <id> waiting --reason "..."\` — park it for a person or an external blocker
 - \`taskyard task comment <id> "..."\` — what changed, what is left, how the work was completed, and the state you left the project in
 - \`taskyard task update <id> [--title] [--description] [--assignee]\` — change the task. \`--description\` replaces the brief, which is the work the task asks for
@@ -59,7 +67,11 @@ Persist progress with the \`taskyard task\` CLI. It prints JSON on stdout. The p
 - \`taskyard task depend <id> --on <other>\`
 - \`taskyard task decision add --task <id> --choice "..."\` — one statement for a non-obvious choice that is still true after the task
 
-Claim a task before you start it. \`ready\` means an agent may claim it. \`review\` means the work is finished and a person should look. \`task next\` returns only \`ready\` tasks, so a task in \`review\` waits for a person. It still blocks anything that depends on it.
+Claim a task before you start it. \`ready\` means an agent may claim it. \`review\` means the work is finished and a person should look. \`merge\` means the person approved the work and any agent may claim it to merge the branch. \`task next\` returns \`merge\` tasks before \`ready\` ones, so a task in \`review\` waits for a person. \`review\` and \`merge\` tasks still block anything that depends on them.
+
+One task is one branch named after the task, such as \`ta-14-short-slug\`. If \`git status\` is clean and no other task in this project is \`in_progress\`, create the branch in this checkout and work here. If the tree is dirty or another task is in progress, stop and tell the user; never stash or discard changes you did not make. Commit on the task branch as you finish; a fix you had to make along the way goes in its own commit. Branching and committing on the task branch are pre-approved; ask before push, reset, rebase, or merging into the default branch. If you park an unfinished task, keep the branch and name it in the task comment so the next session can pick it up.
+
+To finish a \`merge\` task: claim it, merge its branch into the default branch with a plain merge commit, delete the task branch, then set the task \`completed\`. If the merge conflicts, comment with the conflict and set the task back to \`review\`.
 
 The brief is the task description. It describes the work the task asks for. Leave it in place when you finish. Do not rewrite it into a report of the work. How the task was completed, and the state you left the project in, goes in a comment.
 
@@ -67,9 +79,9 @@ Before you stop, write the task back:
 
 1. \`taskyard task comment <id> "..."\` with what changed, what is left, how the work was completed, and the state you left the project in.
 2. \`taskyard task decision add --task <id> --choice "..."\` for each non-obvious choice that cannot be inferred from the code. One statement. No reason. State a fact that is still true in the code that remains after this task. Leave out symbols, files, and prompt details this task removes; the decision is read after they are gone. Skip this when there was no such choice. Cite the decision id in a short comment on the code that follows the rule, for example \`// D-014\`.
-3. Set the status:
+3. Commit everything on the task branch, then set the status:
    - \`review\` when \`TASKYARD_SESSION=autonomous\`, or when you are finishing without the user confirming the work. The board shows this as Ready to review.
-   - \`completed\` only after the user in this session agrees the task is done.
+   - \`completed\` only after the user in this session agrees the task is done, or when you have merged a \`merge\` task.
    - \`waiting\` with \`--reason\` when you stopped for a person or an external blocker.
    - \`ready\` when the work is unfinished and another agent can continue.
    - \`cancelled\` when the user says to drop it.
@@ -510,6 +522,10 @@ export function updateTask(
         })
         .run();
       values.status = next;
+      // Moving to merge releases the work claim so any agent can pick up the merge. D-003
+      if (next === 'merge' && req.assignee === undefined) {
+        values.assignee = null;
+      }
     }
   }
 
@@ -570,8 +586,8 @@ export function claimTask(db: TaskyardDb, id: string, assignee: string, actor?: 
   if (existing.status === 'in_progress' && existing.assignee === name) {
     return getTaskDetail(db, existing.id);
   }
-  if (existing.status !== 'ready') {
-    throw new TaskError(`Task must be ready to claim (current status: ${existing.status})`);
+  if (existing.status !== 'ready' && existing.status !== 'merge') {
+    throw new TaskError(`Task must be ready or merge to claim (current status: ${existing.status})`);
   }
 
   const blockers = incompleteBlockers(db, existing.id);
@@ -594,11 +610,12 @@ export function nextTask(db: TaskyardDb, projectId: string): TaskDetail | null {
     .where(
       and(
         eq(tasks.projectId, projectId),
-        eq(tasks.status, 'ready'),
+        inArray(tasks.status, ['ready', 'merge']),
         or(isNull(tasks.assignee), eq(tasks.assignee, '')),
       ),
     )
-    .orderBy(asc(tasks.createdAt))
+    // Merge tasks finish accepted work and unblock dependents, so they go first.
+    .orderBy(sql`CASE WHEN ${tasks.status} = 'merge' THEN 0 ELSE 1 END`, asc(tasks.createdAt))
     .all();
 
   for (const row of rows) {

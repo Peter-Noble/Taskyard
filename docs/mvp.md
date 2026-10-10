@@ -74,7 +74,7 @@ Fields (v1):
 | `project_id` | FK |
 | `parent_id` | Nullable FK for subtasks |
 | `title`, `description` | Markdown-friendly text |
-| `status` | `backlog` \| `ready` \| `in_progress` \| `waiting` \| `completed` \| `cancelled` |
+| `status` | `backlog` \| `ready` \| `in_progress` \| `review` \| `merge` \| `waiting` \| `completed` \| `cancelled` |
 | `assignee` | Optional string |
 | `created_at`, `updated_at` | Timestamps |
 

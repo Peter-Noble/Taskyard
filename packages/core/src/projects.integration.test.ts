@@ -30,6 +30,7 @@ describe('project order', () => {
         ready: 1,
         in_progress: 0,
         review: 1,
+        merge: 0,
         waiting: 0,
       });
       expect(after.find((project) => project.id === last.id)?.task_counts?.in_progress).toBe(1);

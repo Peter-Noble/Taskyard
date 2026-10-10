@@ -2,6 +2,7 @@ export type TaskStatus =
   | 'ready'
   | 'in-progress'
   | 'review'
+  | 'merge'
   | 'waiting'
   | 'completed'
   | 'backlog';
@@ -486,6 +487,7 @@ export function taskStatusBadgeClass(status: TaskStatus): string {
     ready: 'badge-task-ready',
     'in-progress': 'badge-task-progress',
     review: 'badge-task-review',
+    merge: 'badge-task-merge',
     waiting: 'badge-task-waiting',
     completed: 'badge-task-done',
     backlog: 'badge-task-backlog',

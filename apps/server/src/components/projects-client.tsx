@@ -19,7 +19,7 @@ function repoMeta(project: Project): string {
 
 function taskCounts(project: Project): ProjectTaskCounts {
   return (
-    project.task_counts ?? { backlog: 0, ready: 0, in_progress: 0, review: 0, waiting: 0 }
+    project.task_counts ?? { backlog: 0, ready: 0, in_progress: 0, review: 0, merge: 0, waiting: 0 }
   );
 }
 
@@ -56,13 +56,14 @@ function GripIcon() {
 function ProjectBadges({ project, muted }: { project: Project; muted?: boolean }) {
   const counts = taskCounts(project);
   const open =
-    counts.backlog + counts.ready + counts.in_progress + counts.review + counts.waiting;
+    counts.backlog + counts.ready + counts.in_progress + counts.review + counts.merge + counts.waiting;
   const taskBadges = [
     counts.ready > 0 ? { key: 'ready', className: 'badge-task-ready', label: `${counts.ready} ready` } : null,
     counts.in_progress > 0
       ? { key: 'progress', className: 'badge-task-progress', label: `${counts.in_progress} in progress` }
       : null,
     counts.review > 0 ? { key: 'review', className: 'badge-task-review', label: `${counts.review} review` } : null,
+    counts.merge > 0 ? { key: 'merge', className: 'badge-task-merge', label: `${counts.merge} merge` } : null,
     counts.waiting > 0
       ? { key: 'waiting', className: 'badge-task-waiting', label: `${counts.waiting} waiting` }
       : null,
@@ -322,6 +323,10 @@ function ProjectRow({
         <div>
           <dt>Review</dt>
           <dd>{counts.review}</dd>
+        </div>
+        <div>
+          <dt>Merge</dt>
+          <dd>{counts.merge}</dd>
         </div>
         <div>
           <dt>Waiting</dt>

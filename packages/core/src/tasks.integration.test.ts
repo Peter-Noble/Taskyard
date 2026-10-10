@@ -165,6 +165,38 @@ describe('task board', () => {
     }
   });
 
+  it('surfaces merge tasks in next, releases the claim, and keeps dependents blocked', () => {
+    const ctx = createTestDb();
+    try {
+      const project = createProject(ctx.db, { name: 'Taskyard' });
+      const older = createTask(ctx.db, { project_id: project.id, title: 'Older ready work' });
+      const approved = createTask(ctx.db, { project_id: project.id, title: 'Approved work' });
+      const follower = createTask(ctx.db, { project_id: project.id, title: 'Follows the merge' });
+
+      claimTask(ctx.db, approved.short_id, 'agent-a');
+      updateTask(ctx.db, approved.short_id, { status: 'merge' });
+
+      // Moving to merge releases the work claim so any agent can pick up the merge.
+      expect(getTaskDetail(ctx.db, approved.short_id)?.assignee).toBeNull();
+
+      addTaskDependency(ctx.db, follower.short_id, approved.short_id);
+      expect(getTaskDetail(ctx.db, follower.short_id)?.blocked).toBe(true);
+
+      // task next surfaces the unclaimed merge task ahead of older ready tasks.
+      expect(nextTask(ctx.db, project.id)?.short_id).toBe(approved.short_id);
+
+      const claimed = claimTask(ctx.db, approved.short_id, 'agent-b');
+      expect(claimed?.status).toBe('in_progress');
+      expect(claimed?.assignee).toBe('agent-b');
+
+      updateTask(ctx.db, approved.short_id, { status: 'completed' });
+      expect(getTaskDetail(ctx.db, follower.short_id)?.blocked).toBe(false);
+      expect(nextTask(ctx.db, project.id)?.short_id).toBe(older.short_id);
+    } finally {
+      ctx.cleanup();
+    }
+  });
+
   it('rejects a dependency cycle', () => {
     const ctx = createTestDb();
     try {

@@ -1106,6 +1106,12 @@ a:hover {
   border-color: color-mix(in oklch, var(--waiting) 45%, var(--border));
 }
 
+.badge-task-merge {
+  color: var(--success);
+  background: var(--surface-elevated);
+  border-color: color-mix(in oklch, var(--success) 45%, var(--border));
+}
+
 .badge-task-waiting {
   color: var(--waiting);
   background: var(--waiting-bg);
