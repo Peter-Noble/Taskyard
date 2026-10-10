@@ -71,7 +71,7 @@ Claim a task before you start it. \`ready\` means an agent may claim it. \`revie
 
 One task is one branch named after the task, such as \`ta-14-short-slug\`. If \`git status\` is clean and no other task in this project is \`in_progress\`, create the branch in this checkout and work here. If the tree is dirty or another task is in progress, stop and tell the user; never stash or discard changes you did not make. Commit on the task branch as you finish; a fix you had to make along the way goes in its own commit. Branching and committing on the task branch are pre-approved; ask before push, reset, rebase, or merging into the default branch. If you park an unfinished task, keep the branch and name it in the task comment so the next session can pick it up.
 
-To finish a \`merge\` task: claim it, merge its branch into the default branch with a plain merge commit, delete the task branch, then set the task \`completed\`. If the merge conflicts, comment with the conflict and set the task back to \`review\`.
+To finish a \`merge\` task: claim it, merge its branch into the default branch with a plain merge commit, delete the task branch, then set the task \`completed\`. A task approved before the branch workflow has no task branch; when its commits are already on the default branch, set it \`completed\` without merging. If the merge conflicts, comment with the conflict and set the task back to \`review\`.
 
 The brief is the task description. It describes the work the task asks for. Leave it in place when you finish. Do not rewrite it into a report of the work. How the task was completed, and the state you left the project in, goes in a comment.
 
