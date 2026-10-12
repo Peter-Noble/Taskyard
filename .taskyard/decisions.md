@@ -14,3 +14,8 @@
 
 - Status: accepted
 - Task: TA-3
+
+## D-004 — Marking a password reset leaves that person's current web session signed in. Issuing a temporary password ends their sessions.
+
+- Status: accepted
+- Task: TA-17
