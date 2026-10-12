@@ -56,9 +56,17 @@ html {
   overflow: hidden;
 }
 
-/* Host-side next dev / sandbox DB — unmistakable vs live Docker. */
-html.ty-sandbox {
-  box-shadow: inset 0 0 0 6px #e10600;
+/* Host-side next dev / sandbox DB — unmistakable vs live Docker.
+   Fixed overlay (not inset shadow) so opaque page chrome never covers it.
+   Driven only by html.ty-sandbox on the root layout — new routes inherit it. */
+html.ty-sandbox::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  border: 6px solid #e10600;
+  pointer-events: none;
+  box-sizing: border-box;
 }
 
 html.ty-sandbox body::before {
