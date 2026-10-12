@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type FormEvent } from 'react';
 import type { Project, Task, TaskDetail, TaskStatus } from '@taskyard/protocol';
+import { useSessionPerson } from '@/components/providers';
 
 const STATUSES: TaskStatus[] = [
   'backlog',
@@ -302,14 +303,12 @@ function CreateTaskForm({
 }
 
 function displayActor(actor: string): string {
-  const name = actor.trim().toLowerCase();
-  if (name === 'user' || name === 'you') return 'You';
   return actor;
 }
 
-function isMine(actor: string): boolean {
-  const name = actor.trim().toLowerCase();
-  return name === 'user' || name === 'you';
+function isMine(actor: string, displayName: string | null): boolean {
+  if (!displayName) return false;
+  return actor.trim().toLowerCase() === displayName.trim().toLowerCase();
 }
 
 function TaskEditor({
@@ -325,6 +324,7 @@ function TaskEditor({
   onSelectTask: (taskId: string) => void;
   onChanged: () => void;
 }) {
+  const person = useSessionPerson();
   const [task, setTask] = useState<TaskDetail | null>(null);
   const [briefDraft, setBriefDraft] = useState('');
   const [briefEditing, setBriefEditing] = useState(false);
@@ -413,7 +413,7 @@ function TaskEditor({
     const res = await fetch(`/api/tasks/${encodeURIComponent(taskId)}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...body, actor: 'user' }),
+      body: JSON.stringify(body),
     });
     if (!res.ok) {
       setError(await readError(res));
@@ -465,7 +465,7 @@ function TaskEditor({
     const res = await fetch(`/api/tasks/${encodeURIComponent(taskId)}/comments`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: comment, actor: 'user' }),
+      body: JSON.stringify({ text: comment }),
     });
     if (!res.ok) {
       setError(await readError(res));
@@ -483,7 +483,7 @@ function TaskEditor({
     const res = await fetch(`/api/tasks/${encodeURIComponent(taskId)}/decisions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ choice, actor: 'user' }),
+      body: JSON.stringify({ choice }),
     });
     if (!res.ok) {
       setError(await readError(res));
@@ -496,7 +496,7 @@ function TaskEditor({
   async function removeDecision(decisionId: string) {
     setError(null);
     const res = await fetch(
-      `/api/tasks/${encodeURIComponent(taskId)}/decisions?decision_id=${encodeURIComponent(decisionId)}&actor=user`,
+      `/api/tasks/${encodeURIComponent(taskId)}/decisions?decision_id=${encodeURIComponent(decisionId)}`,
       { method: 'DELETE' },
     );
     if (!res.ok) {
@@ -647,7 +647,7 @@ function TaskEditor({
               return (
                 <article
                   key={`${item.created_at}-${index}`}
-                  className={`chat-msg ${isMine(item.actor) ? 'task-view-mine' : 'task-view-agent'}`}
+                  className={`chat-msg ${isMine(item.actor, person?.displayName ?? null) ? 'task-view-mine' : 'task-view-agent'}`}
                 >
                   <header className="chat-msg-head">
                     {displayActor(item.actor)} · {new Date(item.created_at).toLocaleString()}
