@@ -3493,3 +3493,7 @@ html:has(body.launcher-page) {
   flex-wrap: wrap;
   gap: var(--space-2);
 }
+
+.account-sign-out {
+  margin-top: var(--space-4);
+}

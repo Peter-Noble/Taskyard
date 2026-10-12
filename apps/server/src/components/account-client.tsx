@@ -21,7 +21,19 @@ export function AccountClient() {
   const [confirm, setConfirm] = useState('');
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [pending, setPending] = useState<'name' | 'password' | null>(null);
+  const [pending, setPending] = useState<'name' | 'password' | 'sign-out' | null>(null);
+
+  async function signOut() {
+    setPending('sign-out');
+    setError(null);
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+      window.location.assign('/overview');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to sign out');
+      setPending(null);
+    }
+  }
 
   async function saveName(event: FormEvent) {
     event.preventDefault();
@@ -136,6 +148,10 @@ export function AccountClient() {
             {pending === 'password' ? 'Saving…' : 'Change password'}
           </button>
         </form>
+
+        <button type="button" className="btn account-sign-out" disabled={pending !== null} onClick={() => void signOut()}>
+          {pending === 'sign-out' ? 'Signing out…' : 'Sign out'}
+        </button>
       </div>
     </AppShell>
   );

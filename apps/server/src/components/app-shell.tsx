@@ -28,11 +28,6 @@ export function AppShell({ children, pageTitle, actions }: AppShellProps) {
     { href: '/auto', label: 'Auto' },
   ];
 
-  async function signOut() {
-    await fetch('/api/auth/logout', { method: 'POST' });
-    window.location.assign('/overview');
-  }
-
   return (
     <div className="app-shell">
       <header className="top-header">
@@ -67,11 +62,6 @@ export function AppShell({ children, pageTitle, actions }: AppShellProps) {
               <Image src={avatarSrc} alt="" width={32} height={32} />
               <span className="user-session-name">{person.displayName}</span>
             </Link>
-          ) : null}
-          {person ? (
-            <button type="button" className="btn btn-ghost" onClick={() => void signOut()}>
-              Sign out
-            </button>
           ) : null}
         </div>
       </header>
