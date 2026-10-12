@@ -1,6 +1,7 @@
 import type { CreateTaskRequest, TaskStatus } from '@taskyard/protocol';
 import { createTask, getDb, listTasks } from '@taskyard/core';
 import { jsonError, jsonOk } from '@/lib/api-response';
+import { actorFromWebSession } from '@/lib/people-api';
 import { taskErrorResponse } from '@/lib/task-error';
 
 const TASK_STATUSES: TaskStatus[] = [
@@ -55,9 +56,12 @@ export async function POST(req: Request) {
     return jsonError('title and project_id are required');
   }
 
+  const actor = actorFromWebSession(req, undefined);
+  if (!actor.ok) return actor.response;
+
   const db = getDb();
   try {
-    const task = createTask(db, body);
+    const task = createTask(db, body, actor.actor);
     return jsonOk({ task }, 201);
   } catch (err) {
     return taskErrorResponse(err, 'Failed to create task');

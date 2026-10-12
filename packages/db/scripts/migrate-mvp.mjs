@@ -174,5 +174,35 @@ if (hasTable('tasks') && hasTable('projects')) {
   db.exec(`CREATE UNIQUE INDEX IF NOT EXISTS tasks_short_id_unique ON tasks(short_id)`);
 }
 
+if (!hasTable('people')) {
+  db.exec(`
+    CREATE TABLE people (
+      id text PRIMARY KEY NOT NULL,
+      username text NOT NULL,
+      display_name text NOT NULL,
+      password_hash text NOT NULL,
+      must_change_password integer DEFAULT 0 NOT NULL,
+      created_at integer
+    );
+    CREATE UNIQUE INDEX people_username_unique ON people(username);
+  `);
+  console.log('created people');
+}
+
+if (!hasTable('sessions')) {
+  db.exec(`
+    CREATE TABLE sessions (
+      id text PRIMARY KEY NOT NULL,
+      person_id text NOT NULL REFERENCES people(id),
+      token_hash text NOT NULL,
+      kind text DEFAULT 'web' NOT NULL,
+      must_change_password integer DEFAULT 0 NOT NULL,
+      created_at integer
+    );
+    CREATE UNIQUE INDEX sessions_token_hash_unique ON sessions(token_hash);
+  `);
+  console.log('created sessions');
+}
+
 console.log('migrate-mvp OK:', dbPath);
 db.close();

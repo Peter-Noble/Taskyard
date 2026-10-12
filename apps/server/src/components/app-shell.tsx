@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import Image from 'next/image';
 import { TestDataToggle } from '@/components/test-data-toggle';
+import { useSessionPerson } from '@/components/providers';
 import { useTestData as useTestDataContext } from '@/lib/hooks/use-test-data';
 
 type AppShellProps = {
@@ -14,6 +15,7 @@ type AppShellProps = {
 
 export function AppShell({ children, pageTitle, actions }: AppShellProps) {
   const pathname = usePathname();
+  const person = useSessionPerson();
   const { useTestData: testDataOn } = useTestDataContext();
   const avatarSrc = testDataOn ? '/user-avatar-test.png' : '/user-avatar.svg';
 
@@ -22,6 +24,7 @@ export function AppShell({ children, pageTitle, actions }: AppShellProps) {
     { href: '/dashboard', label: 'Dashboard' },
     { href: '/machines', label: 'Machines' },
     { href: '/projects', label: 'Projects' },
+    { href: '/people', label: 'People' },
     { href: '/auto', label: 'Auto' },
   ];
 
@@ -50,9 +53,16 @@ export function AppShell({ children, pageTitle, actions }: AppShellProps) {
         <div className="header-actions">
           {actions}
           <TestDataToggle />
-          <button type="button" className="user-session" aria-label="Signed in as Peter">
-            <Image src={avatarSrc} alt="" width={32} height={32} />
-          </button>
+          {person ? (
+            <Link
+              href="/account"
+              className="user-session"
+              aria-label={`Signed in as ${person.displayName}`}
+            >
+              <Image src={avatarSrc} alt="" width={32} height={32} />
+              <span className="user-session-name">{person.displayName}</span>
+            </Link>
+          ) : null}
         </div>
       </header>
       <main className="main">{children}</main>

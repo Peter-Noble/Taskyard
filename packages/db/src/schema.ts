@@ -143,6 +143,26 @@ export const portAllocations = sqliteTable('port_allocations', {
   allocatedAt: integer('allocated_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
 });
 
+export const people = sqliteTable('people', {
+  id: text('id').primaryKey(),
+  username: text('username').notNull().unique(),
+  displayName: text('display_name').notNull(),
+  passwordHash: text('password_hash').notNull(),
+  mustChangePassword: integer('must_change_password', { mode: 'boolean' }).notNull().default(false),
+  createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
+});
+
+export const sessions = sqliteTable('sessions', {
+  id: text('id').primaryKey(),
+  personId: text('person_id')
+    .notNull()
+    .references(() => people.id),
+  tokenHash: text('token_hash').notNull().unique(),
+  kind: text('kind', { enum: ['web', 'cli'] }).notNull().default('web'),
+  mustChangePassword: integer('must_change_password', { mode: 'boolean' }).notNull().default(false),
+  createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
+});
+
 export const vault = sqliteTable('vault', {
   id: integer('id', { mode: 'number' }).primaryKey({ autoIncrement: true }),
   agentType: text('agent_type').notNull(),

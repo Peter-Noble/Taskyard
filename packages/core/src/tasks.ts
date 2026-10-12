@@ -423,7 +423,7 @@ export function getTaskById(db: TaskyardDb, id: string) {
   return detail;
 }
 
-export function createTask(db: TaskyardDb, req: CreateTaskRequest) {
+export function createTask(db: TaskyardDb, req: CreateTaskRequest, actor = 'user') {
   const project = getProjectById(db, req.project_id);
   if (!project) throw new TaskError(`Project not found: ${req.project_id}`);
 
@@ -462,7 +462,7 @@ export function createTask(db: TaskyardDb, req: CreateTaskRequest) {
       .run();
   });
 
-  if (description) recordChange(db, id, 'user', 'set the brief', description, now);
+  if (description) recordChange(db, id, actor.trim() || 'user', 'set the brief', description, now);
 
   return getTaskById(db, id)!;
 }
