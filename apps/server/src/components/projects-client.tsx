@@ -630,42 +630,44 @@ function ProjectSection({
                   >
                     <GripIcon />
                   </button>
-                  <button
-                    type="button"
-                    className="overview-item-trigger"
-                    aria-expanded={expanded}
-                    aria-controls={`project-detail-${project.id}`}
-                    onClick={() => setExpandedId(expanded ? null : project.id)}
-                  >
-                    <span className="overview-item-body">
-                      <span className="overview-item-kind">Project</span>
-                      <span className="overview-item-title">{project.name}</span>
-                      <span className="overview-item-meta spec-mono">{repoMeta(project)}</span>
-                    </span>
-                    <span className="overview-item-end">
-                      <ProjectBadges project={project} muted={muted} />
-                      <span className="overview-chevron" aria-hidden="true" />
-                    </span>
-                  </button>
-                </div>
-                {collections.length > 0 && !testDataOn ? (
-                  <div className="collection-toggles">
-                    {collections.map((collection) => {
-                      const included = collection.project_ids.includes(project.id);
-                      return (
-                        <button
-                          key={collection.id}
-                          type="button"
-                          className={`btn btn-sm${included ? ' btn-primary' : ''}`}
-                          aria-pressed={included}
-                          onClick={() => onToggle(collection.id, project.id, !included)}
-                        >
-                          {collection.name}
-                        </button>
-                      );
-                    })}
+                  <div className="project-row-summary">
+                    <button
+                      type="button"
+                      className="overview-item-trigger"
+                      aria-expanded={expanded}
+                      aria-controls={`project-detail-${project.id}`}
+                      onClick={() => setExpandedId(expanded ? null : project.id)}
+                    >
+                      <span className="overview-item-body">
+                        <span className="overview-item-kind">Project</span>
+                        <span className="overview-item-title">{project.name}</span>
+                        <span className="overview-item-meta spec-mono">{repoMeta(project)}</span>
+                      </span>
+                      <span className="overview-item-end">
+                        <ProjectBadges project={project} muted={muted} />
+                        <span className="overview-chevron" aria-hidden="true" />
+                      </span>
+                    </button>
+                    {collections.length > 0 && !testDataOn ? (
+                      <div className="collection-toggles">
+                        {collections.map((collection) => {
+                          const included = collection.project_ids.includes(project.id);
+                          return (
+                            <button
+                              key={collection.id}
+                              type="button"
+                              className={`btn btn-sm${included ? ' btn-primary' : ''}`}
+                              aria-pressed={included}
+                              onClick={() => onToggle(collection.id, project.id, !included)}
+                            >
+                              {collection.name}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    ) : null}
                   </div>
-                ) : null}
+                </div>
                 <div
                   id={`project-detail-${project.id}`}
                   className="overview-item-detail"

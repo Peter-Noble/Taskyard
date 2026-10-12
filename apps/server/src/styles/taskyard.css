@@ -2224,9 +2224,22 @@ a:hover {
   align-items: stretch;
 }
 
-.project-row-head .overview-item-trigger {
+.project-row-summary {
   flex: 1;
   min-width: 0;
+}
+
+.project-row-summary:hover {
+  background: var(--surface-elevated);
+}
+
+.project-row.is-expanded .project-row-summary:hover {
+  background: transparent;
+}
+
+.project-row .overview-item-trigger:hover,
+.overview-list-muted .project-row .overview-item-trigger:hover {
+  background: transparent;
 }
 
 .project-grab {
