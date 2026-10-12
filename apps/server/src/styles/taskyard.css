@@ -2421,7 +2421,11 @@ a:hover {
   min-width: 0;
 }
 
-.projects-page-header .btn {
+.projects-page-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2);
   flex-shrink: 0;
 }
 
@@ -2431,7 +2435,7 @@ a:hover {
     align-items: stretch;
   }
 
-  .projects-page-header .btn {
+  .projects-page-actions {
     align-self: flex-end;
   }
 }
@@ -3501,16 +3505,42 @@ html:has(body.launcher-page) {
   padding-bottom: 0;
 }
 
-.collection-manager {
+.collection-dialog-create {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
   gap: var(--space-2);
-  margin: 0 0 var(--space-4);
 }
 
-.collection-manager .form-field {
-  min-width: 180px;
+.collection-dialog-create .form-field {
+  flex: 1;
+  min-width: 12rem;
+}
+
+.collection-dialog-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.collection-dialog-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border);
+}
+
+.collection-dialog-confirm {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
 }
 
 .collection-toggles {

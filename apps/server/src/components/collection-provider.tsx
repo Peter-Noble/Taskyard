@@ -7,6 +7,7 @@ type CollectionState = {
   activeId: string | null;
   active: CollectionSummary | null;
   collections: CollectionSummary[];
+  loaded: boolean;
   select: (id: string | null) => void;
   refresh: () => Promise<void>;
   create: (name: string) => Promise<void>;
@@ -23,6 +24,7 @@ export function useCollections(): CollectionState {
       activeId: null,
       active: null,
       collections: [],
+      loaded: true,
       select: () => undefined,
       refresh: async () => undefined,
       create: async () => undefined,
@@ -136,8 +138,8 @@ export function CollectionProvider({
   );
 
   const value = useMemo(
-    () => ({ activeId, active, collections, select, refresh, create, remove, toggleProject }),
-    [active, activeId, collections, create, refresh, remove, select, toggleProject],
+    () => ({ activeId, active, collections, loaded, select, refresh, create, remove, toggleProject }),
+    [active, activeId, collections, create, loaded, refresh, remove, select, toggleProject],
   );
 
   return <CollectionContext.Provider value={value}>{children}</CollectionContext.Provider>;

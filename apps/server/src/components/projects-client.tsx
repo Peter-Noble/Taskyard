@@ -230,6 +230,137 @@ function CreateProjectModal({
   );
 }
 
+function CollectionsModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { collections, create, remove } = useCollections();
+  const [name, setName] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState<'create' | 'delete' | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (open) return;
+    setName('');
+    setError(null);
+    setBusy(null);
+    setConfirmDeleteId(null);
+  }, [open]);
+
+  if (!open) return null;
+
+  async function createCollection(event: FormEvent) {
+    event.preventDefault();
+    setBusy('create');
+    setError(null);
+    setConfirmDeleteId(null);
+    try {
+      await create(name);
+      setName('');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create the collection');
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function deleteCollection(id: string) {
+    setBusy('delete');
+    setError(null);
+    try {
+      await remove(id);
+      setConfirmDeleteId(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete the collection');
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  return (
+    <div className="modal-overlay" role="presentation" onClick={onClose}>
+      <div
+        className="modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="collections-title"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <header className="modal-head">
+          <h2 id="collections-title">Collections</h2>
+          <button type="button" className="btn btn-ghost" onClick={onClose}>
+            Close
+          </button>
+        </header>
+        <div className="modal-body">
+          <p className="form-help">
+            Private groups for the projects you see. Press a collection name on a project to add or
+            remove it.
+          </p>
+          <form className="collection-dialog-create" onSubmit={(event) => void createCollection(event)}>
+            <label className="form-field">
+              <span className="form-label">New collection</span>
+              <input
+                className="form-input"
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+                required
+              />
+            </label>
+            <button type="submit" className="btn btn-primary" disabled={busy !== null}>
+              {busy === 'create' ? 'Creating…' : 'Create collection'}
+            </button>
+          </form>
+          {error ? (
+            <p className="modal-error" role="alert">
+              {error}
+            </p>
+          ) : null}
+          {collections.length > 0 ? (
+            <ul className="collection-dialog-list">
+              {collections.map((collection) => (
+                <li key={collection.id} className="collection-dialog-row">
+                  <strong>{collection.name}</strong>
+                  {confirmDeleteId === collection.id ? (
+                    <span className="collection-dialog-confirm">
+                      <span className="people-meta">Delete {collection.name}?</span>
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-danger"
+                        disabled={busy !== null}
+                        onClick={() => void deleteCollection(collection.id)}
+                      >
+                        Delete
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-sm"
+                        disabled={busy !== null}
+                        onClick={() => setConfirmDeleteId(null)}
+                      >
+                        Cancel
+                      </button>
+                    </span>
+                  ) : (
+                    <button
+                      type="button"
+                      className="btn btn-sm"
+                      disabled={busy !== null}
+                      onClick={() => setConfirmDeleteId(collection.id)}
+                    >
+                      Delete
+                    </button>
+                  )}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="form-help">No collections yet.</p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ProjectRow({
   project: initial,
   testDataOn,
@@ -563,13 +694,12 @@ export function ProjectsClient() {
     0,
     !testDataOn,
   );
-  const { active, collections, refresh: refreshCollections, create, remove, toggleProject } = useCollections();
+  const { active, collections, loaded: collectionsLoaded, refresh: refreshCollections, toggleProject } = useCollections();
   const [createOpen, setCreateOpen] = useState(false);
+  const [collectionsOpen, setCollectionsOpen] = useState(false);
   const [ordered, setOrdered] = useState<Project[] | null>(null);
   const [reorderError, setReorderError] = useState<string | null>(null);
-  const [collectionName, setCollectionName] = useState('');
   const [collectionError, setCollectionError] = useState<string | null>(null);
-  const [collectionBusy, setCollectionBusy] = useState(false);
 
   useEffect(() => {
     setOrdered(null);
@@ -597,20 +727,6 @@ export function ProjectsClient() {
     },
     [toggleProject],
   );
-
-  async function createNamedCollection(event: FormEvent) {
-    event.preventDefault();
-    setCollectionBusy(true);
-    setCollectionError(null);
-    try {
-      await create(collectionName);
-      setCollectionName('');
-    } catch (err) {
-      setCollectionError(err instanceof Error ? err.message : 'Failed to create the collection');
-    } finally {
-      setCollectionBusy(false);
-    }
-  }
 
   const handleReorder = useCallback(
     async (nextSection: Project[]) => {
@@ -646,38 +762,21 @@ export function ProjectsClient() {
             Register projects and optionally link an HTTPS git repository. Default branch pre-fills
             the New Thread form. Projects without a repo cannot spawn threads yet.
           </p>
-          <button type="button" className="btn btn-primary" onClick={() => setCreateOpen(true)}>
-            New project
-          </button>
-        </div>
-        {testDataOn ? null : (
-          <form className="collection-manager" onSubmit={(event) => void createNamedCollection(event)}>
-            <label className="form-field">
-              <span className="form-label">New collection</span>
-              <input
-                className="form-input"
-                value={collectionName}
-                onChange={(event) => setCollectionName(event.target.value)}
-                required
-              />
-            </label>
-            <button type="submit" className="btn" disabled={collectionBusy}>
-              {collectionBusy ? 'Creating…' : 'Create collection'}
-            </button>
-            {collections.map((collection) => (
-              <button
-                key={collection.id}
-                type="button"
-                className="btn btn-sm"
-                onClick={() => void remove(collection.id).catch((err: unknown) => {
-                  setCollectionError(err instanceof Error ? err.message : 'Failed to delete the collection');
-                })}
-              >
-                Delete {collection.name}
+          <div className="projects-page-actions">
+            {testDataOn ? null : (
+              // D-006
+              <button type="button" className="btn" onClick={() => setCollectionsOpen(true)}>
+                Collections
               </button>
-            ))}
-          </form>
-        )}
+            )}
+            <button type="button" className="btn btn-primary" onClick={() => setCreateOpen(true)}>
+              New project
+            </button>
+          </div>
+        </div>
+        {!testDataOn && collectionsLoaded && collections.length === 0 ? (
+          <p className="form-help">Open Collections to create one, then press its name on a project.</p>
+        ) : null}
         {collectionError ? <p className="form-error">{collectionError}</p> : null}
         {reorderError ? <p className="modal-error">{reorderError}</p> : null}
 
@@ -725,6 +824,7 @@ export function ProjectsClient() {
         onCreated={saved}
         testDataOn={testDataOn}
       />
+      <CollectionsModal open={collectionsOpen} onClose={() => setCollectionsOpen(false)} />
     </AppShell>
   );
 }
