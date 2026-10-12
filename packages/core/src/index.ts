@@ -15,3 +15,4 @@ export * from './threads.js';
 export * from './tasks.js';
 export * from './passwords.js';
 export * from './people.js';
+export * from './collections.js';

@@ -2224,9 +2224,22 @@ a:hover {
   align-items: stretch;
 }
 
-.project-row-head .overview-item-trigger {
+.project-row-summary {
   flex: 1;
   min-width: 0;
+}
+
+.project-row-summary:hover {
+  background: var(--surface-elevated);
+}
+
+.project-row.is-expanded .project-row-summary:hover {
+  background: transparent;
+}
+
+.project-row .overview-item-trigger:hover,
+.overview-list-muted .project-row .overview-item-trigger:hover {
+  background: transparent;
 }
 
 .project-grab {
@@ -2421,7 +2434,11 @@ a:hover {
   min-width: 0;
 }
 
-.projects-page-header .btn {
+.projects-page-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2);
   flex-shrink: 0;
 }
 
@@ -2431,7 +2448,7 @@ a:hover {
     align-items: stretch;
   }
 
-  .projects-page-header .btn {
+  .projects-page-actions {
     align-self: flex-end;
   }
 }
@@ -3492,6 +3509,58 @@ html:has(body.launcher-page) {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
+}
+
+.collection-switcher {
+  max-width: 11rem;
+  height: 32px;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.collection-dialog-create {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-2);
+}
+
+.collection-dialog-create .form-field {
+  flex: 1;
+  min-width: 12rem;
+}
+
+.collection-dialog-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.collection-dialog-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border);
+}
+
+.collection-dialog-confirm {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.collection-toggles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding: 0 var(--space-4) var(--space-3);
 }
 
 .account-sign-out {

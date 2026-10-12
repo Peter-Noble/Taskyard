@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import Image from 'next/image';
 import { TestDataToggle } from '@/components/test-data-toggle';
 import { useSessionPerson } from '@/components/providers';
+import { useCollections } from '@/components/collection-provider';
 import { useTestData as useTestDataContext } from '@/lib/hooks/use-test-data';
 
 type AppShellProps = {
@@ -16,6 +17,7 @@ type AppShellProps = {
 export function AppShell({ children, pageTitle, actions }: AppShellProps) {
   const pathname = usePathname();
   const person = useSessionPerson();
+  const { collections, activeId, select } = useCollections();
   const { useTestData: testDataOn } = useTestDataContext();
   const avatarSrc = testDataOn ? '/user-avatar-test.png' : '/user-avatar.svg';
 
@@ -53,6 +55,21 @@ export function AppShell({ children, pageTitle, actions }: AppShellProps) {
         <div className="header-actions">
           {actions}
           <TestDataToggle />
+          {person ? (
+            <select
+              className="form-select collection-switcher"
+              aria-label="Collection"
+              value={activeId ?? ''}
+              onChange={(event) => select(event.target.value || null)}
+            >
+              <option value="">All</option>
+              {collections.map((collection) => (
+                <option key={collection.id} value={collection.id}>
+                  {collection.name}
+                </option>
+              ))}
+            </select>
+          ) : null}
           {person ? (
             <Link
               href="/account"
