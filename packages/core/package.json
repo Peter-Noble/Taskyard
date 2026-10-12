@@ -9,6 +9,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "./task-cli-contract": {
+      "types": "./dist/task-cli-contract.d.ts",
+      "import": "./dist/task-cli-contract.js"
     }
   },
   "scripts": {

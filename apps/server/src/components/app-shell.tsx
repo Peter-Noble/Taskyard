@@ -28,6 +28,7 @@ export function AppShell({ children, pageTitle, actions }: AppShellProps) {
     { href: '/projects', label: 'Projects' },
     { href: '/people', label: 'People' },
     { href: '/auto', label: 'Auto' },
+    { href: '/install', label: 'Install' },
   ];
 
   return (

@@ -1,6 +1,7 @@
 node_modules/
 dist/
 .next/
+apps/server/public/cli/
 coverage/
 *.db
 *.db-journal

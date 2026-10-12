@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { getGlobalServerUrl } from './global-config.js';
 
 export type ProjectFile = {
   project_id: string;
@@ -75,9 +76,11 @@ export function resolveProjectContext(explicitProject?: string): {
 
   const projectId =
     explicitProject?.trim() || process.env.TASKYARD_PROJECT_ID?.trim() || found?.file.project_id;
+  // D-014: env > project.json > ~/.config/taskyard/config.json > localhost
   const serverUrl =
     process.env.TASKYARD_SERVER_URL?.trim() ||
     found?.file.server_url ||
+    getGlobalServerUrl() ||
     'http://127.0.0.1:3000';
   const workspace = process.env.TASKYARD_WORKSPACE?.trim() || found?.workspace;
 

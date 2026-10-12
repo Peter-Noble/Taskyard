@@ -1,4 +1,5 @@
 export * from './load-env.js';
+export * from './task-cli-contract.js';
 export * from './db.js';
 export * from './paths.js';
 export * from './format.js';

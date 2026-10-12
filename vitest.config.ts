@@ -13,6 +13,13 @@ export default defineConfig({
     alias: {
       '@taskyard/protocol': packageSrc('protocol'),
       '@taskyard/db': packageSrc('db'),
+      '@taskyard/core/task-cli-contract': path.resolve(
+        root,
+        'packages',
+        'core',
+        'src',
+        'task-cli-contract.ts',
+      ),
       '@taskyard/core': packageSrc('core'),
       '@taskyard/test-utils': packageSrc('test-utils'),
     },

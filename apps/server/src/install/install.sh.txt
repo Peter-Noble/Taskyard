@@ -1,0 +1,128 @@
+#!/usr/bin/env bash
+# Taskyard CLI installer (served by this Taskyard instance).
+set -euo pipefail
+
+SERVER_URL="__TASKYARD_SERVER_URL__"
+BASE_URL="__TASKYARD_BASE_URL__"
+
+echo "Installing Taskyard CLI from ${BASE_URL}"
+echo "Server URL will be set to ${SERVER_URL}"
+echo
+
+if ! command -v node >/dev/null 2>&1; then
+  echo "WARNING: Node.js was not found on PATH."
+  echo "The Taskyard CLI requires Node.js 20 or newer to run."
+  echo "You can continue installing the files now and install Node later."
+  echo
+  printf "Press Enter to continue installing, or Ctrl-C to abort... "
+  # Reading from the controlling tty so curl | bash still pauses.
+  if [[ -r /dev/tty ]]; then
+    read -r _ < /dev/tty
+  else
+    read -r _
+  fi
+  echo
+  NODE_MISSING=1
+else
+  NODE_MISSING=0
+  NODE_MAJOR="$(node -p "process.versions.node.split('.')[0]" 2>/dev/null || echo 0)"
+  if [[ "${NODE_MAJOR}" -lt 20 ]]; then
+    echo "WARNING: Node.js ${NODE_MAJOR} found; Taskyard recommends Node 20+."
+    printf "Press Enter to continue, or Ctrl-C to abort... "
+    if [[ -r /dev/tty ]]; then
+      read -r _ < /dev/tty
+    else
+      read -r _
+    fi
+    echo
+  fi
+fi
+
+if ! command -v curl >/dev/null 2>&1; then
+  echo "error: curl is required" >&2
+  exit 1
+fi
+
+SHARE_DIR="${TASKYARD_INSTALL_ROOT:-${HOME}/.local/share/taskyard}"
+BIN_DIR="${HOME}/.local/bin"
+CONFIG_DIR="${HOME}/.config/taskyard"
+mkdir -p "${SHARE_DIR}" "${BIN_DIR}" "${CONFIG_DIR}"
+
+TMP_BUNDLE="$(mktemp)"
+TMP_VERSION="$(mktemp)"
+trap 'rm -f "${TMP_BUNDLE}" "${TMP_VERSION}"' EXIT
+
+echo "Downloading CLI bundle..."
+curl -fsSL "${BASE_URL}/cli/taskyard.mjs" -o "${TMP_BUNDLE}"
+curl -fsSL "${BASE_URL}/cli/version.json" -o "${TMP_VERSION}"
+
+if command -v sha256sum >/dev/null 2>&1; then
+  GOT="$(sha256sum "${TMP_BUNDLE}" | awk '{print $1}')"
+elif command -v shasum >/dev/null 2>&1; then
+  GOT="$(shasum -a 256 "${TMP_BUNDLE}" | awk '{print $1}')"
+else
+  GOT=""
+fi
+EXPECT="$(sed -n 's/.*"sha256"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "${TMP_VERSION}" | head -n1)"
+if [[ -n "${GOT}" && -n "${EXPECT}" && "${GOT}" != "${EXPECT}" ]]; then
+  echo "error: bundle hash mismatch (got ${GOT}, expected ${EXPECT})" >&2
+  exit 1
+fi
+
+install -m 755 "${TMP_BUNDLE}" "${SHARE_DIR}/taskyard.mjs"
+cp "${TMP_VERSION}" "${SHARE_DIR}/version.json"
+
+cat > "${BIN_DIR}/taskyard" <<EOF
+#!/usr/bin/env bash
+export TASKYARD_INSTALL_ROOT="${SHARE_DIR}"
+exec node "${SHARE_DIR}/taskyard.mjs" "\$@"
+EOF
+chmod 755 "${BIN_DIR}/taskyard"
+
+if command -v python3 >/dev/null 2>&1; then
+  python3 - "${CONFIG_DIR}/config.json" "${SERVER_URL}" <<'PY'
+import json, sys
+path, url = sys.argv[1], sys.argv[2]
+try:
+    with open(path, encoding="utf-8") as f:
+        data = json.load(f)
+    if not isinstance(data, dict):
+        data = {}
+except Exception:
+    data = {}
+data["server_url"] = url
+with open(path, "w", encoding="utf-8") as f:
+    json.dump(data, f, indent=2)
+    f.write("\n")
+PY
+else
+  printf '{\n  "server_url": "%s"\n}\n' "${SERVER_URL}" > "${CONFIG_DIR}/config.json"
+fi
+
+echo
+echo "Installed:"
+echo "  binary:  ${BIN_DIR}/taskyard"
+echo "  bundle:  ${SHARE_DIR}/taskyard.mjs"
+echo "  config:  ${CONFIG_DIR}/config.json (server_url=${SERVER_URL})"
+echo
+
+case ":${PATH}:" in
+  *":${BIN_DIR}:"*) ;;
+  *)
+    echo "Note: ${BIN_DIR} is not on your PATH."
+    echo "Add it, for example:"
+    echo "  export PATH=\"${BIN_DIR}:\$PATH\""
+    echo
+    ;;
+esac
+
+if [[ "${NODE_MISSING}" -eq 1 ]]; then
+  echo "Node.js was not found. Install Node 20+ before running taskyard."
+  echo
+fi
+
+echo "Next steps:"
+echo "  taskyard setup --project <project-id>"
+echo "  taskyard update   # after this server is redeployed"
+echo
+echo "Done."

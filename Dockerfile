@@ -19,11 +19,13 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json projects
 COPY apps ./apps
 COPY packages ./packages
 COPY agents ./agents
+COPY scripts ./scripts
 
 RUN pnpm install --frozen-lockfile \
   && pnpm --filter @taskyard/protocol build \
   && pnpm --filter @taskyard/db build \
   && pnpm --filter @taskyard/core build \
+  && pnpm --filter cli bundle \
   && pnpm --filter server build
 
 ENV TASKYARD_REPO_ROOT=/app

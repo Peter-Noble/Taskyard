@@ -1,0 +1,115 @@
+# Taskyard CLI installer (served by this Taskyard instance).
+$ErrorActionPreference = 'Stop'
+
+$ServerUrl = '__TASKYARD_SERVER_URL__'
+$BaseUrl = '__TASKYARD_BASE_URL__'
+
+Write-Host "Installing Taskyard CLI from $BaseUrl"
+Write-Host "Server URL will be set to $ServerUrl"
+Write-Host ""
+
+$nodeCmd = Get-Command node -ErrorAction SilentlyContinue
+if (-not $nodeCmd) {
+  Write-Host "WARNING: Node.js was not found on PATH."
+  Write-Host "The Taskyard CLI requires Node.js 20 or newer to run."
+  Write-Host "You can continue installing the files now and install Node later."
+  Write-Host ""
+  Read-Host "Press Enter to continue installing, or Ctrl+C to abort"
+  Write-Host ""
+  $NodeMissing = $true
+} else {
+  $NodeMissing = $false
+  try {
+    $major = [int]((node -p "process.versions.node.split('.')[0]").Trim())
+    if ($major -lt 20) {
+      Write-Host "WARNING: Node.js $major found; Taskyard recommends Node 20+."
+      Read-Host "Press Enter to continue, or Ctrl+C to abort"
+      Write-Host ""
+    }
+  } catch {
+    # ignore version probe failures
+  }
+}
+
+if ($env:TASKYARD_INSTALL_ROOT -and $env:TASKYARD_INSTALL_ROOT.Trim()) {
+  $ShareDir = $env:TASKYARD_INSTALL_ROOT.Trim()
+} elseif ($env:LOCALAPPDATA) {
+  $ShareDir = Join-Path $env:LOCALAPPDATA 'taskyard'
+} else {
+  $ShareDir = Join-Path $HOME 'AppData\Local\taskyard'
+}
+
+$ConfigDir = Join-Path $HOME '.config\taskyard'
+$BinDir = Join-Path $env:LOCALAPPDATA 'Microsoft\WindowsApps'
+if (-not (Test-Path $BinDir)) {
+  $BinDir = Join-Path $HOME '.local\bin'
+}
+
+New-Item -ItemType Directory -Force -Path $ShareDir | Out-Null
+New-Item -ItemType Directory -Force -Path $ConfigDir | Out-Null
+New-Item -ItemType Directory -Force -Path $BinDir | Out-Null
+
+$BundlePath = Join-Path $ShareDir 'taskyard.mjs'
+$VersionPath = Join-Path $ShareDir 'version.json'
+$TmpBundle = Join-Path $env:TEMP ("taskyard-bundle-" + [guid]::NewGuid() + ".mjs")
+$TmpVersion = Join-Path $env:TEMP ("taskyard-version-" + [guid]::NewGuid() + ".json")
+
+try {
+  Write-Host "Downloading CLI bundle..."
+  Invoke-WebRequest -Uri ($BaseUrl + '/cli/taskyard.mjs') -OutFile $TmpBundle -UseBasicParsing
+  Invoke-WebRequest -Uri ($BaseUrl + '/cli/version.json') -OutFile $TmpVersion -UseBasicParsing
+
+  $sha = [System.BitConverter]::ToString(
+    [System.Security.Cryptography.SHA256]::Create().ComputeHash(
+      [System.IO.File]::ReadAllBytes($TmpBundle)
+    )
+  ).Replace('-', '').ToLowerInvariant()
+  $expect = (Get-Content $TmpVersion -Raw | ConvertFrom-Json).sha256
+  if ($expect -and ($sha -ne $expect)) {
+    throw "bundle hash mismatch (got $sha, expected $expect)"
+  }
+
+  Copy-Item -Force $TmpBundle $BundlePath
+  Copy-Item -Force $TmpVersion $VersionPath
+
+  $CmdPath = Join-Path $BinDir 'taskyard.cmd'
+  @"
+@echo off
+set TASKYARD_INSTALL_ROOT=$ShareDir
+node "$BundlePath" %*
+"@ | Set-Content -Encoding ASCII $CmdPath
+
+  $configPath = Join-Path $ConfigDir 'config.json'
+  $config = @{ server_url = $ServerUrl }
+  if (Test-Path $configPath) {
+    try {
+      $existing = Get-Content $configPath -Raw | ConvertFrom-Json
+      $config = @{}
+      $existing.PSObject.Properties | ForEach-Object { $config[$_.Name] = $_.Value }
+      $config['server_url'] = $ServerUrl
+    } catch {
+      $config = @{ server_url = $ServerUrl }
+    }
+  }
+  ($config | ConvertTo-Json) | Set-Content -Encoding UTF8 $configPath
+
+  Write-Host ""
+  Write-Host "Installed:"
+  Write-Host "  launcher: $CmdPath"
+  Write-Host "  bundle:   $BundlePath"
+  Write-Host "  config:   $configPath (server_url=$ServerUrl)"
+  Write-Host ""
+
+  if ($NodeMissing) {
+    Write-Host "Node.js was not found. Install Node 20+ before running taskyard."
+    Write-Host ""
+  }
+
+  Write-Host "Next steps:"
+  Write-Host "  taskyard setup --project <project-id>"
+  Write-Host "  taskyard update   # after this server is redeployed"
+  Write-Host ""
+  Write-Host "Done."
+} finally {
+  Remove-Item -ErrorAction SilentlyContinue $TmpBundle, $TmpVersion
+}

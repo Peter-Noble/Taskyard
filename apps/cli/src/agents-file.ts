@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
-import { TASK_CLI_CONTRACT } from '@taskyard/core';
+import { TASK_CLI_CONTRACT } from '@taskyard/core/task-cli-contract';
 import { findProjectFile, readProjectFile, resolveProjectContext } from './project-file.js';
 
 export const TASKYARD_AGENTS_START = '<!-- taskyard:start -->';

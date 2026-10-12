@@ -8,6 +8,22 @@ Self-hosted orchestrator that runs AI coding agents (Cursor / Kimi via ACP) acro
 - [pnpm](https://pnpm.io/) 9+
 - For ACP agents: [Cursor CLI](https://cursor.com/docs/cli) (`agent login`) and/or Kimi CLI (`kimi login`)
 
+## Install the CLI from a running server
+
+On the **Install** page in the web UI, copy a one-liner:
+
+```bash
+curl -fsSL https://<your-taskyard-host>/install.sh | bash
+```
+
+```powershell
+irm https://<your-taskyard-host>/install.ps1 | iex
+```
+
+This downloads an esbuild-bundled `taskyard` (still needs Node 20+ on PATH), puts it on your PATH, and writes `server_url` to `~/.config/taskyard/config.json`. If Node is missing, the script warns and pauses until you confirm. After the server is redeployed, the CLI compares artifact hashes and suggests `taskyard update`.
+
+Build the served artifact with `pnpm bundle:cli` (also runs in the Docker image build).
+
 ## Setup
 
 ```bash
