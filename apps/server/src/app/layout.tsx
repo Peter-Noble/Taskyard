@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { cookies } from 'next/headers';
 import './globals.css';
 import { getDb, seedProjectsIfEmpty } from '@taskyard/core';
+import { shouldShowSandboxChrome } from '@taskyard/db';
 import { AuthGate } from '@/components/auth-gate';
 import { Providers } from '@/components/providers';
 import { readWebGate, SESSION_COOKIE } from '@/lib/web-session';
@@ -22,9 +23,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const jar = await cookies();
   const gate = readWebGate(jar.get(SESSION_COOKIE)?.value);
   const collectionId = jar.get(ACTIVE_COLLECTION_COOKIE)?.value || null;
+  const sandbox = shouldShowSandboxChrome();
 
   return (
-    <html lang="en">
+    <html lang="en" className={sandbox ? 'ty-sandbox' : undefined}>
       <body>
         <Providers person={gate.kind === 'app' ? gate.person : null} collectionId={collectionId}>
           {gate.kind === 'app' ? children : <AuthGate gate={gate} />}

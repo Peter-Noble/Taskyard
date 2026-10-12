@@ -56,6 +56,26 @@ html {
   overflow: hidden;
 }
 
+/* Host-side next dev / sandbox DB — unmistakable vs live Docker. */
+html.ty-sandbox {
+  box-shadow: inset 0 0 0 6px #e10600;
+}
+
+html.ty-sandbox body::before {
+  content: 'DEV — sandbox DB (not live)';
+  position: fixed;
+  top: 0;
+  left: 50%;
+  z-index: 100000;
+  transform: translateX(-50%);
+  padding: 2px 12px;
+  background: #e10600;
+  color: #fff;
+  font: 600 11px/1.4 var(--font-mono, ui-monospace, monospace);
+  letter-spacing: 0.04em;
+  pointer-events: none;
+}
+
 body {
   margin: 0;
   height: 100dvh;

@@ -6,6 +6,11 @@ import * as schema from './schema.js';
 
 export type TaskyardDb = BetterSQLite3Database<typeof schema>;
 
+/** Live / Docker default. */
+export const PRODUCTION_DB_BASENAME = 'taskyard.db';
+/** Host-side `next dev` default — separate file so live stays up. */
+export const SANDBOX_DB_BASENAME = 'taskyard-dev.db';
+
 export function findRepoRoot(start = process.cwd()): string {
   if (process.env.TASKYARD_REPO_ROOT) {
     return path.resolve(process.env.TASKYARD_REPO_ROOT);
@@ -20,8 +25,35 @@ export function findRepoRoot(start = process.cwd()): string {
   return start;
 }
 
+export function productionDbPath(root = findRepoRoot()): string {
+  return path.join(root, 'data', PRODUCTION_DB_BASENAME);
+}
+
+export function sandboxDbPath(root = findRepoRoot()): string {
+  return path.join(root, 'data', SANDBOX_DB_BASENAME);
+}
+
+export function isSandboxDbPath(dbPath: string): boolean {
+  const normalized = path.resolve(dbPath);
+  return (
+    normalized.endsWith(`${path.sep}data${path.sep}${SANDBOX_DB_BASENAME}`) ||
+    dbPath.endsWith(`data/${SANDBOX_DB_BASENAME}`)
+  );
+}
+
+/** True when the UI should warn that this session is not live production data. */
+export function shouldShowSandboxChrome(dbPath = resolveDbPath()): boolean {
+  // next dev always frames the page; production only when on the sandbox file.
+  if (process.env.NODE_ENV === 'development') return true;
+  return isSandboxDbPath(dbPath);
+}
+
 function defaultDbPath(): string {
-  return path.join(findRepoRoot(), 'data', 'taskyard.db');
+  // NODE_ENV=development → data/taskyard-dev.db; otherwise data/taskyard.db.
+  if (process.env.NODE_ENV === 'development') {
+    return sandboxDbPath();
+  }
+  return productionDbPath();
 }
 
 export function resolveDbPath(explicitPath?: string): string {

@@ -3,7 +3,7 @@
   "private": true,
   "packageManager": "pnpm@9.15.0",
   "scripts": {
-    "dev:server": "pnpm --filter server dev",
+    "dev:server": "pnpm --filter @taskyard/protocol build && pnpm --filter @taskyard/db build && pnpm --filter @taskyard/core build && pnpm db:sync-sandbox && pnpm --filter server dev",
     "dev:hub": "pnpm --filter hub dev",
     "dev:worker": "pnpm --filter cli dev:worker",
     "dev:tui": "pnpm --filter cli dev:tui",
@@ -15,7 +15,8 @@
     "test:unit": "vitest run packages/**/*.unit.test.ts apps/**/*.unit.test.ts",
     "test:integration": "vitest run packages/**/*.integration.test.ts apps/**/*.integration.test.ts",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "db:sync-sandbox": "pnpm --filter @taskyard/db exec node ./scripts/sync-sandbox-db.mjs"
   },
   "devDependencies": {
     "@vitest/coverage-v8": "^3.2.4",

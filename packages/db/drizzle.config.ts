@@ -13,7 +13,14 @@ function findRepoRoot(start = process.cwd()): string {
   return start;
 }
 
-const dbPath = process.env.TASKYARD_DB_PATH ?? path.join(findRepoRoot(), 'data', 'taskyard.db');
+const root = findRepoRoot();
+const dbPath =
+  process.env.TASKYARD_DB_PATH ??
+  path.join(
+    root,
+    'data',
+    process.env.NODE_ENV === 'development' ? 'taskyard-dev.db' : 'taskyard.db',
+  );
 fs.mkdirSync(path.dirname(dbPath), { recursive: true });
 
 export default defineConfig({

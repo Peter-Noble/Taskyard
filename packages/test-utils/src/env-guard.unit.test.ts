@@ -10,9 +10,11 @@ describe('env-guard', () => {
     process.env = { ...originalEnv };
   });
 
-  it('detects the dev database path', () => {
+  it('detects protected project database paths', () => {
     expect(isDevDbPath('/repo/data/taskyard.db')).toBe(true);
+    expect(isDevDbPath('/repo/data/taskyard-dev.db')).toBe(true);
     expect(isDevDbPath(path.join('D:', 'Taskyard', 'data', 'taskyard.db'))).toBe(true);
+    expect(isDevDbPath(path.join('D:', 'Taskyard', 'data', 'taskyard-dev.db'))).toBe(true);
   });
 
   it('allows temp and memory database paths', () => {
@@ -20,14 +22,18 @@ describe('env-guard', () => {
     expect(isSafeTestDbPath(tempDb)).toBe(true);
     expect(isSafeTestDbPath(':memory:')).toBe(true);
     expect(isSafeTestDbPath(path.join('D:', 'Taskyard', 'data', 'taskyard.db'))).toBe(false);
+    expect(isSafeTestDbPath(path.join('D:', 'Taskyard', 'data', 'taskyard-dev.db'))).toBe(false);
   });
 
-  it('assertSafeTestEnv rejects dev database paths', () => {
+  it('assertSafeTestEnv rejects project database paths', () => {
     process.env.NODE_ENV = 'test';
     process.env.TASKYARD_DB_PATH = path.join(os.tmpdir(), 'taskyard-test', 'test.db');
     expect(() => assertSafeTestEnv()).not.toThrow();
 
     process.env.TASKYARD_DB_PATH = path.join('D:', 'Taskyard', 'data', 'taskyard.db');
+    expect(() => assertSafeTestEnv()).toThrow(/dev database/i);
+
+    process.env.TASKYARD_DB_PATH = path.join('D:', 'Taskyard', 'data', 'taskyard-dev.db');
     expect(() => assertSafeTestEnv()).toThrow(/dev database/i);
   });
 });

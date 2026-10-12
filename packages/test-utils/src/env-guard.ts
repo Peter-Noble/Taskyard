@@ -1,11 +1,18 @@
 import os from 'node:os';
 import path from 'node:path';
 
-const DEV_DB_NAME = `${path.sep}data${path.sep}taskyard.db`;
+/** Project SQLite files under data/ — never use these for automated tests. */
+const PROTECTED_DB_SUFFIXES = [
+  `${path.sep}data${path.sep}taskyard.db`,
+  `${path.sep}data${path.sep}taskyard-dev.db`,
+] as const;
+
+const PROTECTED_DB_RELATIVE = ['data/taskyard.db', 'data/taskyard-dev.db'] as const;
 
 export function isDevDbPath(dbPath: string): boolean {
   const normalized = path.resolve(dbPath);
-  return normalized.endsWith(DEV_DB_NAME) || dbPath.endsWith('data/taskyard.db');
+  if (PROTECTED_DB_SUFFIXES.some((suffix) => normalized.endsWith(suffix))) return true;
+  return PROTECTED_DB_RELATIVE.some((rel) => dbPath.endsWith(rel));
 }
 
 export function isSafeTestDbPath(dbPath: string): boolean {

@@ -1,0 +1,17 @@
+.git
+**/.next
+**/node_modules
+**/dist
+**/.turbo
+**/coverage
+**/tsconfig.tsbuildinfo
+data
+design
+theme
+docs
+.agents
+.claude
+.taskyard
+images
+*.md
+!docker_command.md
