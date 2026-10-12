@@ -3494,6 +3494,32 @@ html:has(body.launcher-page) {
   gap: var(--space-2);
 }
 
+.collection-switcher {
+  max-width: 11rem;
+  height: 32px;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.collection-manager {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-4);
+}
+
+.collection-manager .form-field {
+  min-width: 180px;
+}
+
+.collection-toggles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding: 0 var(--space-4) var(--space-3);
+}
+
 .account-sign-out {
   margin-top: var(--space-4);
 }

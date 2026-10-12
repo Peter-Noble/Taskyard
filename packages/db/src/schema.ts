@@ -163,6 +163,33 @@ export const sessions = sqliteTable('sessions', {
   createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
 });
 
+export const collections = sqliteTable(
+  'collections',
+  {
+    id: text('id').primaryKey(),
+    personId: text('person_id')
+      .notNull()
+      .references(() => people.id),
+    name: text('name').notNull(),
+    createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
+  },
+  (table) => [uniqueIndex('collections_person_name').on(table.personId, table.name)],
+);
+
+export const collectionProjects = sqliteTable(
+  'collection_projects',
+  {
+    collectionId: text('collection_id')
+      .notNull()
+      .references(() => collections.id),
+    projectId: text('project_id')
+      .notNull()
+      .references(() => projects.id),
+    sortOrder: integer('sort_order').notNull().default(0),
+  },
+  (table) => [primaryKey({ columns: [table.collectionId, table.projectId] })],
+);
+
 export const vault = sqliteTable('vault', {
   id: integer('id', { mode: 'number' }).primaryKey({ autoIncrement: true }),
   agentType: text('agent_type').notNull(),

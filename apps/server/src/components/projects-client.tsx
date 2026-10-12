@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { AppShell } from '@/components/app-shell';
 import { useTestData } from '@/lib/hooks/use-test-data';
 import { useJsonFetch } from '@/lib/hooks/use-json-fetch';
@@ -11,6 +11,8 @@ import type {
   ProjectTaskCounts,
   UpdateProjectRequest,
 } from '@taskyard/protocol';
+import { useCollections } from '@/components/collection-provider';
+import { projectsInCollection, type CollectionSummary } from '@/lib/active-collection';
 
 function repoMeta(project: Project): string {
   if (!project.repo_url) return 'No repository';
@@ -429,6 +431,8 @@ function ProjectSection({
   onSaved,
   onReorder,
   emptyMessage,
+  collections,
+  onToggle,
 }: {
   id: string;
   label: string;
@@ -438,6 +442,8 @@ function ProjectSection({
   onSaved: () => void;
   onReorder: (next: Project[]) => void;
   emptyMessage?: string;
+  collections: CollectionSummary[];
+  onToggle: (collectionId: string, projectId: string, include: boolean) => void;
 }) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [overId, setOverId] = useState<string | null>(null);
@@ -511,6 +517,24 @@ function ProjectSection({
                     </span>
                   </button>
                 </div>
+                {collections.length > 0 && !testDataOn ? (
+                  <div className="collection-toggles">
+                    {collections.map((collection) => {
+                      const included = collection.project_ids.includes(project.id);
+                      return (
+                        <button
+                          key={collection.id}
+                          type="button"
+                          className={`btn btn-sm${included ? ' btn-primary' : ''}`}
+                          aria-pressed={included}
+                          onClick={() => onToggle(collection.id, project.id, !included)}
+                        >
+                          {collection.name}
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : null}
                 <div
                   id={`project-detail-${project.id}`}
                   className="overview-item-detail"
@@ -539,39 +563,79 @@ export function ProjectsClient() {
     0,
     !testDataOn,
   );
+  const { active, collections, refresh: refreshCollections, create, remove, toggleProject } = useCollections();
   const [createOpen, setCreateOpen] = useState(false);
   const [ordered, setOrdered] = useState<Project[] | null>(null);
   const [reorderError, setReorderError] = useState<string | null>(null);
+  const [collectionName, setCollectionName] = useState('');
+  const [collectionError, setCollectionError] = useState<string | null>(null);
+  const [collectionBusy, setCollectionBusy] = useState(false);
 
   useEffect(() => {
     setOrdered(null);
-  }, [data]);
+  }, [data, active?.id]);
 
   const allProjects = testDataOn ? TEST_PROJECTS : (ordered ?? data?.projects ?? []);
-  const active = useMemo(() => allProjects.filter((p) => !p.archived), [allProjects]);
-  const archived = useMemo(() => allProjects.filter((p) => p.archived), [allProjects]);
+  const visibleProjects = useMemo(() => {
+    if (testDataOn || ordered || !active) return allProjects;
+    return projectsInCollection(allProjects, active);
+  }, [active, allProjects, ordered, testDataOn]);
+  const activeProjects = useMemo(() => visibleProjects.filter((p) => !p.archived), [visibleProjects]);
+  const archivedProjects = useMemo(() => visibleProjects.filter((p) => p.archived), [visibleProjects]);
+
+  const saved = useCallback(() => {
+    void refresh();
+    void refreshCollections();
+  }, [refresh, refreshCollections]);
+
+  const handleToggle = useCallback(
+    (collectionId: string, projectId: string, include: boolean) => {
+      setCollectionError(null);
+      void toggleProject(collectionId, projectId, include).catch((err: unknown) => {
+        setCollectionError(err instanceof Error ? err.message : 'Failed to update the collection');
+      });
+    },
+    [toggleProject],
+  );
+
+  async function createNamedCollection(event: FormEvent) {
+    event.preventDefault();
+    setCollectionBusy(true);
+    setCollectionError(null);
+    try {
+      await create(collectionName);
+      setCollectionName('');
+    } catch (err) {
+      setCollectionError(err instanceof Error ? err.message : 'Failed to create the collection');
+    } finally {
+      setCollectionBusy(false);
+    }
+  }
 
   const handleReorder = useCallback(
     async (nextSection: Project[]) => {
-      const nextAll = placeSection(allProjects, nextSection);
+      const nextAll = placeSection(visibleProjects, nextSection);
       setOrdered(nextAll);
       setReorderError(null);
       if (testDataOn) return;
       try {
-        const res = await fetch('/api/projects/order', {
+        // D-005
+        const url = active ? `/api/collections/${encodeURIComponent(active.id)}/order` : '/api/projects/order';
+        const res = await fetch(url, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ ids: nextSection.map((project) => project.id) }),
         });
         const body = (await res.json()) as { error?: string };
         if (!res.ok) throw new Error(body.error ?? 'Failed to reorder projects');
-        await refresh();
+        if (active) await refreshCollections();
+        else await refresh();
       } catch (err) {
         setOrdered(null);
         setReorderError(err instanceof Error ? err.message : 'Failed to reorder projects');
       }
     },
-    [allProjects, refresh, testDataOn],
+    [active, refresh, refreshCollections, testDataOn, visibleProjects],
   );
 
   return (
@@ -586,6 +650,35 @@ export function ProjectsClient() {
             New project
           </button>
         </div>
+        {testDataOn ? null : (
+          <form className="collection-manager" onSubmit={(event) => void createNamedCollection(event)}>
+            <label className="form-field">
+              <span className="form-label">New collection</span>
+              <input
+                className="form-input"
+                value={collectionName}
+                onChange={(event) => setCollectionName(event.target.value)}
+                required
+              />
+            </label>
+            <button type="submit" className="btn" disabled={collectionBusy}>
+              {collectionBusy ? 'Creating…' : 'Create collection'}
+            </button>
+            {collections.map((collection) => (
+              <button
+                key={collection.id}
+                type="button"
+                className="btn btn-sm"
+                onClick={() => void remove(collection.id).catch((err: unknown) => {
+                  setCollectionError(err instanceof Error ? err.message : 'Failed to delete the collection');
+                })}
+              >
+                Delete {collection.name}
+              </button>
+            ))}
+          </form>
+        )}
+        {collectionError ? <p className="form-error">{collectionError}</p> : null}
         {reorderError ? <p className="modal-error">{reorderError}</p> : null}
 
         {loading && allProjects.length === 0 && !testDataOn ? (
@@ -595,24 +688,30 @@ export function ProjectsClient() {
             <ProjectSection
               id="active-projects-heading"
               label="Active"
-              items={active}
+              items={activeProjects}
               testDataOn={testDataOn}
-              onSaved={() => void refresh()}
+              onSaved={saved}
               onReorder={(next) => void handleReorder(next)}
+              collections={testDataOn ? [] : collections}
+              onToggle={handleToggle}
               emptyMessage={
                 testDataOn
                   ? undefined
-                  : 'No projects yet. Create one to use in New Thread.'
+                  : active
+                    ? `No projects in ${active.name}. Choose All and press the collection name on a project.`
+                    : 'No projects yet. Create one to use in New Thread.'
               }
             />
             <ProjectSection
               id="archived-projects-heading"
               label="Archived"
-              items={archived}
+              items={archivedProjects}
               muted
               testDataOn={testDataOn}
-              onSaved={() => void refresh()}
+              onSaved={saved}
               onReorder={(next) => void handleReorder(next)}
+              collections={testDataOn ? [] : collections}
+              onToggle={handleToggle}
               emptyMessage="Archived projects are hidden from New Thread."
             />
           </div>
@@ -623,7 +722,7 @@ export function ProjectsClient() {
       <CreateProjectModal
         open={createOpen}
         onClose={() => setCreateOpen(false)}
-        onCreated={() => void refresh()}
+        onCreated={saved}
         testDataOn={testDataOn}
       />
     </AppShell>

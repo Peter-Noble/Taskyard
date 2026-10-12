@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { AgentManifest, Machine, Project, ThreadPlacement } from '@taskyard/protocol';
 import { fetchTasksForProject, type ApiTask } from '@/lib/tasks-api';
+import { useCollections } from '@/components/collection-provider';
+import { projectsInCollection } from '@/lib/active-collection';
 
 type AgentInfo = AgentManifest & { id: string };
 
@@ -37,6 +39,7 @@ export function NewThreadModal({ open, onClose, onCreated }: NewThreadModalProps
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [errorHint, setErrorHint] = useState<string | null>(null);
+  const { active } = useCollections();
 
   const runnableProjects = useMemo(
     () => projects.filter((p) => !p.archived && p.repo_url),
@@ -52,7 +55,7 @@ export function NewThreadModal({ open, onClose, onCreated }: NewThreadModalProps
       fetch('/api/agents').then((r) => r.json()),
       fetch('/api/machines').then((r) => r.json()),
     ]).then(([projData, agentData, machineData]) => {
-      const projs = (projData.projects ?? []) as Project[];
+      const projs = projectsInCollection((projData.projects ?? []) as Project[], active);
       const ags = (agentData.agents ?? []) as AgentInfo[];
       const macs = (machineData.machines ?? []) as Machine[];
       setProjects(projs);
@@ -69,7 +72,7 @@ export function NewThreadModal({ open, onClose, onCreated }: NewThreadModalProps
       }
       if (ags.length && !agentType) setAgentType(ags[0].id);
     });
-  }, [open, agentType]);
+  }, [active, open, agentType]);
 
   useEffect(() => {
     if (!open || !projectId) {

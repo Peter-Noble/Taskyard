@@ -204,5 +204,30 @@ if (!hasTable('sessions')) {
   console.log('created sessions');
 }
 
+if (!hasTable('collections')) {
+  db.exec(`
+    CREATE TABLE collections (
+      id text PRIMARY KEY NOT NULL,
+      person_id text NOT NULL REFERENCES people(id),
+      name text NOT NULL,
+      created_at integer
+    );
+    CREATE UNIQUE INDEX collections_person_name ON collections(person_id, name);
+  `);
+  console.log('created collections');
+}
+
+if (!hasTable('collection_projects')) {
+  db.exec(`
+    CREATE TABLE collection_projects (
+      collection_id text NOT NULL REFERENCES collections(id),
+      project_id text NOT NULL REFERENCES projects(id),
+      sort_order integer DEFAULT 0 NOT NULL,
+      PRIMARY KEY (collection_id, project_id)
+    );
+  `);
+  console.log('created collection_projects');
+}
+
 console.log('migrate-mvp OK:', dbPath);
 db.close();

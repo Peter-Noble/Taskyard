@@ -19,6 +19,8 @@ import {
 import { useEventStream } from '@/lib/hooks/use-event-stream';
 import { useJsonFetch } from '@/lib/hooks/use-json-fetch';
 import { isDemoThreadId, useTestData } from '@/lib/hooks/use-test-data';
+import { useCollections } from '@/components/collection-provider';
+import { projectsInCollection, threadsInCollection } from '@/lib/active-collection';
 import { threadTitle } from '@/lib/format-ui';
 import {
   DEFAULT_TEST_THREAD_ID,
@@ -37,6 +39,7 @@ type ProjectsResponse = { projects: Project[] };
 export function DashboardClient({ initialPanels }: { initialPanels?: PanelVisibility }) {
   const router = useRouter();
   const { useTestData: testDataOn, hydrated } = useTestData();
+  const { active } = useCollections();
   const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [centerMode, setCenterMode] = useState<'chat' | 'task'>('chat');
@@ -65,6 +68,14 @@ export function DashboardClient({ initialPanels }: { initialPanels?: PanelVisibi
   const threads = testDataOn ? TEST_THREADS : (threadsData?.threads ?? []);
   const machines = testDataOn ? TEST_MACHINES : (machinesData?.machines ?? []);
   const projects = projectsData?.projects ?? [];
+  const visibleProjects = useMemo(
+    () => (testDataOn ? projects : projectsInCollection(projects, active)),
+    [active, projects, testDataOn],
+  );
+  const visibleThreads = useMemo(
+    () => (testDataOn ? threads : threadsInCollection(threads, active)),
+    [active, testDataOn, threads],
+  );
 
   useEffect(() => {
     if (!hydrated) return;
@@ -80,8 +91,8 @@ export function DashboardClient({ initialPanels }: { initialPanels?: PanelVisibi
   }, [testDataOn, hydrated]);
 
   const selectedThread = useMemo(
-    () => threads.find((t) => t.id === selectedThreadId) ?? null,
-    [threads, selectedThreadId],
+    () => visibleThreads.find((t) => t.id === selectedThreadId) ?? null,
+    [visibleThreads, selectedThreadId],
   );
 
   useEffect(() => {
@@ -90,9 +101,15 @@ export function DashboardClient({ initialPanels }: { initialPanels?: PanelVisibi
   }, [selectedThread?.id, selectedThread?.project_id, testDataOn]);
 
   useEffect(() => {
-    if (testDataOn || liveProjectId || projects.length === 0) return;
-    setLiveProjectId(projects[0]?.id ?? null);
-  }, [testDataOn, liveProjectId, projects]);
+    if (testDataOn || liveProjectId || visibleProjects.length === 0) return;
+    setLiveProjectId(visibleProjects[0]?.id ?? null);
+  }, [testDataOn, liveProjectId, visibleProjects]);
+
+  useEffect(() => {
+    if (testDataOn || !active) return;
+    if (liveProjectId && visibleProjects.some((project) => project.id === liveProjectId)) return;
+    setLiveProjectId(visibleProjects[0]?.id ?? null);
+  }, [active, liveProjectId, testDataOn, visibleProjects]);
 
   const liveTaskOpen = !testDataOn && centerMode === 'task' && !composingTask && Boolean(selectedTaskId);
 
@@ -170,8 +187,8 @@ export function DashboardClient({ initialPanels }: { initialPanels?: PanelVisibi
                   value={liveProjectId ?? ''}
                   onChange={(event) => setLiveProjectId(event.target.value || null)}
                 >
-                  {projects.length === 0 ? <option value="">No projects</option> : null}
-                  {projects.map((project) => (
+                  {visibleProjects.length === 0 ? <option value="">No projects</option> : null}
+                  {visibleProjects.map((project) => (
                     <option key={project.id} value={project.id}>
                       {project.name}
                     </option>
@@ -293,7 +310,7 @@ export function DashboardClient({ initialPanels }: { initialPanels?: PanelVisibi
                 {!testDataOn ? (
                   <LiveTaskDetail
                     projectId={liveProjectId}
-                    projects={projects}
+                    projects={visibleProjects}
                     taskId={selectedTaskId}
                     composing={composingTask}
                     refreshKey={taskTick}
@@ -316,7 +333,7 @@ export function DashboardClient({ initialPanels }: { initialPanels?: PanelVisibi
 
   const threadBody = (
           <ThreadRailAside
-            threads={threads}
+            threads={visibleThreads}
             selectedThreadId={selectedThreadId}
             onSelect={handleSelectThread}
           />
@@ -325,7 +342,7 @@ export function DashboardClient({ initialPanels }: { initialPanels?: PanelVisibi
   const workers = (
         <MachineDock
           machines={machines}
-          threads={threads}
+          threads={visibleThreads}
           selectedThreadId={selectedThreadId}
           onSelectThread={handleSelectThread}
         />
