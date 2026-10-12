@@ -19,3 +19,13 @@
 
 - Status: accepted
 - Task: TA-17
+
+## D-005 — The active collection is stored in the browser. Reordering projects inside a collection does not change the server-wide project order.
+
+- Status: accepted
+- Task: TA-25
+
+## D-006 — A person creates and deletes their collections from a dialog on the Projects page.
+
+- Status: accepted
+- Task: TA-25
