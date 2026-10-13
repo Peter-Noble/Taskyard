@@ -29,3 +29,13 @@
 
 - Status: accepted
 - Task: TA-25
+
+## D-007 — Task list filter uses design A: funnel icon opening a popover with Type checkboxes (all on), a snapping Priority min–max range, and Status checkboxes with Completed and Cancelled off by default.
+
+- Status: accepted
+- Task: TA-35
+
+## D-008 — Type, Priority, and Category use labels layout C: compact matched-height fields on create; on the task page they show as header pills that open edit popups when clicked.
+
+- Status: accepted
+- Task: TA-35
