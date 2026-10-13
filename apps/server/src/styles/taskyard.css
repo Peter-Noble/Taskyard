@@ -586,6 +586,41 @@ a:hover {
   gap: var(--space-3);
 }
 
+.task-item-id-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  flex-shrink: 0;
+  min-width: 3.25rem;
+}
+
+.task-item-id-col .entity-num {
+  padding-top: 2px;
+}
+
+.task-item-label-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+}
+
+.task-item-priority {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.task-item-dependent .task-item-priority {
+  font-size: 8px;
+  opacity: 0.75;
+}
+
 .task-item-main {
   flex: 1;
   min-width: 0;
