@@ -3646,16 +3646,20 @@ html:has(body.launcher-page) {
   min-width: 12rem;
 }
 
-/* Popover hangs below the 72px head; panel-head normally clips overflow. */
+/* Popover hangs below the 72px head; panel-head normally clips overflow.
+   Do not raise the rail z-index — that covers the collapse seam (‹). */
 .task-rail-head.ta35-filter-head {
   overflow: visible;
-  z-index: 30;
 }
 
-.workspace-rail:has(.ta35-filter-head),
 .workspace-slot-head:has(.ta35-filter-head) {
   overflow: visible;
-  z-index: 30;
+  position: relative;
+  z-index: 4;
+}
+
+.workspace-seam {
+  z-index: 5;
 }
 
 .ta35-filter-icon-btn {
@@ -3712,11 +3716,100 @@ html:has(body.launcher-page) {
   top: calc(100% - 1px);
   left: var(--space-3);
   right: var(--space-3);
-  z-index: 20;
+  z-index: 4;
   border: 1px solid var(--border);
   background: var(--surface);
   padding: var(--space-3);
   box-shadow: 0 8px 24px oklch(12% 0.012 250 / 0.08);
+  max-height: min(70vh, 520px);
+  overflow: auto;
+}
+
+.ta35-priority-range {
+  position: relative;
+  margin: 0 0 var(--space-3);
+  padding: 10px 4px 0;
+}
+
+.ta35-priority-range-track {
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  top: 16px;
+  height: 4px;
+  background: var(--border);
+  pointer-events: none;
+}
+
+.ta35-priority-range-fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: var(--fg);
+}
+
+.ta35-priority-range-input {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 8px;
+  width: 100%;
+  margin: 0;
+  appearance: none;
+  background: transparent;
+  pointer-events: none;
+  height: 20px;
+}
+
+.ta35-priority-range-input::-webkit-slider-thumb {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border: 1px solid var(--fg);
+  background: var(--surface);
+  border-radius: 0;
+  pointer-events: auto;
+  cursor: pointer;
+  position: relative;
+  z-index: 2;
+}
+
+.ta35-priority-range-input::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border: 1px solid var(--fg);
+  background: var(--surface);
+  border-radius: 0;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.ta35-priority-range-input::-webkit-slider-runnable-track {
+  height: 4px;
+  background: transparent;
+}
+
+.ta35-priority-range-input::-moz-range-track {
+  height: 4px;
+  background: transparent;
+}
+
+.ta35-priority-range-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 28px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--label-subtle);
+}
+
+.ta35-priority-range-value {
+  margin: 6px 0 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--fg);
 }
 
 .ta35-filter-popover h3 {
