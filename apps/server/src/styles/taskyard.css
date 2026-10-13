@@ -601,54 +601,30 @@ a:hover {
   text-align: center;
 }
 
-.task-item-id-col .ta35-type-swatch {
+.task-item-id-col .ta35-type-swatch,
+.task-item-id-col .ta35-priority-swatch {
   display: block;
-}
-
-.task-item-priority {
-  display: inline-flex;
-  align-items: center;
-  height: 16px;
-  padding: 0 5px;
-  border: 1px solid var(--border);
-  font-family: var(--font-mono);
-  font-size: 9px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  line-height: 1;
-  white-space: nowrap;
-  background: transparent;
-}
-
-.task-item-dependent .task-item-priority {
-  font-size: 8px;
-  height: 14px;
-  padding: 0 4px;
 }
 
 /* Priority tones: Low grey, Medium green, High orange, Critical red */
 .priority-low {
   color: oklch(48% 0.01 250);
   border-color: oklch(78% 0.01 250);
-  background: transparent;
 }
 
 .priority-medium {
   color: oklch(42% 0.12 145);
   border-color: oklch(70% 0.08 145);
-  background: transparent;
 }
 
 .priority-high {
   color: oklch(48% 0.14 55);
   border-color: oklch(72% 0.1 55);
-  background: transparent;
 }
 
 .priority-critical {
   color: var(--danger);
   border-color: oklch(72% 0.1 25);
-  background: transparent;
 }
 
 .task-item-main {
@@ -3912,7 +3888,8 @@ html:has(body.launcher-page) {
   accent-color: var(--fg);
 }
 
-.ta35-type-swatch {
+.ta35-type-swatch,
+.ta35-priority-swatch {
   width: 8px;
   height: 8px;
   flex-shrink: 0;
@@ -3932,6 +3909,22 @@ html:has(body.launcher-page) {
 
 .ta35-type-swatch.type-thought {
   background: oklch(48% 0.12 85);
+}
+
+.ta35-priority-swatch.priority-low {
+  background: oklch(72% 0.01 250);
+}
+
+.ta35-priority-swatch.priority-medium {
+  background: oklch(55% 0.12 145);
+}
+
+.ta35-priority-swatch.priority-high {
+  background: oklch(62% 0.14 55);
+}
+
+.ta35-priority-swatch.priority-critical {
+  background: var(--danger);
 }
 
 .ta35-filter-popover-actions {
@@ -4265,6 +4258,26 @@ html:has(body.launcher-page) {
 
 .ta35-label-pill-priority {
   background: transparent;
+}
+
+.ta35-label-pill-priority.priority-low {
+  color: oklch(48% 0.01 250);
+  border-color: oklch(78% 0.01 250);
+}
+
+.ta35-label-pill-priority.priority-medium {
+  color: oklch(42% 0.12 145);
+  border-color: oklch(70% 0.08 145);
+}
+
+.ta35-label-pill-priority.priority-high {
+  color: oklch(48% 0.14 55);
+  border-color: oklch(72% 0.1 55);
+}
+
+.ta35-label-pill-priority.priority-critical {
+  color: var(--danger);
+  border-color: oklch(72% 0.1 25);
 }
 
 .ta35-priority-dot {
