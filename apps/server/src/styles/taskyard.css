@@ -387,7 +387,7 @@ a:hover {
 .task-editor-row {
   display: flex;
   gap: var(--space-3);
-  align-items: end;
+  align-items: flex-end;
 }
 
 .task-editor-row .form-field,
@@ -4045,7 +4045,7 @@ html:has(body.launcher-page) {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-3);
-  align-items: end;
+  align-items: flex-end;
   margin-bottom: var(--space-3);
 }
 
