@@ -1,6 +1,6 @@
 import { cookies } from 'next/headers';
 import { DashboardClient } from '@/components/dashboard-client';
-import { parseTa35Design } from '@/components/ta-35-filter-design';
+import { parseTa35Design } from '@/lib/ta-35-design';
 import { PANEL_VISIBILITY_COOKIE, parsePanelVisibility } from '@/lib/panel-visibility';
 
 export const dynamic = 'force-dynamic';
