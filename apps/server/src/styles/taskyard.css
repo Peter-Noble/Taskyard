@@ -3866,8 +3866,14 @@ html:has(body.launcher-page) {
   color: var(--label-subtle);
 }
 
-.ta35-filter-popover h3 + .ta35-filter-options {
+.ta35-filter-popover h3 + .ta35-filter-options,
+.ta35-filter-popover h3 + .ta35-filter-sort {
   margin-bottom: var(--space-3);
+}
+
+.ta35-filter-sort {
+  font-size: 12px;
+  padding: 6px 8px;
 }
 
 .ta35-filter-options {

@@ -8,7 +8,11 @@ import {
   TaskLabelPills,
   type TaskLabelValues,
 } from '@/components/task-label-fields';
-import { taskPassesRailFilter, type TaskRailFilterState } from '@/components/task-rail-filter';
+import {
+  sortTasksForRail,
+  taskPassesRailFilter,
+  type TaskRailFilterState,
+} from '@/components/task-rail-filter';
 import { categoriesFromTasks, taskPriorityLabel, taskPriorityTone, taskTypeMeta } from '@/lib/task-labels';
 
 function useProjectCategorySuggestions(projectId: string | null | undefined, refreshKey = 0) {
@@ -145,14 +149,20 @@ export function LiveTaskRail({
     onSelectedUpdatedAt(match?.updated_at ?? null);
   }, [tasks, selectedTaskId, onSelectedUpdatedAt]);
 
-  const visible = filter
+  const filtered = filter
     ? tasks.filter((task) => taskPassesRailFilter(task, filter))
     : tasks.filter((task) => task.status !== 'cancelled');
+  const sort = filter?.sort ?? 'priority_desc';
+  const visible = sortTasksForRail(filtered, sort);
   const ids = new Set(visible.map((task) => task.id));
   const roots = visible.filter((task) => !task.parent_id || !ids.has(task.parent_id));
   const open = roots.filter((task) => task.status !== 'completed');
   const completed = roots.filter((task) => task.status === 'completed');
-  const childrenOf = (id: string) => visible.filter((task) => task.parent_id === id);
+  const childrenOf = (id: string) =>
+    sortTasksForRail(
+      visible.filter((task) => task.parent_id === id),
+      sort,
+    );
 
   function renderTask(task: Task, nested = false) {
     const type = taskTypeMeta(task.task_type);
