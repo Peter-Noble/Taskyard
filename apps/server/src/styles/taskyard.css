@@ -340,6 +340,7 @@ a:hover {
   padding: 0 var(--space-3);
   background: var(--bg);
   border-right: 1px solid var(--border);
+  position: relative;
 }
 
 .task-rail-head-label {
@@ -3593,4 +3594,258 @@ html:has(body.launcher-page) {
 
 .account-sign-out {
   margin-top: var(--space-4);
+}
+
+/* TA-35 filter design prototypes (?ta-35-design=A|B|C|D) — remove with the task */
+.ta35-design-picker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  padding: 6px var(--space-4);
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-elevated);
+  font-size: 12px;
+}
+
+.ta35-design-picker-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--label-subtle);
+}
+
+.ta35-design-picker-options {
+  display: flex;
+  gap: 4px;
+}
+
+.ta35-design-pick {
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--fg);
+}
+
+.ta35-design-pick.is-current,
+.ta35-design-pick[aria-pressed='true'] {
+  border-color: var(--fg);
+  background: var(--fg);
+  color: var(--surface);
+}
+
+.ta35-design-picker-blurb {
+  color: var(--muted);
+  flex: 1 1 auto;
+  min-width: 12rem;
+}
+
+.ta35-filter-icon-btn {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--fg);
+  cursor: pointer;
+  position: relative;
+}
+
+.ta35-filter-icon-btn.is-active,
+.ta35-filter-text-btn.is-active {
+  border-color: var(--fg);
+  background: var(--surface-elevated);
+}
+
+.ta35-filter-count {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  background: var(--fg);
+  color: var(--surface);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 16px;
+  text-align: center;
+}
+
+.ta35-filter-text-btn {
+  flex-shrink: 0;
+  height: 32px;
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--fg);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.ta35-filter-popover {
+  position: absolute;
+  top: calc(100% - 1px);
+  left: var(--space-3);
+  right: var(--space-3);
+  z-index: 20;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: var(--space-3);
+  box-shadow: 0 8px 24px oklch(12% 0.012 250 / 0.08);
+}
+
+.ta35-filter-popover h3 {
+  margin: 0 0 var(--space-2);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--label-subtle);
+}
+
+.ta35-filter-popover h3 + .ta35-filter-options {
+  margin-bottom: var(--space-3);
+}
+
+.ta35-filter-options {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ta35-filter-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.ta35-filter-option input {
+  margin: 0;
+  accent-color: var(--fg);
+}
+
+.ta35-type-swatch {
+  width: 8px;
+  height: 8px;
+  flex-shrink: 0;
+}
+
+.ta35-type-swatch.type-feature {
+  background: oklch(45% 0.14 255);
+}
+
+.ta35-type-swatch.type-bug {
+  background: oklch(48% 0.16 25);
+}
+
+.ta35-type-swatch.type-docs {
+  background: oklch(42% 0.12 145);
+}
+
+.ta35-type-swatch.type-thought {
+  background: oklch(48% 0.12 85);
+}
+
+.ta35-filter-popover-actions {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border);
+}
+
+.ta35-filter-strip {
+  border-bottom: 1px solid var(--border);
+  padding: var(--space-2) var(--space-3) var(--space-3);
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+.ta35-filter-strip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.ta35-filter-strip-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--label-subtle);
+  width: 100%;
+}
+
+.ta35-chip {
+  height: 24px;
+  padding: 0 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--fg);
+}
+
+.ta35-chip[aria-pressed='true'] {
+  border-color: var(--fg);
+  background: var(--surface-elevated);
+}
+
+.ta35-chip .ta35-type-swatch {
+  width: 6px;
+  height: 6px;
+}
+
+.ta35-dual-menus {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.ta35-dual-menus .form-select {
+  width: auto;
+  min-width: 0;
+  height: 32px;
+  margin: 0;
+  padding: 0 4px 0 6px;
+  font-size: 11px;
+  line-height: 30px;
+  max-width: 72px;
+}
+
+.ta35-task-body-wrap {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+}
+
+.ta35-task-body-wrap > .task-rail,
+.ta35-task-body-wrap > [class*='task'] {
+  flex: 1;
+  min-height: 0;
 }

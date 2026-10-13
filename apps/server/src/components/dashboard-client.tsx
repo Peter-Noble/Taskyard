@@ -28,6 +28,12 @@ import {
   TEST_THREADS,
   getTestChatForThread,
 } from '@/lib/test-data/fixtures';
+import {
+  Ta35DesignPicker,
+  Ta35FilterDesignControls,
+  Ta35FilterDesignStrip,
+  type Ta35DesignOption,
+} from '@/components/ta-35-filter-design';
 
 type MachinesResponse = {
   machines: Array<Machine & { port_utilization?: { used: number; total: number } }>;
@@ -36,7 +42,13 @@ type MachinesResponse = {
 type ThreadsResponse = { threads: Thread[] };
 type ProjectsResponse = { projects: Project[] };
 
-export function DashboardClient({ initialPanels }: { initialPanels?: PanelVisibility }) {
+export function DashboardClient({
+  initialPanels,
+  ta35Design = null,
+}: {
+  initialPanels?: PanelVisibility;
+  ta35Design?: Ta35DesignOption | null;
+}) {
   const router = useRouter();
   const { useTestData: testDataOn, hydrated } = useTestData();
   const { active } = useCollections();
@@ -48,6 +60,7 @@ export function DashboardClient({ initialPanels }: { initialPanels?: PanelVisibi
   const [selectedTaskUpdatedAt, setSelectedTaskUpdatedAt] = useState<string | null>(null);
   const [liveProjectId, setLiveProjectId] = useState<string | null>(null);
   const [composingTask, setComposingTask] = useState(false);
+  const [ta35StripOpen, setTa35StripOpen] = useState(true);
 
   const { data: machinesData } = useJsonFetch<MachinesResponse>(
     '/api/machines',
@@ -196,6 +209,13 @@ export function DashboardClient({ initialPanels }: { initialPanels?: PanelVisibi
                 </select>
               </div>
             ) : null}
+            {ta35Design ? (
+              <Ta35FilterDesignControls
+                option={ta35Design}
+                stripOpen={ta35StripOpen}
+                onStripOpenChange={setTa35StripOpen}
+              />
+            ) : null}
             <button
               type="button"
               className="btn btn-primary btn-rail-new"
@@ -261,7 +281,7 @@ export function DashboardClient({ initialPanels }: { initialPanels?: PanelVisibi
 
   const threadHead = <ThreadRailHead onNewThread={() => setModalOpen(true)} />;
 
-  const taskBody = testDataOn ? (
+  const taskRail = testDataOn ? (
             <TaskRail
               key={taskTick}
               useFixtures={testDataOn}
@@ -280,6 +300,16 @@ export function DashboardClient({ initialPanels }: { initialPanels?: PanelVisibi
               onSelectedUpdatedAt={handleSelectedUpdatedAt}
             />
   );
+
+  const taskBody =
+    ta35Design === 'C' ? (
+      <div className="ta35-task-body-wrap">
+        <Ta35FilterDesignStrip option={ta35Design} open={ta35StripOpen} />
+        {taskRail}
+      </div>
+    ) : (
+      taskRail
+    );
 
   const streamBody = (
           <section className="stream-panel" aria-label="Center panel">
@@ -350,6 +380,7 @@ export function DashboardClient({ initialPanels }: { initialPanels?: PanelVisibi
 
   return (
     <AppShell>
+      {ta35Design ? <Ta35DesignPicker option={ta35Design} /> : null}
       <WorkspaceSeams
         initialPanels={initialPanels}
         taskHead={taskHead}

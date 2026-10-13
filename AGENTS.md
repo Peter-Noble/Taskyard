@@ -40,3 +40,7 @@ Before you stop, write the task back:
 
 Completing a task writes its decisions into `.taskyard/decisions.md`, next to `project.json`. Both files are committed with the repo. `taskyard sync` refreshes the decision file from the server.
 <!-- taskyard:end -->
+
+## UI prototypes
+
+When a person asks for design prototypes or UI options to pick from, host them on the running app (`pnpm dev:server`), not as static HTML under `design/`. Use a query param on the real screen, e.g. `/dashboard?ta-35-design=A`. See `design/PROTOTYPES.md`.
