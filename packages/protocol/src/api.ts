@@ -83,6 +83,10 @@ export type TaskStatus =
   | 'completed'
   | 'cancelled';
 
+export type TaskType = 'feature' | 'bug' | 'documentation' | 'thought';
+
+export type TaskPriority = 'low' | 'medium' | 'high' | 'critical';
+
 export type DecisionStatus = 'accepted' | 'rejected';
 
 export type TaskLink = {
@@ -101,6 +105,10 @@ export type Task = {
   title: string;
   description: string;
   status: TaskStatus;
+  task_type: TaskType;
+  priority: TaskPriority;
+  /** Free-text theme; grouping UX is TA-27. */
+  category: string | null;
   assignee: string | null;
   /** True when a dependency is still open. */
   blocked: boolean;
@@ -169,12 +177,18 @@ export type CreateTaskRequest = {
   parent_id?: string | null;
   description?: string;
   status?: TaskStatus;
+  task_type?: TaskType;
+  priority?: TaskPriority;
+  category?: string | null;
 };
 
 export type UpdateTaskRequest = {
   title?: string;
   description?: string;
   status?: TaskStatus;
+  task_type?: TaskType;
+  priority?: TaskPriority;
+  category?: string | null;
   assignee?: string | null;
   /** Required when moving a task to `waiting`. Stored as a comment. */
   wait_reason?: string;

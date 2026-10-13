@@ -121,6 +121,24 @@ if (hasTable('tasks') && !taskCols.has('short_id')) {
   db.exec(`ALTER TABLE tasks ADD COLUMN short_id text`);
   console.log('added tasks.short_id');
 }
+if (hasTable('tasks') && !taskCols.has('task_type')) {
+  db.exec(`ALTER TABLE tasks ADD COLUMN task_type text NOT NULL DEFAULT 'feature'`);
+  console.log('added tasks.task_type');
+}
+{
+  const cols = columns('tasks');
+  if (hasTable('tasks') && !cols.has('priority')) {
+    db.exec(`ALTER TABLE tasks ADD COLUMN priority text NOT NULL DEFAULT 'medium'`);
+    console.log('added tasks.priority');
+  }
+}
+{
+  const cols = columns('tasks');
+  if (hasTable('tasks') && !cols.has('category')) {
+    db.exec(`ALTER TABLE tasks ADD COLUMN category text`);
+    console.log('added tasks.category');
+  }
+}
 
 function prefixFromName(name) {
   const words = String(name).split(/[^A-Za-z0-9]+/).filter(Boolean);

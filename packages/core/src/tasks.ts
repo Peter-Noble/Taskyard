@@ -12,7 +12,9 @@ import type {
   TaskDecision,
   TaskDetail,
   TaskLink,
+  TaskPriority,
   TaskStatus,
+  TaskType,
   UpdateTaskRequest,
 } from '@taskyard/protocol';
 import { formatTask, formatTaskActivity, formatTaskChild } from './format.js';
@@ -41,6 +43,10 @@ const TASK_STATUSES: TaskStatus[] = [
   'completed',
   'cancelled',
 ];
+
+const TASK_TYPES: TaskType[] = ['feature', 'bug', 'documentation', 'thought'];
+
+const TASK_PRIORITIES: TaskPriority[] = ['low', 'medium', 'high', 'critical'];
 
 const OPEN_DEPENDENCY_STATUSES: TaskStatus[] = [
   'backlog',
@@ -103,6 +109,26 @@ function assertTaskStatus(status: string): TaskStatus {
     throw new TaskError(`Invalid status: ${status}`);
   }
   return status as TaskStatus;
+}
+
+function assertTaskType(taskType: string): TaskType {
+  if (!TASK_TYPES.includes(taskType as TaskType)) {
+    throw new TaskError(`Invalid task_type: ${taskType}`);
+  }
+  return taskType as TaskType;
+}
+
+function assertTaskPriority(priority: string): TaskPriority {
+  if (!TASK_PRIORITIES.includes(priority as TaskPriority)) {
+    throw new TaskError(`Invalid priority: ${priority}`);
+  }
+  return priority as TaskPriority;
+}
+
+function normalizeCategory(value: string | null | undefined): string | null {
+  if (value === undefined || value === null) return null;
+  const trimmed = value.trim();
+  return trimmed ? trimmed : null;
 }
 
 function getTaskRow(db: TaskyardDb, idOrShort: string) {
@@ -404,6 +430,9 @@ export function createTask(db: TaskyardDb, req: CreateTaskRequest, actor = 'user
   }
 
   const status = req.status ? assertTaskStatus(req.status) : 'ready';
+  const taskType = req.task_type ? assertTaskType(req.task_type) : 'feature';
+  const priority = req.priority ? assertTaskPriority(req.priority) : 'medium';
+  const category = normalizeCategory(req.category);
   const description = req.description?.trim() ?? '';
   const id = randomUUID();
   const now = new Date();
@@ -419,6 +448,9 @@ export function createTask(db: TaskyardDb, req: CreateTaskRequest, actor = 'user
         title,
         description,
         status,
+        taskType,
+        priority,
+        category,
         createdAt: now,
         updatedAt: now,
       })
@@ -459,6 +491,18 @@ export function updateTask(
   if (req.assignee !== undefined) {
     const assignee = req.assignee?.trim() ?? '';
     values.assignee = assignee ? assignee : null;
+  }
+
+  if (req.task_type !== undefined) {
+    values.taskType = assertTaskType(req.task_type);
+  }
+
+  if (req.priority !== undefined) {
+    values.priority = assertTaskPriority(req.priority);
+  }
+
+  if (req.category !== undefined) {
+    values.category = normalizeCategory(req.category);
   }
 
   if (req.status !== undefined) {

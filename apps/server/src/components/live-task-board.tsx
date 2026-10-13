@@ -3,6 +3,13 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type FormEvent } from 'react';
 import type { Project, Task, TaskDetail, TaskStatus } from '@taskyard/protocol';
 import { useSessionPerson } from '@/components/providers';
+import {
+  TaskLabelCreateFields,
+  TaskLabelPills,
+  type TaskLabelValues,
+} from '@/components/task-label-fields';
+import { taskPassesRailFilter, type TaskRailFilterState } from '@/components/task-rail-filter';
+import { taskTypeMeta } from '@/lib/task-labels';
 
 const STATUSES: TaskStatus[] = [
   'backlog',
@@ -69,11 +76,13 @@ export function LiveTaskRail({
   selectedTaskId,
   onSelectTask,
   onSelectedUpdatedAt,
+  filter,
 }: {
   projectId: string | null;
   selectedTaskId: string | null;
   onSelectTask: (taskId: string) => void;
   onSelectedUpdatedAt?: (updatedAt: string | null) => void;
+  filter?: TaskRailFilterState;
 }) {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(false);
@@ -111,7 +120,9 @@ export function LiveTaskRail({
     onSelectedUpdatedAt(match?.updated_at ?? null);
   }, [tasks, selectedTaskId, onSelectedUpdatedAt]);
 
-  const visible = tasks.filter((task) => task.status !== 'cancelled');
+  const visible = filter
+    ? tasks.filter((task) => taskPassesRailFilter(task, filter))
+    : tasks.filter((task) => task.status !== 'cancelled');
   const ids = new Set(visible.map((task) => task.id));
   const roots = visible.filter((task) => !task.parent_id || !ids.has(task.parent_id));
   const open = roots.filter((task) => task.status !== 'completed');
@@ -119,6 +130,7 @@ export function LiveTaskRail({
   const childrenOf = (id: string) => visible.filter((task) => task.parent_id === id);
 
   function renderTask(task: Task, nested = false) {
+    const type = taskTypeMeta(task.task_type);
     return (
       <div key={task.id} className="task-item-wrap">
         <button
@@ -128,6 +140,7 @@ export function LiveTaskRail({
           onClick={() => onSelectTask(task.id)}
         >
           <div className="task-item-row">
+            <span className={`ta35-type-swatch ${type.swatch}`} title={type.label} />
             <span className="entity-num">{task.short_id}</span>
             <div className="task-item-main">
               <h3 className="task-item-title">{task.title}</h3>
@@ -234,6 +247,11 @@ function CreateTaskForm({
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [parent, setParent] = useState('');
+  const [labels, setLabels] = useState<TaskLabelValues>({
+    taskType: 'feature',
+    priority: 'medium',
+    category: '',
+  });
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -250,6 +268,9 @@ function CreateTaskForm({
           project_id: projectId,
           title,
           description,
+          task_type: labels.taskType,
+          priority: labels.priority,
+          category: labels.category.trim() || null,
           ...(parent.trim() ? { parent_id: parent.trim() } : {}),
         }),
       });
@@ -270,6 +291,7 @@ function CreateTaskForm({
           <span className="form-label">Title</span>
           <input className="form-input" value={title} onChange={(e) => setTitle(e.target.value)} required />
         </label>
+        <TaskLabelCreateFields value={labels} onChange={setLabels} />
         <label className="form-field">
           <span className="form-label">Description</span>
           <textarea
@@ -408,7 +430,7 @@ function TaskEditor({
     return () => cancelAnimationFrame(frame);
   }, [task?.id, task?.activity.length]);
 
-  async function patchTask(body: Record<string, string>) {
+  async function patchTask(body: Record<string, string | null>) {
     setError(null);
     const res = await fetch(`/api/tasks/${encodeURIComponent(taskId)}`, {
       method: 'PATCH',
@@ -421,6 +443,14 @@ function TaskEditor({
     }
     onChanged();
     return true;
+  }
+
+  async function patchLabels(next: TaskLabelValues) {
+    await patchTask({
+      task_type: next.taskType,
+      priority: next.priority,
+      category: next.category.trim() || null,
+    });
   }
 
   async function changeStatus(next: TaskStatus) {
@@ -516,9 +546,15 @@ function TaskEditor({
 
   const headerOpen = detailsOpen || waitingForReason || Boolean(error);
 
+  const labelValues: TaskLabelValues = {
+    taskType: task.task_type,
+    priority: task.priority,
+    category: task.category ?? '',
+  };
+
   return (
     <div className="task-view" aria-label="Task detail">
-      <header className={`task-view-head${headerOpen ? ' is-open' : ''}`}>
+      <header className={`task-view-head${headerOpen ? ' is-open' : ''} has-label-pills`}>
         <div className="task-view-top">
           <span className="entity-num">{task.short_id}</span>
           <h2 className="task-detail-title">{task.title}</h2>
@@ -536,6 +572,7 @@ function TaskEditor({
               ))}
             </span>
           ) : null}
+          <TaskLabelPills value={labelValues} onChange={patchLabels} />
           <span className="task-view-top-actions">
             <button
               type="button"

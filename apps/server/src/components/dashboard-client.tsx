@@ -29,16 +29,10 @@ import {
   getTestChatForThread,
 } from '@/lib/test-data/fixtures';
 import {
-  Ta35DesignPicker,
-  Ta35FilterDesignControls,
-  Ta35FilterDesignStrip,
-  type Ta35DesignOption,
-} from '@/components/ta-35-filter-design';
-import {
-  Ta35LabelsDesignBoard,
-  Ta35LabelsDesignPicker,
-  type Ta35LabelsOption,
-} from '@/components/ta-35-labels-design';
+  TaskRailFilterButton,
+  defaultTaskRailFilter,
+  type TaskRailFilterState,
+} from '@/components/task-rail-filter';
 
 type MachinesResponse = {
   machines: Array<Machine & { port_utilization?: { used: number; total: number } }>;
@@ -49,12 +43,8 @@ type ProjectsResponse = { projects: Project[] };
 
 export function DashboardClient({
   initialPanels,
-  ta35Design = null,
-  ta35Labels = null,
 }: {
   initialPanels?: PanelVisibility;
-  ta35Design?: Ta35DesignOption | null;
-  ta35Labels?: Ta35LabelsOption | null;
 }) {
   const router = useRouter();
   const { useTestData: testDataOn, hydrated } = useTestData();
@@ -67,7 +57,7 @@ export function DashboardClient({
   const [selectedTaskUpdatedAt, setSelectedTaskUpdatedAt] = useState<string | null>(null);
   const [liveProjectId, setLiveProjectId] = useState<string | null>(null);
   const [composingTask, setComposingTask] = useState(false);
-  const [ta35StripOpen, setTa35StripOpen] = useState(true);
+  const [taskFilter, setTaskFilter] = useState<TaskRailFilterState>(() => defaultTaskRailFilter());
 
   const { data: machinesData } = useJsonFetch<MachinesResponse>(
     '/api/machines',
@@ -197,9 +187,7 @@ export function DashboardClient({
         : 'Select a thread';
 
   const taskHead = (
-          <header
-            className={`panel-head task-rail-head${ta35Design === 'A' || ta35Design === 'B' ? ' ta35-filter-head' : ''}`}
-          >
+          <header className="panel-head task-rail-head ta35-filter-head">
             <span className="task-rail-head-label">Tasks</span>
             {!testDataOn ? (
               <div className="task-rail-project-wrap">
@@ -218,12 +206,8 @@ export function DashboardClient({
                 </select>
               </div>
             ) : null}
-            {ta35Design ? (
-              <Ta35FilterDesignControls
-                option={ta35Design}
-                stripOpen={ta35StripOpen}
-                onStripOpenChange={setTa35StripOpen}
-              />
+            {!testDataOn ? (
+              <TaskRailFilterButton value={taskFilter} onChange={setTaskFilter} />
             ) : null}
             <button
               type="button"
@@ -236,16 +220,7 @@ export function DashboardClient({
           </header>
   );
 
-  const streamHead = ta35Labels ? (
-          <header className="panel-head stream-header" aria-label="Label field prototypes">
-            <div className="stream-header-view">
-              <div className="stream-header-main">
-                <h2 className="stream-title">Type / Priority / Category</h2>
-                <p className="stream-sub">Prototype option {ta35Labels} — not saved</p>
-              </div>
-            </div>
-          </header>
-  ) : liveTaskOpen ? null : (
+  const streamHead = liveTaskOpen ? null : (
           <header
             className="panel-head stream-header"
             aria-label={centerMode === 'task' ? 'Selected task' : 'Selected thread'}
@@ -299,7 +274,7 @@ export function DashboardClient({
 
   const threadHead = <ThreadRailHead onNewThread={() => setModalOpen(true)} />;
 
-  const taskRail = testDataOn ? (
+  const taskBody = testDataOn ? (
             <TaskRail
               key={taskTick}
               useFixtures={testDataOn}
@@ -316,28 +291,13 @@ export function DashboardClient({
               selectedTaskId={selectedTaskId}
               onSelectTask={handleSelectTask}
               onSelectedUpdatedAt={handleSelectedUpdatedAt}
+              filter={taskFilter}
             />
   );
 
-  const taskBody =
-    ta35Design === 'C' ? (
-      <div className="ta35-task-body-wrap">
-        <Ta35FilterDesignStrip option={ta35Design} open={ta35StripOpen} />
-        {taskRail}
-      </div>
-    ) : (
-      taskRail
-    );
-
   const streamBody = (
           <section className="stream-panel" aria-label="Center panel">
-            {ta35Labels ? (
-              <div className="center-view">
-                <div className="stream-body">
-                  <Ta35LabelsDesignBoard option={ta35Labels} />
-                </div>
-              </div>
-            ) : centerMode === 'chat' ? (
+            {centerMode === 'chat' ? (
               <div className="center-view">
                 <div className="stream-body">
                   {selectedThread ? (
@@ -404,8 +364,6 @@ export function DashboardClient({
 
   return (
     <AppShell>
-      {ta35Labels ? <Ta35LabelsDesignPicker option={ta35Labels} /> : null}
-      {ta35Design ? <Ta35DesignPicker option={ta35Design} /> : null}
       <WorkspaceSeams
         initialPanels={initialPanels}
         taskHead={taskHead}

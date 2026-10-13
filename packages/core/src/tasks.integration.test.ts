@@ -53,7 +53,19 @@ describe('task board', () => {
 
       expect(first.short_id).toBe('TA-1');
       expect(first.status).toBe('ready');
+      expect(first.task_type).toBe('feature');
+      expect(first.priority).toBe('medium');
+      expect(first.category).toBeNull();
       expect(second.short_id).toBe('TA-2');
+
+      const labeled = updateTask(ctx.db, first.short_id, {
+        task_type: 'bug',
+        priority: 'critical',
+        category: 'Performance',
+      });
+      expect(labeled?.task_type).toBe('bug');
+      expect(labeled?.priority).toBe('critical');
+      expect(labeled?.category).toBe('Performance');
 
       addTaskDependency(ctx.db, second.short_id, first.short_id);
       expect(nextTask(ctx.db, project.id)?.short_id).toBe('TA-1');

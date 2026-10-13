@@ -2927,6 +2927,12 @@ html:has(body.launcher-page) {
   background: var(--surface);
 }
 
+.task-view-head.has-label-pills {
+  overflow: visible;
+  position: relative;
+  z-index: 4;
+}
+
 .task-view-head.is-open {
   height: auto;
   max-height: none;

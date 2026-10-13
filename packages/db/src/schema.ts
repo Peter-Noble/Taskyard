@@ -55,6 +55,18 @@ export const tasks = sqliteTable(
     })
       .notNull()
       .default('ready'),
+    // D-008 — fixed Type / Priority; Category is free text (grouping stays TA-27)
+    taskType: text('task_type', {
+      enum: ['feature', 'bug', 'documentation', 'thought'],
+    })
+      .notNull()
+      .default('feature'),
+    priority: text('priority', {
+      enum: ['low', 'medium', 'high', 'critical'],
+    })
+      .notNull()
+      .default('medium'),
+    category: text('category'),
     assignee: text('assignee'),
     createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
     updatedAt: integer('updated_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
