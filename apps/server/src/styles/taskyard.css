@@ -586,39 +586,71 @@ a:hover {
   gap: var(--space-3);
 }
 
+.task-item-id-block {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  min-width: 0;
+}
+
 .task-item-id-col {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 4px;
-  flex-shrink: 0;
-  min-width: 3.25rem;
+  gap: 3px;
+  min-width: 2.75rem;
 }
 
 .task-item-id-col .entity-num {
-  padding-top: 2px;
-}
-
-.task-item-label-meta {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  min-width: 0;
+  padding-top: 0;
+  line-height: 1.1;
 }
 
 .task-item-priority {
+  display: inline-flex;
+  align-items: center;
+  height: 16px;
+  padding: 0 5px;
+  border: 1px solid var(--border);
   font-family: var(--font-mono);
   font-size: 9px;
-  font-weight: 500;
+  font-weight: 600;
   letter-spacing: 0.04em;
-  color: var(--muted);
   line-height: 1;
   white-space: nowrap;
+  background: var(--surface);
 }
 
 .task-item-dependent .task-item-priority {
   font-size: 8px;
-  opacity: 0.75;
+  height: 14px;
+  padding: 0 4px;
+}
+
+/* Priority tones: Low grey, Medium green, High orange, Critical red */
+.priority-low {
+  color: oklch(48% 0.01 250);
+  border-color: oklch(78% 0.01 250);
+  background: oklch(96% 0.004 250);
+}
+
+.priority-medium {
+  color: oklch(42% 0.12 145);
+  border-color: oklch(70% 0.08 145);
+  background: var(--success-bg);
+}
+
+.priority-high {
+  color: oklch(48% 0.14 55);
+  border-color: oklch(72% 0.1 55);
+  background: oklch(96% 0.04 55);
+}
+
+.priority-critical {
+  color: var(--danger);
+  border-color: oklch(72% 0.1 25);
+  background: var(--danger-bg);
 }
 
 .task-item-main {
@@ -4231,6 +4263,64 @@ html:has(body.launcher-page) {
 
 .ta35-label-pill-type.type-thought {
   border-color: oklch(48% 0.12 85);
+}
+
+.ta35-label-pill-priority.priority-low,
+.ta35-label-pill-priority.priority-medium,
+.ta35-label-pill-priority.priority-high,
+.ta35-label-pill-priority.priority-critical {
+  border-color: inherit;
+}
+
+.ta35-label-pill-priority.priority-low {
+  color: oklch(48% 0.01 250);
+  border-color: oklch(78% 0.01 250);
+  background: oklch(96% 0.004 250);
+}
+
+.ta35-label-pill-priority.priority-medium {
+  color: oklch(42% 0.12 145);
+  border-color: oklch(70% 0.08 145);
+  background: var(--success-bg);
+}
+
+.ta35-label-pill-priority.priority-high {
+  color: oklch(48% 0.14 55);
+  border-color: oklch(72% 0.1 55);
+  background: oklch(96% 0.04 55);
+}
+
+.ta35-label-pill-priority.priority-critical {
+  color: var(--danger);
+  border-color: oklch(72% 0.1 25);
+  background: var(--danger-bg);
+}
+
+.ta35-priority-dot {
+  width: 8px;
+  height: 8px;
+  flex-shrink: 0;
+  border: 1px solid currentColor;
+}
+
+.ta35-priority-dot.priority-low {
+  background: oklch(78% 0.01 250);
+  border-color: oklch(60% 0.01 250);
+}
+
+.ta35-priority-dot.priority-medium {
+  background: oklch(70% 0.1 145);
+  border-color: oklch(42% 0.12 145);
+}
+
+.ta35-priority-dot.priority-high {
+  background: oklch(72% 0.12 55);
+  border-color: oklch(48% 0.14 55);
+}
+
+.ta35-priority-dot.priority-critical {
+  background: oklch(72% 0.12 25);
+  border-color: var(--danger);
 }
 
 .ta35-labels-detail-inline {

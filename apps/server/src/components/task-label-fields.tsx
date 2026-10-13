@@ -6,6 +6,7 @@ import {
   TASK_PRIORITIES,
   TASK_TYPES,
   taskPriorityLabel,
+  taskPriorityTone,
   taskTypeMeta,
 } from '@/lib/task-labels';
 
@@ -195,7 +196,7 @@ export function TaskLabelPills({
       <span className="ta35-label-pill-wrap">
         <button
           type="button"
-          className={`ta35-label-pill${open === 'priority' ? ' is-open' : ''}`}
+          className={`ta35-label-pill ta35-label-pill-priority ${taskPriorityTone(value.priority)}${open === 'priority' ? ' is-open' : ''}`}
           aria-expanded={open === 'priority'}
           aria-haspopup="dialog"
           disabled={disabled}
@@ -216,6 +217,7 @@ export function TaskLabelPills({
                     setOpen(null);
                   }}
                 >
+                  <span className={`ta35-priority-dot ${p.tone}`} aria-hidden="true" />
                   {p.label}
                 </button>
               ))}

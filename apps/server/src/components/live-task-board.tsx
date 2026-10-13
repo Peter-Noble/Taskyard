@@ -9,7 +9,7 @@ import {
   type TaskLabelValues,
 } from '@/components/task-label-fields';
 import { taskPassesRailFilter, type TaskRailFilterState } from '@/components/task-rail-filter';
-import { taskPriorityLabel, taskTypeMeta } from '@/lib/task-labels';
+import { taskPriorityLabel, taskPriorityTone, taskTypeMeta } from '@/lib/task-labels';
 
 const STATUSES: TaskStatus[] = [
   'backlog',
@@ -140,12 +140,17 @@ export function LiveTaskRail({
           onClick={() => onSelectTask(task.id)}
         >
           <div className="task-item-row">
-            <div className="task-item-id-col">
-              <span className="entity-num">{task.short_id}</span>
-              <span className="task-item-label-meta" title={`${type.label} · ${taskPriorityLabel(task.priority)}`}>
-                <span className={`ta35-type-swatch ${type.swatch}`} aria-hidden="true" />
-                <span className="task-item-priority">{taskPriorityLabel(task.priority)}</span>
-              </span>
+            <div
+              className="task-item-id-block"
+              title={`${type.label} · ${taskPriorityLabel(task.priority)}`}
+            >
+              <span className={`ta35-type-swatch ${type.swatch}`} aria-hidden="true" />
+              <div className="task-item-id-col">
+                <span className={`task-item-priority ${taskPriorityTone(task.priority)}`}>
+                  {taskPriorityLabel(task.priority)}
+                </span>
+                <span className="entity-num">{task.short_id}</span>
+              </div>
             </div>
             <div className="task-item-main">
               <h3 className="task-item-title">{task.title}</h3>
