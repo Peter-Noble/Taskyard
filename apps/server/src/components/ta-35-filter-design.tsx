@@ -86,7 +86,7 @@ export function Ta35FilterDesignControls({
   stripOpen?: boolean;
   onStripOpenChange?: (open: boolean) => void;
 }) {
-  const [open, setOpen] = useState(option === 'A' || option === 'B');
+  const [open, setOpen] = useState(false);
   const activeCount = 3;
 
   if (option === 'D') {
