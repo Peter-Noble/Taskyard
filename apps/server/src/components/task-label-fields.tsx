@@ -19,6 +19,8 @@ export type TaskLabelValues = {
 
 type PillEditor = 'type' | 'priority' | 'category' | null;
 
+const SUGGESTION_LIMIT = 8;
+
 function TypeSwatch({ typeId }: { typeId: TaskType }) {
   return <span className={`ta35-type-swatch ${taskTypeMeta(typeId).swatch}`} aria-hidden="true" />;
 }
@@ -34,43 +36,109 @@ function CategoryInput({
   value,
   onChange,
   suggestions,
+  autoFocus = false,
+  onSubmit,
 }: {
   id: string;
   value: string;
   onChange: (next: string) => void;
   suggestions: string[];
+  autoFocus?: boolean;
+  /** Called with the text to commit (highlighted suggestion or current input). */
+  onSubmit?: (next: string) => void;
 }) {
-  const listId = `${id}-suggestions`;
-  // Keep a local known set so a slow/partial server list never blanks the input filter.
+  const inputRef = useRef<HTMLInputElement>(null);
   const [known, setKnown] = useState(suggestions);
+  const [highlight, setHighlight] = useState(-1);
+  const listId = `${id}-suggestions`;
 
   useEffect(() => {
     setKnown((prev) => mergeCategorySuggestions(prev, suggestions));
   }, [suggestions]);
 
+  useEffect(() => {
+    if (!autoFocus) return;
+    const frame = requestAnimationFrame(() => inputRef.current?.focus());
+    return () => cancelAnimationFrame(frame);
+  }, [autoFocus]);
+
   const filtered = useMemo(() => {
     const q = value.trim().toLowerCase();
-    if (!q) return known;
-    return known.filter((item) => item.toLowerCase().includes(q));
+    const list = !q ? known : known.filter((item) => item.toLowerCase().includes(q));
+    return list.slice(0, SUGGESTION_LIMIT);
   }, [known, value]);
 
+  useEffect(() => {
+    setHighlight(-1);
+  }, [value, filtered.length]);
+
+  function pick(item: string) {
+    onChange(item);
+    onSubmit?.(item);
+  }
+
+  function submitCurrent() {
+    if (highlight >= 0 && filtered[highlight]) {
+      pick(filtered[highlight]!);
+      return;
+    }
+    onSubmit?.(value);
+  }
+
   return (
-    <>
+    <div className="ta35-category-input">
       <input
+        ref={inputRef}
         id={id}
         className="form-input form-input-compact ta35-labels-control"
-        list={listId}
+        role="combobox"
+        aria-autocomplete="list"
+        aria-controls={listId}
+        aria-expanded={filtered.length > 0}
+        aria-activedescendant={highlight >= 0 ? `${listId}-${highlight}` : undefined}
         value={value}
         onChange={(event) => onChange(event.target.value)}
+        onKeyDown={(event) => {
+          if (event.key === 'ArrowDown') {
+            if (filtered.length === 0) return;
+            event.preventDefault();
+            setHighlight((prev) => (prev + 1) % filtered.length);
+            return;
+          }
+          if (event.key === 'ArrowUp') {
+            if (filtered.length === 0) return;
+            event.preventDefault();
+            setHighlight((prev) => (prev <= 0 ? filtered.length - 1 : prev - 1));
+            return;
+          }
+          if (event.key === 'Enter') {
+            event.preventDefault();
+            submitCurrent();
+          }
+        }}
         placeholder="e.g. Performance"
         autoComplete="off"
       />
-      <datalist id={listId}>
-        {filtered.map((item) => (
-          <option key={item} value={item} />
-        ))}
-      </datalist>
-    </>
+      {filtered.length > 0 ? (
+        <div id={listId} className="ta35-category-suggest" role="listbox" aria-label="Category suggestions">
+          {filtered.map((item, index) => (
+            <button
+              key={item}
+              id={`${listId}-${index}`}
+              type="button"
+              role="option"
+              aria-selected={index === highlight}
+              className={`ta35-label-popup-option${index === highlight ? ' is-selected' : ''}`}
+              onMouseDown={(event) => event.preventDefault()}
+              onMouseEnter={() => setHighlight(index)}
+              onClick={() => pick(item)}
+            >
+              {item}
+            </button>
+          ))}
+        </div>
+      ) : null}
+    </div>
   );
 }
 
@@ -291,6 +359,16 @@ export function TaskLabelPills({
                 value={categoryDraft}
                 onChange={setCategoryDraft}
                 suggestions={categorySuggestions}
+                autoFocus
+                onSubmit={(next) => {
+                  categoryDraftRef.current = next;
+                  setCategoryDraft(next);
+                  const current = valueRef.current;
+                  if (next.trim() !== current.category.trim()) {
+                    void onChangeRef.current({ ...current, category: next });
+                  }
+                  setOpen(null);
+                }}
               />
             </label>
             <div className="ta35-label-popup-actions">

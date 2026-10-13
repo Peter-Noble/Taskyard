@@ -37,28 +37,46 @@ export function taskPriorityTone(id: TaskPriority) {
   return taskPriorityMeta(id).tone;
 }
 
-/** Distinct non-empty categories from tasks, sorted for datalist display. */
-export function categoriesFromTasks(tasks: Array<Pick<Task, 'category'>>): string[] {
-  const seen = new Set<string>();
-  const out: string[] = [];
+/**
+ * Distinct non-empty categories from tasks, ranked by use count then recency.
+ * Empty-query suggestions should show this order (popular / recently used).
+ */
+export function categoriesFromTasks(
+  tasks: Array<Pick<Task, 'category' | 'updated_at'>>,
+): string[] {
+  const map = new Map<string, { label: string; count: number; latest: number }>();
   for (const task of tasks) {
     const category = task.category?.trim();
     if (!category) continue;
     const key = category.toLowerCase();
-    if (seen.has(key)) continue;
-    seen.add(key);
-    out.push(category);
+    const ts = Date.parse(task.updated_at) || 0;
+    const prev = map.get(key);
+    if (!prev) {
+      map.set(key, { label: category, count: 1, latest: ts });
+      continue;
+    }
+    prev.count += 1;
+    if (ts >= prev.latest) {
+      prev.latest = ts;
+      prev.label = category;
+    }
   }
-  out.sort((a, b) => a.localeCompare(b));
-  return out;
+  return [...map.values()]
+    .sort(
+      (a, b) =>
+        b.count - a.count || b.latest - a.latest || a.label.localeCompare(b.label),
+    )
+    .map((entry) => entry.label);
 }
 
-/** Merge suggestion lists without dropping known values when a slower fetch arrives. */
+/**
+ * Merge suggestion lists without dropping known values when a slower fetch arrives.
+ * Incoming order wins (ranked popular/recent); prev-only items append.
+ */
 export function mergeCategorySuggestions(prev: string[], incoming: string[]): string[] {
   if (incoming.length === 0) return prev;
-  const seen = new Set(prev.map((item) => item.toLowerCase()));
-  let changed = false;
-  const next = [...prev];
+  const seen = new Set<string>();
+  const next: string[] = [];
   for (const raw of incoming) {
     const item = raw.trim();
     if (!item) continue;
@@ -66,9 +84,14 @@ export function mergeCategorySuggestions(prev: string[], incoming: string[]): st
     if (seen.has(key)) continue;
     seen.add(key);
     next.push(item);
-    changed = true;
   }
-  if (!changed) return prev;
-  next.sort((a, b) => a.localeCompare(b));
+  for (const raw of prev) {
+    const item = raw.trim();
+    if (!item) continue;
+    const key = item.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    next.push(item);
+  }
   return next;
 }

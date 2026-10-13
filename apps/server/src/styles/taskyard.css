@@ -4207,6 +4207,42 @@ html:has(body.launcher-page) {
   gap: var(--space-2);
 }
 
+.ta35-category-input {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.ta35-category-suggest {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 11rem;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: 2px;
+}
+
+.ta35-labels-row .ta35-category-suggest {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 2px);
+  z-index: 4;
+  box-shadow: 0 8px 24px oklch(12% 0.012 250 / 0.08);
+}
+
+.ta35-labels-field-grow {
+  position: relative;
+}
+
+.ta35-label-popup-category .ta35-category-suggest {
+  position: static;
+  box-shadow: none;
+}
+
 .ta35-label-popup-options {
   display: flex;
   flex-direction: column;
