@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   TA35_LABELS_OPTIONS,
@@ -27,6 +27,8 @@ type LabelState = {
   category: string;
 };
 
+type PillEditor = 'type' | 'priority' | 'category' | null;
+
 function TypeSwatch({ id }: { id: (typeof TYPES)[number]['id'] }) {
   const swatch = TYPES.find((t) => t.id === id)?.swatch ?? 'type-feature';
   return <span className={`ta35-type-swatch ${swatch}`} aria-hidden="true" />;
@@ -36,10 +38,12 @@ function CategoryField({
   value,
   onChange,
   id,
+  compact = false,
 }: {
   value: string;
   onChange: (next: string) => void;
   id: string;
+  compact?: boolean;
 }) {
   const listId = `${id}-suggestions`;
   const filtered = useMemo(() => {
@@ -52,7 +56,7 @@ function CategoryField({
     <>
       <input
         id={id}
-        className="form-input"
+        className={compact ? 'form-input form-input-compact ta35-labels-control' : 'form-input'}
         list={listId}
         value={value}
         onChange={(event) => onChange(event.target.value)}
@@ -85,7 +89,7 @@ function LabelsLayoutA({
         <span className="ta35-labels-select-wrap">
           <TypeSwatch id={state.typeId} />
           <select
-            className="form-select form-select-compact"
+            className="form-select form-select-compact ta35-labels-control"
             aria-label="Type"
             value={state.typeId}
             onChange={(event) =>
@@ -103,7 +107,7 @@ function LabelsLayoutA({
       <label className="ta35-labels-field">
         <span className="form-label">Priority</span>
         <select
-          className="form-select form-select-compact"
+          className="form-select form-select-compact ta35-labels-control"
           aria-label="Priority"
           value={state.priority}
           onChange={(event) =>
@@ -123,6 +127,7 @@ function LabelsLayoutA({
           id={`ta35-cat-${mode}-a`}
           value={state.category}
           onChange={(category) => onChange({ ...state, category })}
+          compact
         />
       </label>
     </div>
@@ -162,7 +167,7 @@ function LabelsLayoutB({
         <label className="ta35-labels-field">
           <span className="form-label">Priority</span>
           <select
-            className="form-select form-select-compact"
+            className="form-select form-select-compact ta35-labels-control"
             aria-label="Priority"
             value={state.priority}
             onChange={(event) =>
@@ -182,6 +187,7 @@ function LabelsLayoutB({
             id={`ta35-cat-${mode}-b`}
             value={state.category}
             onChange={(category) => onChange({ ...state, category })}
+            compact
           />
         </label>
       </div>
@@ -189,42 +195,137 @@ function LabelsLayoutB({
   );
 }
 
-/** C — read-only pills in the header; edit controls in a details block */
-function LabelsDisplayPills({ state }: { state: LabelState }) {
-  const type = TYPES.find((t) => t.id === state.typeId)!;
-  return (
-    <div className="ta35-labels-pills" aria-label="Task labels">
-      <span className={`ta35-label-pill ta35-label-pill-type ${type.swatch}`}>
-        <TypeSwatch id={state.typeId} />
-        {type.label}
-      </span>
-      <span className="ta35-label-pill">{state.priority}</span>
-      {state.category.trim() ? (
-        <span className="ta35-label-pill ta35-label-pill-category">{state.category}</span>
-      ) : (
-        <span className="ta35-label-pill ta35-label-pill-muted">No category</span>
-      )}
-    </div>
-  );
-}
-
-function LabelsLayoutCEdit({
+/** C — clickable header pills; each opens a small edit popup */
+function LabelsEditablePills({
   state,
   onChange,
-  mode,
 }: {
   state: LabelState;
   onChange: (next: LabelState) => void;
-  mode: 'create' | 'detail';
 }) {
+  const [open, setOpen] = useState<PillEditor>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const categoryInputId = useId();
+  const type = TYPES.find((t) => t.id === state.typeId)!;
+
+  useEffect(() => {
+    if (!open) return;
+    function onPointerDown(event: MouseEvent) {
+      if (!rootRef.current?.contains(event.target as Node)) setOpen(null);
+    }
+    function onKey(event: KeyboardEvent) {
+      if (event.key === 'Escape') setOpen(null);
+    }
+    document.addEventListener('mousedown', onPointerDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onPointerDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+
+  function toggle(next: PillEditor) {
+    setOpen((prev) => (prev === next ? null : next));
+  }
+
   return (
-    <div className="ta35-labels-c-edit">
-      <p className="ta35-labels-c-note">
-        {mode === 'detail'
-          ? 'Shown as pills in the header; edit here (Details-style).'
-          : 'On create, fields stay in the form; after create they become header pills.'}
-      </p>
-      <LabelsLayoutA state={state} onChange={onChange} mode={mode} />
+    <div className="ta35-labels-pills" aria-label="Task labels" ref={rootRef}>
+      <span className="ta35-label-pill-wrap">
+        <button
+          type="button"
+          className={`ta35-label-pill ta35-label-pill-type ${type.swatch}${open === 'type' ? ' is-open' : ''}`}
+          aria-expanded={open === 'type'}
+          aria-haspopup="dialog"
+          onClick={() => toggle('type')}
+        >
+          <TypeSwatch id={state.typeId} />
+          {type.label}
+        </button>
+        {open === 'type' ? (
+          <div className="ta35-label-popup" role="dialog" aria-label="Change type">
+            <div className="ta35-label-popup-options">
+              {TYPES.map((t) => (
+                <button
+                  key={t.id}
+                  type="button"
+                  className={`ta35-label-popup-option${state.typeId === t.id ? ' is-selected' : ''}`}
+                  onClick={() => {
+                    onChange({ ...state, typeId: t.id });
+                    setOpen(null);
+                  }}
+                >
+                  <span className={`ta35-type-swatch ${t.swatch}`} />
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : null}
+      </span>
+
+      <span className="ta35-label-pill-wrap">
+        <button
+          type="button"
+          className={`ta35-label-pill${open === 'priority' ? ' is-open' : ''}`}
+          aria-expanded={open === 'priority'}
+          aria-haspopup="dialog"
+          onClick={() => toggle('priority')}
+        >
+          {state.priority}
+        </button>
+        {open === 'priority' ? (
+          <div className="ta35-label-popup" role="dialog" aria-label="Change priority">
+            <div className="ta35-label-popup-options">
+              {PRIORITIES.map((p) => (
+                <button
+                  key={p}
+                  type="button"
+                  className={`ta35-label-popup-option${state.priority === p ? ' is-selected' : ''}`}
+                  onClick={() => {
+                    onChange({ ...state, priority: p });
+                    setOpen(null);
+                  }}
+                >
+                  {p}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : null}
+      </span>
+
+      <span className="ta35-label-pill-wrap">
+        <button
+          type="button"
+          className={`ta35-label-pill${state.category.trim() ? '' : ' ta35-label-pill-muted'}${open === 'category' ? ' is-open' : ''}`}
+          aria-expanded={open === 'category'}
+          aria-haspopup="dialog"
+          onClick={() => toggle('category')}
+        >
+          {state.category.trim() || 'No category'}
+        </button>
+        {open === 'category' ? (
+          <div className="ta35-label-popup ta35-label-popup-category" role="dialog" aria-label="Change category">
+            <label className="ta35-labels-field">
+              <span className="form-label">Category</span>
+              <CategoryField
+                id={categoryInputId}
+                value={state.category}
+                onChange={(category) => onChange({ ...state, category })}
+                compact
+              />
+            </label>
+            <div className="ta35-label-popup-actions">
+              <button type="button" className="btn btn-ghost btn-sm" onClick={() => onChange({ ...state, category: '' })}>
+                Clear
+              </button>
+              <button type="button" className="btn btn-primary btn-sm" onClick={() => setOpen(null)}>
+                Done
+              </button>
+            </div>
+          </div>
+        ) : null}
+      </span>
     </div>
   );
 }
@@ -264,10 +365,14 @@ function CreateMock({
           <span className="form-label">Title</span>
           <input className="form-input" defaultValue="Snappy filter defaults" readOnly />
         </label>
-        {option === 'A' ? <LabelsLayoutA state={state} onChange={onChange} mode="create" /> : null}
+        {option === 'A' || option === 'C' ? (
+          <LabelsLayoutA state={state} onChange={onChange} mode="create" />
+        ) : null}
         {option === 'B' ? <LabelsLayoutB state={state} onChange={onChange} mode="create" /> : null}
         {option === 'C' ? (
-          <LabelsLayoutCEdit state={state} onChange={onChange} mode="create" />
+          <p className="ta35-labels-c-note">
+            Same compact row as A on create. After create, values show as clickable header pills.
+          </p>
         ) : null}
         <label className="form-field">
           <span className="form-label">Description</span>
@@ -295,7 +400,7 @@ function DetailMock({
   state: LabelState;
   onChange: (next: LabelState) => void;
 }) {
-  const [detailsOpen, setDetailsOpen] = useState(option === 'C');
+  const [detailsOpen, setDetailsOpen] = useState(false);
 
   return (
     <section className="ta35-labels-panel" aria-label="Task page prototype">
@@ -306,7 +411,7 @@ function DetailMock({
             <span className="entity-num">TA-35</span>
             <h2 className="task-detail-title">Add task type and priority labels</h2>
             <span className="task-view-inline-meta">Auto</span>
-            {option === 'C' ? <LabelsDisplayPills state={state} /> : null}
+            {option === 'C' ? <LabelsEditablePills state={state} onChange={onChange} /> : null}
             <span className="task-view-top-actions">
               <button
                 type="button"
@@ -331,7 +436,10 @@ function DetailMock({
           {detailsOpen ? (
             <div className="task-view-details">
               {option === 'C' ? (
-                <LabelsLayoutCEdit state={state} onChange={onChange} mode="detail" />
+                <p className="ta35-labels-c-note">
+                  Click a Type, Priority, or Category pill in the header to change it. Details stays for
+                  brief and other metadata.
+                </p>
               ) : (
                 <p className="ta35-labels-c-note">
                   Brief and other details stay here. Labels edit inline above in this option.
@@ -366,7 +474,7 @@ export function Ta35LabelsDesignPicker({ option }: { option: Ta35LabelsOption })
   const blurbs: Record<Ta35LabelsOption, string> = {
     A: 'Compact Type / Priority / Category selects under the title',
     B: 'Coloured Type chips + Priority select + Category field',
-    C: 'Header pills on the task page; edit in Details (form fields on create)',
+    C: 'Header pills; click to edit in a popup (compact row on create)',
   };
 
   return (

@@ -4029,6 +4029,25 @@ html:has(body.launcher-page) {
   min-width: 8rem;
 }
 
+/* Keep Type / Priority / Category controls the same height in the create row */
+.ta35-labels-control,
+.ta35-labels-row .form-select-compact,
+.ta35-labels-row .form-input-compact {
+  box-sizing: border-box;
+  height: 32px;
+  min-height: 32px;
+  max-height: 32px;
+  padding: 0 8px;
+  font-size: 12px;
+  line-height: 30px;
+  margin: 0;
+  width: 100%;
+}
+
+.ta35-labels-row .form-select-compact {
+  width: auto;
+}
+
 .ta35-labels-b {
   display: flex;
   flex-direction: column;
@@ -4068,6 +4087,13 @@ html:has(body.launcher-page) {
   gap: 6px;
   align-items: center;
   margin-right: auto;
+  position: relative;
+  z-index: 6;
+}
+
+.ta35-label-pill-wrap {
+  position: relative;
+  display: inline-flex;
 }
 
 .ta35-label-pill {
@@ -4081,11 +4107,72 @@ html:has(body.launcher-page) {
   font-weight: 600;
   background: var(--surface);
   color: var(--fg);
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.ta35-label-pill.is-open,
+.ta35-label-pill:hover {
+  border-color: var(--fg);
 }
 
 .ta35-label-pill-muted {
   color: var(--muted);
   font-weight: 500;
+}
+
+.ta35-label-popup {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 8;
+  min-width: 11rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: var(--space-2);
+  box-shadow: 0 8px 24px oklch(12% 0.012 250 / 0.08);
+}
+
+.ta35-label-popup-category {
+  min-width: 14rem;
+  padding: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.ta35-label-popup-options {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ta35-label-popup-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: 28px;
+  padding: 0 8px;
+  border: none;
+  background: transparent;
+  text-align: left;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--fg);
+  cursor: pointer;
+}
+
+.ta35-label-popup-option:hover,
+.ta35-label-popup-option.is-selected {
+  background: var(--surface-elevated);
+}
+
+.ta35-label-popup-actions {
+  display: flex;
+  gap: var(--space-2);
+  justify-content: flex-end;
 }
 
 .ta35-label-pill-type.type-feature {
@@ -4120,6 +4207,15 @@ html:has(body.launcher-page) {
 
 .ta35-labels-task-view {
   border: none;
+  overflow: visible;
+}
+
+.ta35-labels-task-view .task-view-head {
+  overflow: visible;
+}
+
+.ta35-labels-panel {
+  overflow: visible;
 }
 
 .ta35-labels-list-preview {
