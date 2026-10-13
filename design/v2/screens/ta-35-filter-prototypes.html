@@ -1,0 +1,553 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TA-35 filter prototypes — Taskyard</title>
+  <link rel="stylesheet" href="../css/taskyard.css" />
+  <style>
+    /* Prototype page chrome only — rail mockups reuse product tokens */
+    body {
+      height: auto;
+      min-height: 100dvh;
+      overflow: auto;
+      background: var(--bg);
+    }
+
+    .proto-page {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: var(--space-5) var(--space-5) var(--space-6);
+    }
+
+    .proto-page h1 {
+      margin: 0 0 var(--space-2);
+      font-family: var(--font-display);
+      font-size: 22px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+    }
+
+    .proto-lede {
+      margin: 0 0 var(--space-5);
+      max-width: 62ch;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .proto-grid {
+      display: grid;
+      gap: var(--space-5);
+    }
+
+    .proto-card {
+      border: 1px solid var(--border);
+      background: var(--surface);
+      padding: var(--space-4);
+    }
+
+    .proto-card h2 {
+      margin: 0 0 4px;
+      font-family: var(--font-display);
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .proto-card .pick {
+      margin: 0 0 var(--space-3);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+
+    .proto-card .why {
+      margin: 0 0 var(--space-4);
+      color: var(--muted);
+      font-size: 13px;
+      max-width: 70ch;
+    }
+
+    .rail-stage {
+      width: var(--task-rail-w);
+      border: 1px solid var(--border);
+      background: var(--bg);
+      position: relative;
+    }
+
+    .rail-stage .task-rail-head {
+      position: relative;
+      border-right: none;
+    }
+
+    /* Shared filter popover / strip pieces for mocks */
+    .filter-icon-btn {
+      flex-shrink: 0;
+      width: 32px;
+      height: 32px;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--fg);
+      cursor: pointer;
+      position: relative;
+    }
+
+    .filter-icon-btn[aria-pressed="true"],
+    .filter-icon-btn.is-active {
+      border-color: var(--fg);
+      background: var(--surface-elevated);
+    }
+
+    .filter-icon-btn svg {
+      width: 14px;
+      height: 14px;
+      display: block;
+    }
+
+    .filter-count {
+      position: absolute;
+      top: -5px;
+      right: -5px;
+      min-width: 16px;
+      height: 16px;
+      padding: 0 4px;
+      border-radius: 0;
+      background: var(--fg);
+      color: var(--surface);
+      font-family: var(--font-mono);
+      font-size: 10px;
+      line-height: 16px;
+      text-align: center;
+    }
+
+    .filter-text-btn {
+      flex-shrink: 0;
+      height: 32px;
+      padding: 0 10px;
+      font-size: 12px;
+      font-weight: 600;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--fg);
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .filter-text-btn.is-active {
+      border-color: var(--fg);
+      background: var(--surface-elevated);
+    }
+
+    .filter-popover {
+      position: absolute;
+      top: calc(100% - 1px);
+      left: var(--space-3);
+      right: var(--space-3);
+      z-index: 5;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      padding: var(--space-3);
+      box-shadow: 0 8px 24px oklch(12% 0.012 250 / 0.08);
+    }
+
+    .filter-popover h3 {
+      margin: 0 0 var(--space-2);
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 400;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--label-subtle);
+    }
+
+    .filter-popover h3 + .filter-options {
+      margin-bottom: var(--space-3);
+    }
+
+    .filter-options {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .filter-option {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .filter-option input {
+      margin: 0;
+      accent-color: var(--fg);
+    }
+
+    .type-swatch {
+      width: 8px;
+      height: 8px;
+      flex-shrink: 0;
+    }
+
+    .type-feature { background: oklch(45% 0.14 255); }
+    .type-bug { background: oklch(48% 0.16 25); }
+    .type-docs { background: oklch(42% 0.12 145); }
+    .type-thought { background: oklch(48% 0.12 85); }
+
+    .filter-popover-actions {
+      display: flex;
+      gap: var(--space-2);
+      margin-top: var(--space-3);
+      padding-top: var(--space-3);
+      border-top: 1px solid var(--border);
+    }
+
+    .filter-popover-actions .btn {
+      height: 28px;
+      padding: 0 10px;
+      font-size: 12px;
+    }
+
+    .filter-strip {
+      border-top: 1px solid var(--border);
+      padding: var(--space-2) var(--space-3) var(--space-3);
+      background: var(--surface);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+    }
+
+    .filter-strip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .filter-strip-label {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--label-subtle);
+      width: 100%;
+    }
+
+    .chip {
+      height: 24px;
+      padding: 0 8px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--fg);
+    }
+
+    .chip[aria-pressed="true"] {
+      border-color: var(--fg);
+      background: var(--surface-elevated);
+    }
+
+    .chip .type-swatch {
+      width: 6px;
+      height: 6px;
+    }
+
+    /* Option D: two compact menus stacked under project */
+    .dual-menus {
+      display: flex;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+
+    .dual-menus .form-select {
+      width: auto;
+      min-width: 0;
+      height: 32px;
+      margin: 0;
+      padding: 0 4px 0 6px;
+      font-size: 11px;
+      line-height: 30px;
+      max-width: 72px;
+    }
+
+    .rail-list-stub {
+      padding: var(--space-2) 0;
+      border-top: 1px solid var(--border);
+    }
+
+    .rail-list-stub .stub {
+      padding: 8px var(--space-3);
+      font-size: 12px;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .rail-list-stub .stub:last-child {
+      border-bottom: none;
+    }
+
+    .rail-list-stub .stub strong {
+      color: var(--fg);
+      font-weight: 600;
+    }
+
+    .proto-note {
+      margin-top: var(--space-5);
+      padding: var(--space-3) var(--space-4);
+      border: 1px dashed var(--border);
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .proto-note code {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--fg);
+    }
+  </style>
+</head>
+<body>
+  <div class="proto-page">
+    <h1>TA-35 — Task list filter prototypes</h1>
+    <p class="proto-lede">
+      Placement is fixed: between the project select and <strong>New task</strong>, in the 280px task rail.
+      Pick A–D (or a hybrid). Click controls in each mock — they are interactive.
+    </p>
+
+    <div class="proto-grid">
+      <!-- A -->
+      <article class="proto-card" id="opt-a">
+        <p class="pick">Option A</p>
+        <h2>Icon button → checkbox popover</h2>
+        <p class="why">
+          Smallest footprint. Funnel icon with a count badge when filters are on.
+          Popover multi-selects Type and Priority; Clear / Apply at the bottom.
+        </p>
+        <div class="rail-stage" data-proto="a">
+          <header class="panel-head task-rail-head">
+            <span class="task-rail-head-label">Tasks</span>
+            <div class="task-rail-project-wrap">
+              <select class="form-select task-rail-project" aria-label="Project">
+                <option>Taskyard</option>
+                <option>Invoice bot</option>
+              </select>
+            </div>
+            <button type="button" class="filter-icon-btn is-active" aria-label="Filter tasks" aria-expanded="true" aria-controls="pop-a" data-toggle="pop-a">
+              <svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M1.5 2h13l-5 6.2V13l-3 1.5V8.2L1.5 2z"/></svg>
+              <span class="filter-count">2</span>
+            </button>
+            <button type="button" class="btn btn-primary btn-rail-new">New task</button>
+            <div class="filter-popover" id="pop-a" role="dialog" aria-label="Filter tasks">
+              <h3>Type</h3>
+              <div class="filter-options">
+                <label class="filter-option"><input type="checkbox" checked /> <span class="type-swatch type-feature"></span> Feature</label>
+                <label class="filter-option"><input type="checkbox" checked /> <span class="type-swatch type-bug"></span> Bug</label>
+                <label class="filter-option"><input type="checkbox" /> <span class="type-swatch type-docs"></span> Documentation</label>
+                <label class="filter-option"><input type="checkbox" /> <span class="type-swatch type-thought"></span> Thought</label>
+              </div>
+              <h3>Priority</h3>
+              <div class="filter-options">
+                <label class="filter-option"><input type="checkbox" /> Low</label>
+                <label class="filter-option"><input type="checkbox" /> Medium</label>
+                <label class="filter-option"><input type="checkbox" checked /> High</label>
+                <label class="filter-option"><input type="checkbox" /> Critical</label>
+              </div>
+              <div class="filter-popover-actions">
+                <button type="button" class="btn btn-ghost">Clear</button>
+                <button type="button" class="btn btn-primary">Apply</button>
+              </div>
+            </div>
+          </header>
+          <div class="rail-list-stub">
+            <div class="stub"><strong>TA-35</strong> · Feature · High</div>
+            <div class="stub"><strong>TA-12</strong> · Bug · High</div>
+          </div>
+        </div>
+      </article>
+
+      <!-- B -->
+      <article class="proto-card" id="opt-b">
+        <p class="pick">Option B</p>
+        <h2>Labeled Filter button → same popover</h2>
+        <p class="why">
+          Same interaction as A, but a text control so it is obvious. Active state shows
+          <code style="font-family:var(--font-mono);font-size:12px">Filter · 2</code>. Costs more horizontal space.
+        </p>
+        <div class="rail-stage" data-proto="b">
+          <header class="panel-head task-rail-head">
+            <span class="task-rail-head-label">Tasks</span>
+            <div class="task-rail-project-wrap">
+              <select class="form-select task-rail-project" aria-label="Project">
+                <option>Taskyard</option>
+              </select>
+            </div>
+            <button type="button" class="filter-text-btn is-active" aria-expanded="true" aria-controls="pop-b" data-toggle="pop-b">
+              Filter · 2
+            </button>
+            <button type="button" class="btn btn-primary btn-rail-new">New task</button>
+            <div class="filter-popover" id="pop-b" role="dialog" aria-label="Filter tasks">
+              <h3>Type</h3>
+              <div class="filter-options">
+                <label class="filter-option"><input type="checkbox" checked /> <span class="type-swatch type-feature"></span> Feature</label>
+                <label class="filter-option"><input type="checkbox" /> <span class="type-swatch type-bug"></span> Bug</label>
+                <label class="filter-option"><input type="checkbox" /> <span class="type-swatch type-docs"></span> Documentation</label>
+                <label class="filter-option"><input type="checkbox" /> <span class="type-swatch type-thought"></span> Thought</label>
+              </div>
+              <h3>Priority</h3>
+              <div class="filter-options">
+                <label class="filter-option"><input type="checkbox" /> Low</label>
+                <label class="filter-option"><input type="checkbox" checked /> Medium</label>
+                <label class="filter-option"><input type="checkbox" checked /> High</label>
+                <label class="filter-option"><input type="checkbox" /> Critical</label>
+              </div>
+              <div class="filter-popover-actions">
+                <button type="button" class="btn btn-ghost">Clear</button>
+                <button type="button" class="btn btn-primary">Apply</button>
+              </div>
+            </div>
+          </header>
+          <div class="rail-list-stub">
+            <div class="stub"><strong>TA-35</strong> · Feature · High</div>
+            <div class="stub"><strong>TA-08</strong> · Feature · Medium</div>
+          </div>
+        </div>
+      </article>
+
+      <!-- C -->
+      <article class="proto-card" id="opt-c">
+        <p class="pick">Option C</p>
+        <h2>Icon toggles an inline chip strip</h2>
+        <p class="why">
+          No floating panel. Clicking the icon expands a strip under the head with
+          pressable Type and Priority chips. Filters apply immediately. Clearer on narrow rails;
+          steals vertical space when open.
+        </p>
+        <div class="rail-stage" data-proto="c">
+          <header class="panel-head task-rail-head">
+            <span class="task-rail-head-label">Tasks</span>
+            <div class="task-rail-project-wrap">
+              <select class="form-select task-rail-project" aria-label="Project">
+                <option>Taskyard</option>
+              </select>
+            </div>
+            <button type="button" class="filter-icon-btn is-active" aria-label="Filter tasks" aria-expanded="true" data-toggle-strip="strip-c">
+              <svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M1.5 2h13l-5 6.2V13l-3 1.5V8.2L1.5 2z"/></svg>
+              <span class="filter-count">3</span>
+            </button>
+            <button type="button" class="btn btn-primary btn-rail-new">New task</button>
+          </header>
+          <div class="filter-strip" id="strip-c">
+            <div class="filter-strip-row">
+              <span class="filter-strip-label">Type</span>
+              <button type="button" class="chip" aria-pressed="true"><span class="type-swatch type-feature"></span>Feature</button>
+              <button type="button" class="chip" aria-pressed="true"><span class="type-swatch type-bug"></span>Bug</button>
+              <button type="button" class="chip" aria-pressed="false"><span class="type-swatch type-docs"></span>Docs</button>
+              <button type="button" class="chip" aria-pressed="false"><span class="type-swatch type-thought"></span>Thought</button>
+            </div>
+            <div class="filter-strip-row">
+              <span class="filter-strip-label">Priority</span>
+              <button type="button" class="chip" aria-pressed="false">Low</button>
+              <button type="button" class="chip" aria-pressed="false">Med</button>
+              <button type="button" class="chip" aria-pressed="true">High</button>
+              <button type="button" class="chip" aria-pressed="false">Crit</button>
+            </div>
+          </div>
+          <div class="rail-list-stub">
+            <div class="stub"><strong>TA-35</strong> · Feature · High</div>
+            <div class="stub"><strong>TA-12</strong> · Bug · High</div>
+          </div>
+        </div>
+      </article>
+
+      <!-- D -->
+      <article class="proto-card" id="opt-d">
+        <p class="pick">Option D</p>
+        <h2>Two compact selects (Type · Priority)</h2>
+        <p class="why">
+          Always visible, no open/close. Each select is single-value including “Any”.
+          Fastest to scan; weakest for multi-select (e.g. High + Critical at once) unless we
+          switch to multi-select menus later.
+        </p>
+        <div class="rail-stage" data-proto="d">
+          <header class="panel-head task-rail-head">
+            <span class="task-rail-head-label">Tasks</span>
+            <div class="task-rail-project-wrap">
+              <select class="form-select task-rail-project" aria-label="Project">
+                <option>Taskyard</option>
+              </select>
+            </div>
+            <div class="dual-menus">
+              <select class="form-select" aria-label="Type filter">
+                <option>Any type</option>
+                <option selected>Feature</option>
+                <option>Bug</option>
+                <option>Docs</option>
+                <option>Thought</option>
+              </select>
+              <select class="form-select" aria-label="Priority filter">
+                <option>Any pri</option>
+                <option>Low</option>
+                <option>Med</option>
+                <option selected>High</option>
+                <option>Crit</option>
+              </select>
+            </div>
+            <button type="button" class="btn btn-primary btn-rail-new">New task</button>
+          </header>
+          <div class="rail-list-stub">
+            <div class="stub"><strong>TA-35</strong> · Feature · High</div>
+          </div>
+        </div>
+      </article>
+    </div>
+
+    <p class="proto-note">
+      Open this file locally:
+      <code>design/v2/screens/ta-35-filter-prototypes.html</code>
+      · Reply with A, B, C, D, or a mix (e.g. “A but live-apply, no Apply button”).
+      Type/Priority fields on create + task page will ship with whichever filter you pick.
+    </p>
+  </div>
+
+  <script>
+    document.querySelectorAll('[data-toggle]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-toggle');
+        const panel = document.getElementById(id);
+        if (!panel) return;
+        const open = panel.hidden;
+        panel.hidden = !open;
+        btn.setAttribute('aria-expanded', String(open));
+      });
+    });
+
+    document.querySelectorAll('[data-toggle-strip]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const strip = document.getElementById(btn.getAttribute('data-toggle-strip'));
+        if (!strip) return;
+        const open = strip.hidden;
+        strip.hidden = !open;
+        btn.setAttribute('aria-expanded', String(open));
+        btn.classList.toggle('is-active', open);
+      });
+    });
+
+    document.querySelectorAll('.chip').forEach((chip) => {
+      chip.addEventListener('click', () => {
+        const next = chip.getAttribute('aria-pressed') !== 'true';
+        chip.setAttribute('aria-pressed', String(next));
+      });
+    });
+  </script>
+</body>
+</html>
