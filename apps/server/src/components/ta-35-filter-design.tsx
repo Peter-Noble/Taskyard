@@ -121,7 +121,9 @@ function DesignAFilterPopover({
     Object.fromEntries(TYPE_OPTIONS.map((opt) => [opt.id, true])),
   );
   const [statuses, setStatuses] = useState<Record<string, boolean>>(() =>
-    Object.fromEntries(STATUS_OPTIONS.map((opt) => [opt.id, true])),
+    Object.fromEntries(
+      STATUS_OPTIONS.map((opt) => [opt.id, opt.id !== 'completed' && opt.id !== 'cancelled']),
+    ),
   );
   const [priorityMin, setPriorityMin] = useState(0);
   const [priorityMax, setPriorityMax] = useState(PRIORITY_MAX);
@@ -137,7 +139,11 @@ function DesignAFilterPopover({
 
   function clear() {
     setTypes(Object.fromEntries(TYPE_OPTIONS.map((opt) => [opt.id, true])));
-    setStatuses(Object.fromEntries(STATUS_OPTIONS.map((opt) => [opt.id, true])));
+    setStatuses(
+      Object.fromEntries(
+        STATUS_OPTIONS.map((opt) => [opt.id, opt.id !== 'completed' && opt.id !== 'cancelled']),
+      ),
+    );
     setPriorityMin(0);
     setPriorityMax(PRIORITY_MAX);
   }
