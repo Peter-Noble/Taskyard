@@ -22,6 +22,12 @@ function TypeSwatch({ typeId }: { typeId: TaskType }) {
   return <span className={`ta35-type-swatch ${taskTypeMeta(typeId).swatch}`} aria-hidden="true" />;
 }
 
+function PrioritySwatch({ priority }: { priority: TaskPriority }) {
+  return (
+    <span className={`ta35-priority-swatch ${taskPriorityTone(priority)}`} aria-hidden="true" />
+  );
+}
+
 function CategoryInput({
   id,
   value,
@@ -202,6 +208,7 @@ export function TaskLabelPills({
           disabled={disabled}
           onClick={() => toggle('priority')}
         >
+          <PrioritySwatch priority={value.priority} />
           {taskPriorityLabel(value.priority)}
         </button>
         {open === 'priority' ? (
@@ -217,7 +224,7 @@ export function TaskLabelPills({
                     setOpen(null);
                   }}
                 >
-                  <span className={`ta35-priority-dot ${p.tone}`} aria-hidden="true" />
+                  <span className={`ta35-priority-swatch ${p.tone}`} aria-hidden="true" />
                   {p.label}
                 </button>
               ))}
