@@ -1,4 +1,4 @@
-import type { TaskPriority, TaskType } from '@taskyard/protocol';
+import type { Task, TaskPriority, TaskType } from '@taskyard/protocol';
 
 export const TASK_TYPES: Array<{ id: TaskType; label: string; swatch: string }> = [
   { id: 'feature', label: 'Feature', swatch: 'type-feature' },
@@ -35,4 +35,40 @@ export function taskPriorityLabel(id: TaskPriority) {
 
 export function taskPriorityTone(id: TaskPriority) {
   return taskPriorityMeta(id).tone;
+}
+
+/** Distinct non-empty categories from tasks, sorted for datalist display. */
+export function categoriesFromTasks(tasks: Array<Pick<Task, 'category'>>): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const task of tasks) {
+    const category = task.category?.trim();
+    if (!category) continue;
+    const key = category.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(category);
+  }
+  out.sort((a, b) => a.localeCompare(b));
+  return out;
+}
+
+/** Merge suggestion lists without dropping known values when a slower fetch arrives. */
+export function mergeCategorySuggestions(prev: string[], incoming: string[]): string[] {
+  if (incoming.length === 0) return prev;
+  const seen = new Set(prev.map((item) => item.toLowerCase()));
+  let changed = false;
+  const next = [...prev];
+  for (const raw of incoming) {
+    const item = raw.trim();
+    if (!item) continue;
+    const key = item.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    next.push(item);
+    changed = true;
+  }
+  if (!changed) return prev;
+  next.sort((a, b) => a.localeCompare(b));
+  return next;
 }

@@ -5,6 +5,7 @@ import type { TaskPriority, TaskType } from '@taskyard/protocol';
 import {
   TASK_PRIORITIES,
   TASK_TYPES,
+  mergeCategorySuggestions,
   taskPriorityLabel,
   taskPriorityTone,
   taskTypeMeta,
@@ -40,11 +41,18 @@ function CategoryInput({
   suggestions: string[];
 }) {
   const listId = `${id}-suggestions`;
+  // Keep a local known set so a slow/partial server list never blanks the input filter.
+  const [known, setKnown] = useState(suggestions);
+
+  useEffect(() => {
+    setKnown((prev) => mergeCategorySuggestions(prev, suggestions));
+  }, [suggestions]);
+
   const filtered = useMemo(() => {
     const q = value.trim().toLowerCase();
-    if (!q) return suggestions;
-    return suggestions.filter((item) => item.toLowerCase().includes(q));
-  }, [suggestions, value]);
+    if (!q) return known;
+    return known.filter((item) => item.toLowerCase().includes(q));
+  }, [known, value]);
 
   return (
     <>
@@ -138,17 +146,43 @@ export function TaskLabelPills({
   disabled?: boolean;
 }) {
   const [open, setOpen] = useState<PillEditor>(null);
+  const [categoryDraft, setCategoryDraft] = useState(value.category);
+  const categoryDraftRef = useRef(categoryDraft);
+  const valueRef = useRef(value);
+  const onChangeRef = useRef(onChange);
+  const openRef = useRef(open);
   const rootRef = useRef<HTMLDivElement>(null);
   const categoryId = useId();
   const type = taskTypeMeta(value.taskType);
+  categoryDraftRef.current = categoryDraft;
+  valueRef.current = value;
+  onChangeRef.current = onChange;
+  openRef.current = open;
+
+  useEffect(() => {
+    if (open !== 'category') setCategoryDraft(value.category);
+  }, [value.category, open]);
+
+  function commitCategory() {
+    const draft = categoryDraftRef.current;
+    const current = valueRef.current;
+    if (draft.trim() === current.category.trim()) return;
+    void onChangeRef.current({ ...current, category: draft });
+  }
 
   useEffect(() => {
     if (!open) return;
     function onPointerDown(event: MouseEvent) {
-      if (!rootRef.current?.contains(event.target as Node)) setOpen(null);
+      if (!rootRef.current?.contains(event.target as Node)) {
+        if (openRef.current === 'category') commitCategory();
+        setOpen(null);
+      }
     }
     function onKey(event: KeyboardEvent) {
-      if (event.key === 'Escape') setOpen(null);
+      if (event.key === 'Escape') {
+        if (openRef.current === 'category') setCategoryDraft(valueRef.current.category);
+        setOpen(null);
+      }
     }
     document.addEventListener('mousedown', onPointerDown);
     document.addEventListener('keydown', onKey);
@@ -160,7 +194,11 @@ export function TaskLabelPills({
 
   function toggle(next: PillEditor) {
     if (disabled) return;
-    setOpen((prev) => (prev === next ? null : next));
+    setOpen((prev) => {
+      if (prev === 'category' && next !== 'category') commitCategory();
+      if (next === 'category') setCategoryDraft(valueRef.current.category);
+      return prev === next ? null : next;
+    });
   }
 
   return (
@@ -250,8 +288,8 @@ export function TaskLabelPills({
               <span className="form-label">Category</span>
               <CategoryInput
                 id={categoryId}
-                value={value.category}
-                onChange={(category) => void onChange({ ...value, category })}
+                value={categoryDraft}
+                onChange={setCategoryDraft}
                 suggestions={categorySuggestions}
               />
             </label>
@@ -259,11 +297,21 @@ export function TaskLabelPills({
               <button
                 type="button"
                 className="btn btn-ghost btn-sm"
-                onClick={() => void onChange({ ...value, category: '' })}
+                onClick={() => {
+                  setCategoryDraft('');
+                  void onChange({ ...value, category: '' });
+                }}
               >
                 Clear
               </button>
-              <button type="button" className="btn btn-primary btn-sm" onClick={() => setOpen(null)}>
+              <button
+                type="button"
+                className="btn btn-primary btn-sm"
+                onClick={() => {
+                  commitCategory();
+                  setOpen(null);
+                }}
+              >
                 Done
               </button>
             </div>

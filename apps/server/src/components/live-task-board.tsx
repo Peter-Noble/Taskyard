@@ -9,7 +9,32 @@ import {
   type TaskLabelValues,
 } from '@/components/task-label-fields';
 import { taskPassesRailFilter, type TaskRailFilterState } from '@/components/task-rail-filter';
-import { taskPriorityLabel, taskPriorityTone, taskTypeMeta } from '@/lib/task-labels';
+import { categoriesFromTasks, taskPriorityLabel, taskPriorityTone, taskTypeMeta } from '@/lib/task-labels';
+
+function useProjectCategorySuggestions(projectId: string | null | undefined, refreshKey = 0) {
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  useEffect(() => {
+    if (!projectId) {
+      setSuggestions([]);
+      return;
+    }
+    let cancelled = false;
+    void fetch(`/api/tasks?project_id=${encodeURIComponent(projectId)}`)
+      .then(async (res) => {
+        if (!res.ok) return;
+        const data = (await res.json()) as { tasks?: Task[] };
+        if (cancelled) return;
+        setSuggestions(categoriesFromTasks(data.tasks ?? []));
+      })
+      .catch(() => {
+        /* suggestions are optional */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [projectId, refreshKey]);
+  return suggestions;
+}
 
 const STATUSES: TaskStatus[] = [
   'backlog',
@@ -265,6 +290,7 @@ function CreateTaskForm({
   });
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const categorySuggestions = useProjectCategorySuggestions(projectId);
 
   async function submit(event: FormEvent) {
     event.preventDefault();
@@ -302,7 +328,11 @@ function CreateTaskForm({
           <span className="form-label">Title</span>
           <input className="form-input" value={title} onChange={(e) => setTitle(e.target.value)} required />
         </label>
-        <TaskLabelCreateFields value={labels} onChange={setLabels} />
+        <TaskLabelCreateFields
+          value={labels}
+          onChange={setLabels}
+          categorySuggestions={categorySuggestions}
+        />
         <label className="form-field">
           <span className="form-label">Description</span>
           <textarea
@@ -547,6 +577,8 @@ function TaskEditor({
     onChanged();
   }
 
+  const categorySuggestions = useProjectCategorySuggestions(task?.project_id, refreshKey);
+
   if (!task) {
     return (
       <div className="empty-state" style={{ padding: 'var(--space-5)' }}>
@@ -583,7 +615,11 @@ function TaskEditor({
               ))}
             </span>
           ) : null}
-          <TaskLabelPills value={labelValues} onChange={patchLabels} />
+          <TaskLabelPills
+            value={labelValues}
+            onChange={patchLabels}
+            categorySuggestions={categorySuggestions}
+          />
           <span className="task-view-top-actions">
             <button
               type="button"
