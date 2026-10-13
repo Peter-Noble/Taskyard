@@ -3950,3 +3950,231 @@ html:has(body.launcher-page) {
   flex: 1;
   min-height: 0;
 }
+
+/* TA-35 label field prototypes (?ta-35-labels=A|B|C) — remove with the task */
+.ta35-labels-board {
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  overflow: auto;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.ta35-labels-lede {
+  margin: 0;
+  max-width: 70ch;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.ta35-labels-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+  align-items: start;
+}
+
+@media (max-width: 1100px) {
+  .ta35-labels-columns {
+    grid-template-columns: 1fr;
+  }
+}
+
+.ta35-labels-panel {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: var(--space-3);
+  min-width: 0;
+}
+
+.ta35-labels-panel-title {
+  margin: 0 0 var(--space-3);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--label-subtle);
+}
+
+.ta35-labels-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: end;
+  margin-bottom: var(--space-3);
+}
+
+.ta35-labels-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.ta35-labels-field-grow {
+  flex: 1 1 10rem;
+}
+
+.ta35-labels-select-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ta35-labels-select-wrap .form-select {
+  width: auto;
+  min-width: 8rem;
+}
+
+.ta35-labels-b {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.ta35-type-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.ta35-type-chip {
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--fg);
+}
+
+.ta35-type-chip.is-selected,
+.ta35-type-chip[aria-pressed='true'] {
+  border-color: var(--fg);
+  background: var(--surface-elevated);
+}
+
+.ta35-labels-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  margin-right: auto;
+}
+
+.ta35-label-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  padding: 0 8px;
+  border: 1px solid var(--border);
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--surface);
+  color: var(--fg);
+}
+
+.ta35-label-pill-muted {
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.ta35-label-pill-type.type-feature {
+  border-color: oklch(45% 0.14 255);
+}
+
+.ta35-label-pill-type.type-bug {
+  border-color: oklch(48% 0.16 25);
+}
+
+.ta35-label-pill-type.type-docs {
+  border-color: oklch(42% 0.12 145);
+}
+
+.ta35-label-pill-type.type-thought {
+  border-color: oklch(48% 0.12 85);
+}
+
+.ta35-labels-detail-inline {
+  padding: 0 var(--space-4) var(--space-3);
+}
+
+.ta35-labels-c-edit {
+  margin-bottom: var(--space-3);
+}
+
+.ta35-labels-c-note {
+  margin: 0 0 var(--space-3);
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.ta35-labels-task-view {
+  border: none;
+}
+
+.ta35-labels-list-preview {
+  border: 1px solid var(--border);
+  background: var(--bg);
+  padding: var(--space-3);
+}
+
+.ta35-labels-list-preview-label {
+  display: block;
+  margin-bottom: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--label-subtle);
+}
+
+.ta35-labels-list-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-size: 12px;
+  min-width: 0;
+}
+
+.ta35-labels-list-id {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+.ta35-labels-list-title {
+  font-weight: 600;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ta35-labels-list-meta,
+.ta35-labels-list-cat {
+  flex-shrink: 0;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.ta35-labels-list-cat {
+  max-width: 8rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

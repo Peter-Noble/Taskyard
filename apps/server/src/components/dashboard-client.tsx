@@ -34,6 +34,11 @@ import {
   Ta35FilterDesignStrip,
   type Ta35DesignOption,
 } from '@/components/ta-35-filter-design';
+import {
+  Ta35LabelsDesignBoard,
+  Ta35LabelsDesignPicker,
+  type Ta35LabelsOption,
+} from '@/components/ta-35-labels-design';
 
 type MachinesResponse = {
   machines: Array<Machine & { port_utilization?: { used: number; total: number } }>;
@@ -45,9 +50,11 @@ type ProjectsResponse = { projects: Project[] };
 export function DashboardClient({
   initialPanels,
   ta35Design = null,
+  ta35Labels = null,
 }: {
   initialPanels?: PanelVisibility;
   ta35Design?: Ta35DesignOption | null;
+  ta35Labels?: Ta35LabelsOption | null;
 }) {
   const router = useRouter();
   const { useTestData: testDataOn, hydrated } = useTestData();
@@ -229,7 +236,16 @@ export function DashboardClient({
           </header>
   );
 
-  const streamHead = liveTaskOpen ? null : (
+  const streamHead = ta35Labels ? (
+          <header className="panel-head stream-header" aria-label="Label field prototypes">
+            <div className="stream-header-view">
+              <div className="stream-header-main">
+                <h2 className="stream-title">Type / Priority / Category</h2>
+                <p className="stream-sub">Prototype option {ta35Labels} — not saved</p>
+              </div>
+            </div>
+          </header>
+  ) : liveTaskOpen ? null : (
           <header
             className="panel-head stream-header"
             aria-label={centerMode === 'task' ? 'Selected task' : 'Selected thread'}
@@ -315,7 +331,13 @@ export function DashboardClient({
 
   const streamBody = (
           <section className="stream-panel" aria-label="Center panel">
-            {centerMode === 'chat' ? (
+            {ta35Labels ? (
+              <div className="center-view">
+                <div className="stream-body">
+                  <Ta35LabelsDesignBoard option={ta35Labels} />
+                </div>
+              </div>
+            ) : centerMode === 'chat' ? (
               <div className="center-view">
                 <div className="stream-body">
                   {selectedThread ? (
@@ -382,6 +404,7 @@ export function DashboardClient({
 
   return (
     <AppShell>
+      {ta35Labels ? <Ta35LabelsDesignPicker option={ta35Labels} /> : null}
       {ta35Design ? <Ta35DesignPicker option={ta35Design} /> : null}
       <WorkspaceSeams
         initialPanels={initialPanels}
