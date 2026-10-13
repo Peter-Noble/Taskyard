@@ -190,7 +190,9 @@ export function DashboardClient({
         : 'Select a thread';
 
   const taskHead = (
-          <header className="panel-head task-rail-head">
+          <header
+            className={`panel-head task-rail-head${ta35Design === 'A' || ta35Design === 'B' ? ' ta35-filter-head' : ''}`}
+          >
             <span className="task-rail-head-label">Tasks</span>
             {!testDataOn ? (
               <div className="task-rail-project-wrap">

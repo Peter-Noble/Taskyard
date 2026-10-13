@@ -3646,6 +3646,18 @@ html:has(body.launcher-page) {
   min-width: 12rem;
 }
 
+/* Popover hangs below the 72px head; panel-head normally clips overflow. */
+.task-rail-head.ta35-filter-head {
+  overflow: visible;
+  z-index: 30;
+}
+
+.workspace-rail:has(.ta35-filter-head),
+.workspace-slot-head:has(.ta35-filter-head) {
+  overflow: visible;
+  z-index: 30;
+}
+
 .ta35-filter-icon-btn {
   flex-shrink: 0;
   width: 32px;
