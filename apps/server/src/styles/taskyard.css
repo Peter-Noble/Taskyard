@@ -3987,6 +3987,7 @@ html:has(body.launcher-page) {
   background: var(--surface);
   padding: var(--space-3);
   min-width: 0;
+  overflow: visible;
 }
 
 .ta35-labels-panel-title {
@@ -4211,10 +4212,6 @@ html:has(body.launcher-page) {
 }
 
 .ta35-labels-task-view .task-view-head {
-  overflow: visible;
-}
-
-.ta35-labels-panel {
   overflow: visible;
 }
 
