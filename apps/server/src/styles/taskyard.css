@@ -617,7 +617,7 @@ a:hover {
   letter-spacing: 0.04em;
   line-height: 1;
   white-space: nowrap;
-  background: var(--surface);
+  background: transparent;
 }
 
 .task-item-dependent .task-item-priority {
@@ -630,25 +630,25 @@ a:hover {
 .priority-low {
   color: oklch(48% 0.01 250);
   border-color: oklch(78% 0.01 250);
-  background: oklch(96% 0.004 250);
+  background: transparent;
 }
 
 .priority-medium {
   color: oklch(42% 0.12 145);
   border-color: oklch(70% 0.08 145);
-  background: var(--success-bg);
+  background: transparent;
 }
 
 .priority-high {
   color: oklch(48% 0.14 55);
   border-color: oklch(72% 0.1 55);
-  background: oklch(96% 0.04 55);
+  background: transparent;
 }
 
 .priority-critical {
   color: var(--danger);
   border-color: oklch(72% 0.1 25);
-  background: var(--danger-bg);
+  background: transparent;
 }
 
 .task-item-main {
@@ -4263,35 +4263,8 @@ html:has(body.launcher-page) {
   border-color: oklch(48% 0.12 85);
 }
 
-.ta35-label-pill-priority.priority-low,
-.ta35-label-pill-priority.priority-medium,
-.ta35-label-pill-priority.priority-high,
-.ta35-label-pill-priority.priority-critical {
-  border-color: inherit;
-}
-
-.ta35-label-pill-priority.priority-low {
-  color: oklch(48% 0.01 250);
-  border-color: oklch(78% 0.01 250);
-  background: oklch(96% 0.004 250);
-}
-
-.ta35-label-pill-priority.priority-medium {
-  color: oklch(42% 0.12 145);
-  border-color: oklch(70% 0.08 145);
-  background: var(--success-bg);
-}
-
-.ta35-label-pill-priority.priority-high {
-  color: oklch(48% 0.14 55);
-  border-color: oklch(72% 0.1 55);
-  background: oklch(96% 0.04 55);
-}
-
-.ta35-label-pill-priority.priority-critical {
-  color: var(--danger);
-  border-color: oklch(72% 0.1 25);
-  background: var(--danger-bg);
+.ta35-label-pill-priority {
+  background: transparent;
 }
 
 .ta35-priority-dot {
