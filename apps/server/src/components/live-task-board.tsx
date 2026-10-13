@@ -141,16 +141,14 @@ export function LiveTaskRail({
         >
           <div className="task-item-row">
             <div
-              className="task-item-id-block"
+              className="task-item-id-col"
               title={`${type.label} · ${taskPriorityLabel(task.priority)}`}
             >
+              <span className={`task-item-priority ${taskPriorityTone(task.priority)}`}>
+                {taskPriorityLabel(task.priority)}
+              </span>
+              <span className="entity-num">{task.short_id}</span>
               <span className={`ta35-type-swatch ${type.swatch}`} aria-hidden="true" />
-              <div className="task-item-id-col">
-                <span className={`task-item-priority ${taskPriorityTone(task.priority)}`}>
-                  {taskPriorityLabel(task.priority)}
-                </span>
-                <span className="entity-num">{task.short_id}</span>
-              </div>
             </div>
             <div className="task-item-main">
               <h3 className="task-item-title">{task.title}</h3>
