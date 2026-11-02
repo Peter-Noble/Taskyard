@@ -1,4 +1,4 @@
-import { machines, projects, threads } from '@taskyard/db';
+import { ideas, machines, projects, threads } from '@taskyard/db';
 import { and, desc, eq } from 'drizzle-orm';
 import { randomUUID } from 'node:crypto';
 import type { TaskyardDb } from '@taskyard/db';
@@ -19,59 +19,128 @@ import {
 import { listThreadEvents } from './events.js';
 import { isOfferedAgent, readAgentManifest } from './agents.js';
 import { composeThreadPrompt, getTaskById, TaskError } from './tasks.js';
+import { canReadIdeaId, getOwnedIdeaDetail, IdeaError } from './ideas.js';
+import { IDEA_CLI_CONTRACT } from './idea-cli-contract.js';
 
 const TERMINAL_STATUSES: ThreadState[] = ['completed', 'error', 'closed'];
 const KILLABLE_STATUSES: ThreadState[] = ['pending', 'spawning', 'running', 'paused'];
 
-export function listThreads(db: TaskyardDb, status?: ThreadState) {
+function threadNames(db: TaskyardDb, row: typeof threads.$inferSelect) {
+  const project = row.projectId
+    ? db.select().from(projects).where(eq(projects.id, row.projectId)).get()
+    : undefined;
+  const idea = row.ideaId
+    ? db.select().from(ideas).where(eq(ideas.id, row.ideaId)).get()
+    : undefined;
+  const machine = row.machineId
+    ? db.select().from(machines).where(eq(machines.id, row.machineId)).get()
+    : undefined;
+  return {
+    project_name: project?.name ?? idea?.title,
+    idea_short_id: idea?.shortId,
+    machine_name: machine?.name,
+  };
+}
+
+export function canReadThread(db: TaskyardDb, threadId: string, personId?: string): boolean {
+  const row = db.select({ ideaId: threads.ideaId }).from(threads).where(eq(threads.id, threadId)).get();
+  if (!row) return false;
+  return !row.ideaId || Boolean(personId && canReadIdeaId(db, row.ideaId, personId));
+}
+
+export function listThreads(db: TaskyardDb, status?: ThreadState, personId?: string) {
   const rows = status
     ? db.select().from(threads).where(eq(threads.status, status)).orderBy(desc(threads.createdAt)).all()
     : db.select().from(threads).orderBy(desc(threads.createdAt)).all();
 
-  return rows.map((row) => {
-    const project = row.projectId
-      ? db.select().from(projects).where(eq(projects.id, row.projectId)).get()
-      : undefined;
-    const machine = row.machineId
-      ? db.select().from(machines).where(eq(machines.id, row.machineId)).get()
-      : undefined;
-    return formatThread(row, {
-      project_name: project?.name,
-      machine_name: machine?.name,
-    });
-  });
+  return rows
+    .filter((row) => !row.ideaId || Boolean(personId && canReadIdeaId(db, row.ideaId, personId)))
+    .map((row) => formatThread(row, threadNames(db, row)));
 }
 
 export function getThreadDetail(db: TaskyardDb, id: string) {
   const row = db.select().from(threads).where(eq(threads.id, id)).get();
   if (!row) return null;
 
-  const project = row.projectId
-    ? db.select().from(projects).where(eq(projects.id, row.projectId)).get()
-    : undefined;
-  const machine = row.machineId
-    ? db.select().from(machines).where(eq(machines.id, row.machineId)).get()
-    : undefined;
-
   return {
-    ...formatThread(row, {
-      project_name: project?.name,
-      machine_name: machine?.name,
-    }),
+    ...formatThread(row, threadNames(db, row)),
     events: listThreadEvents(db, id, { limit: 50 }),
   };
 }
 
-export async function createThread(db: TaskyardDb, req: CreateThreadRequest) {
-  const project = getProjectById(db, req.project_id);
-  if (!project) throw new Error(`Project not found: ${req.project_id}`);
-  if (project.archived) throw new ProjectError('Project is archived');
-  if (!project.repoUrl) throw new ProjectError('Project has no repository configured');
+// D-010
+async function createIdeaThread(db: TaskyardDb, req: CreateThreadRequest, personId?: string) {
+  if (!personId) throw new IdeaError('Sign in required to discuss an idea.', 401);
+  const idea = getOwnedIdeaDetail(db, req.idea_id!, personId);
+  if (idea.status !== 'active') throw new IdeaError('Only an active idea can start a discussion.', 409);
+  const seed = `# ${idea.short_id}: ${idea.title}${idea.description.trim() ? `\n\n${idea.description.trim()}` : ''}`;
+  const base = req.prompt?.trim() ? `${seed}\n\n${req.prompt.trim()}` : seed;
+  const prompt = `${base}\n\n${IDEA_CLI_CONTRACT}`;
+  const machineId = resolvePlacement(db, {
+    projectId: null,
+    agentType: req.agent_type,
+    placement: normalizePlacement(req),
+  });
+  const threadId = randomUUID();
+  db.insert(threads)
+    .values({
+      id: threadId,
+      projectId: null,
+      ideaId: idea.id,
+      machineId,
+      agentType: req.agent_type,
+      branch: '',
+      prompt,
+      status: 'pending',
+    })
+    .run();
 
+  try {
+    await hubSpawn(
+      {
+        type: 'spawn_thread',
+        thread_id: threadId,
+        project_id: null,
+        idea_id: idea.id,
+        project: idea.title,
+        repo_url: null,
+        branch: null,
+        agent_type: req.agent_type,
+        prompt,
+        env: { ...getEnvForAgent(db, req.agent_type), TASKYARD_PERSON_ID: personId },
+      },
+      machineId,
+    );
+    db.update(threads).set({ status: 'spawning' }).where(eq(threads.id, threadId)).run();
+  } catch (err) {
+    db.update(threads)
+      .set({ status: 'error', completedAt: new Date() })
+      .where(eq(threads.id, threadId))
+      .run();
+    if (err instanceof HubUnreachableError) {
+      throw new Error('No worker connected — start a worker and try again');
+    }
+    throw err;
+  }
+
+  const row = db.select().from(threads).where(eq(threads.id, threadId)).get()!;
+  return formatThread(row, { project_name: idea.title, idea_short_id: idea.short_id });
+}
+
+export async function createThread(db: TaskyardDb, req: CreateThreadRequest, personId?: string) {
   const manifest = readAgentManifest(req.agent_type);
   if (!manifest || !isOfferedAgent(req.agent_type, manifest)) {
     throw new Error(`Unknown agent type: ${req.agent_type}`);
   }
+  if (req.idea_id) {
+    if (req.project_id || req.task_id) throw new IdeaError('An idea thread cannot include a project or task.');
+    return createIdeaThread(db, req, personId);
+  }
+  if (!req.project_id) throw new Error('project_id or idea_id is required');
+  const project = getProjectById(db, req.project_id);
+  if (!project) throw new Error(`Project not found: ${req.project_id}`);
+  if (project.archived) throw new ProjectError('Project is archived');
+  if (!project.repoUrl) throw new ProjectError('Project has no repository configured');
 
   let taskId: string | null = req.task_id ?? null;
   let linkedTask: ReturnType<typeof getTaskById> = null;

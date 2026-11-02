@@ -4395,3 +4395,216 @@ html:has(body.launcher-page) {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+.ideas-page {
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr);
+  height: calc(100vh - var(--header-h));
+  min-height: 0;
+  border-top: 1px solid var(--border);
+}
+
+.ideas-list-panel {
+  border-right: 1px solid var(--border);
+  background: var(--surface-elevated);
+  overflow-y: auto;
+}
+
+.ideas-status-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-bottom: 1px solid var(--border);
+}
+
+.ideas-status-tabs button {
+  border: 0;
+  border-right: 1px solid var(--border);
+  padding: 12px 8px;
+  background: transparent;
+  color: var(--muted);
+  text-transform: capitalize;
+  cursor: pointer;
+}
+
+.ideas-status-tabs button.is-active {
+  background: var(--surface);
+  color: var(--fg);
+  font-weight: 600;
+}
+
+.ideas-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.ideas-list li {
+  border-bottom: 1px solid var(--border);
+}
+
+.ideas-list button {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
+  width: 100%;
+  border: 0;
+  border-left: 3px solid transparent;
+  padding: 14px 16px;
+  background: transparent;
+  color: var(--fg);
+  text-align: left;
+  cursor: pointer;
+}
+
+.ideas-list button.is-selected {
+  border-left-color: var(--accent);
+  background: var(--surface);
+}
+
+.ideas-list button > span:last-child {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.idea-short-id {
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.idea-detail-panel {
+  overflow-y: auto;
+  padding: var(--space-5);
+  background: var(--surface);
+}
+
+.idea-empty {
+  padding-top: 15vh;
+  text-align: center;
+}
+
+.idea-detail-head {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--border);
+}
+
+.idea-detail-head h1 {
+  margin: 4px 0 0;
+  font-size: 24px;
+}
+
+.idea-actions {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+.idea-brief-form {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4) 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.idea-brief-form .form-textarea {
+  resize: vertical;
+  white-space: pre-wrap;
+}
+
+.idea-collections {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  border: 0;
+  padding: 0;
+}
+
+.idea-collections legend {
+  width: 100%;
+  margin-bottom: 6px;
+}
+
+.idea-collections label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.idea-history {
+  padding-top: var(--space-4);
+}
+
+.idea-history h2 {
+  margin: 0 0 12px;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.idea-comment,
+.idea-change {
+  margin-bottom: 10px;
+  border: 1px solid var(--border);
+  padding: 12px;
+}
+
+.idea-comment {
+  background: var(--surface-elevated);
+}
+
+.idea-change {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.idea-comment header,
+.idea-change header {
+  margin-bottom: 6px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.idea-comment p,
+.idea-change p {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.idea-change pre {
+  margin: 8px 0 0;
+  white-space: pre-wrap;
+  font-family: var(--font-body);
+}
+
+.idea-history .chat-compose {
+  margin-top: var(--space-4);
+}
+
+.project-origin-link {
+  display: inline-block;
+  margin: 6px 0 0 12px;
+  color: var(--accent);
+  font-size: 11px;
+  text-decoration: none;
+}
+
+@media (max-width: 800px) {
+  .ideas-page {
+    grid-template-columns: 220px minmax(0, 1fr);
+  }
+
+  .idea-detail-head {
+    flex-direction: column;
+  }
+
+  .idea-actions {
+    justify-content: flex-start;
+  }
+}

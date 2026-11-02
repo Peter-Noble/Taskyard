@@ -70,10 +70,10 @@ function isAgentAllowed(row: MachineRow, agentType: string): boolean {
   return allowed.includes(agentType);
 }
 
-function isProjectAllowed(row: MachineRow, projectId: string): boolean {
+function isProjectAllowed(row: MachineRow, projectId: string | null): boolean {
   const allowed = parseJsonList(row.allowedProjectIds);
   if (!allowed || allowed.length === 0) return true;
-  return allowed.includes(projectId);
+  return projectId !== null && allowed.includes(projectId);
 }
 
 function isUnderThreadCap(db: TaskyardDb, row: MachineRow): boolean {
@@ -90,7 +90,7 @@ function machineScore(row: MachineRow): number {
 function filterEligible(
   db: TaskyardDb,
   rows: MachineRow[],
-  projectId: string,
+  projectId: string | null,
   agentType: string,
 ): MachineRow[] {
   return rows.filter(
@@ -121,7 +121,7 @@ function pickBest(db: TaskyardDb, candidates: MachineRow[]): string {
 export function resolvePlacement(
   db: TaskyardDb,
   opts: {
-    projectId: string;
+    projectId: string | null;
     agentType: string;
     placement: ThreadPlacement;
   },

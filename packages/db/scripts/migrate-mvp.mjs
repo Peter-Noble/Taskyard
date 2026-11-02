@@ -247,5 +247,67 @@ if (!hasTable('collection_projects')) {
   console.log('created collection_projects');
 }
 
+if (!hasTable('ideas')) {
+  db.exec(`
+    CREATE TABLE ideas (
+      id text PRIMARY KEY NOT NULL,
+      short_id text NOT NULL,
+      owner_id text NOT NULL REFERENCES people(id),
+      title text NOT NULL,
+      description text DEFAULT '' NOT NULL,
+      archived_at integer,
+      promoted_project_id text REFERENCES projects(id),
+      created_at integer,
+      updated_at integer
+    );
+    CREATE UNIQUE INDEX ideas_short_id_unique ON ideas(short_id);
+    CREATE UNIQUE INDEX ideas_promoted_project_unique ON ideas(promoted_project_id);
+  `);
+  console.log('created ideas');
+}
+
+if (!hasTable('idea_activity')) {
+  db.exec(`
+    CREATE TABLE idea_activity (
+      id integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+      idea_id text NOT NULL REFERENCES ideas(id),
+      kind text NOT NULL,
+      actor text NOT NULL,
+      payload text NOT NULL,
+      timestamp integer
+    );
+  `);
+  console.log('created idea_activity');
+}
+
+if (!hasTable('collection_ideas')) {
+  db.exec(`
+    CREATE TABLE collection_ideas (
+      collection_id text NOT NULL REFERENCES collections(id),
+      idea_id text NOT NULL REFERENCES ideas(id),
+      sort_order integer DEFAULT 0 NOT NULL,
+      PRIMARY KEY (collection_id, idea_id)
+    );
+  `);
+  console.log('created collection_ideas');
+}
+
+if (!hasTable('project_guests')) {
+  db.exec(`
+    CREATE TABLE project_guests (
+      project_id text NOT NULL REFERENCES projects(id),
+      person_id text NOT NULL REFERENCES people(id),
+      PRIMARY KEY (project_id, person_id)
+    );
+  `);
+  console.log('created project_guests');
+}
+
+const ideaThreadCols = columns('threads');
+if (!ideaThreadCols.has('idea_id')) {
+  db.exec(`ALTER TABLE threads ADD COLUMN idea_id text REFERENCES ideas(id)`);
+  console.log('added threads.idea_id');
+}
+
 console.log('migrate-mvp OK:', dbPath);
 db.close();

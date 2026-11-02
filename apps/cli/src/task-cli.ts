@@ -32,9 +32,10 @@ export type GetThreadResponse = { thread: ThreadDetail };
 
 export type ShowThreadResult = {
   thread_id: string;
-  project_id: string;
+  project_id: string | null;
   project_name: string | null;
   task_id: string | null;
+  idea_id: string | null;
   task: Task | null;
   status: string;
   workspace: string | null;
@@ -96,6 +97,12 @@ export async function apiFetch<T>(path: string, init?: RequestInit, serverUrl?: 
       headers: {
         Accept: 'application/json',
         ...(init?.body ? { 'Content-Type': 'application/json' } : {}),
+        ...(process.env.TASKYARD_SESSION_TOKEN
+          ? { Authorization: `Bearer ${process.env.TASKYARD_SESSION_TOKEN}` }
+          : {}),
+        ...(process.env.TASKYARD_PERSON_ID
+          ? { 'x-taskyard-person-id': process.env.TASKYARD_PERSON_ID }
+          : {}),
         ...init?.headers,
       },
     });
@@ -554,6 +561,7 @@ export async function cmdShowThread(pretty: boolean): Promise<void> {
     project_id: thread.project_id,
     project_name: thread.project_name ?? null,
     task_id: taskId,
+    idea_id: thread.idea_id,
     task,
     status: thread.status,
     workspace: thread.worktree_path,

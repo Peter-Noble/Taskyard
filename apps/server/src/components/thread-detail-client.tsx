@@ -178,14 +178,26 @@ export function ThreadDetailClient({ initialThread, demoThreadId }: ThreadDetail
           </section>
 
           <aside className="card detail-sidebar">
-            <h2 className="card-title">Project</h2>
+            <h2 className="card-title">{thread.idea_id ? 'Idea' : 'Project'}</h2>
             <dl className="meta-dl">
-              <dt>Repository</dt>
-              <dd>{thread.project_name ?? thread.project_id}</dd>
-              <dt>Branch</dt>
+              <dt>{thread.idea_id ? 'Origin' : 'Repository'}</dt>
               <dd>
-                <code style={{ fontFamily: 'var(--font-mono)', fontSize: 12 }}>{thread.branch}</code>
+                {thread.idea_id ? (
+                  <a href={`/ideas?idea=${thread.idea_id}`}>
+                    {thread.idea_short_id} · {thread.project_name}
+                  </a>
+                ) : (
+                  thread.project_name ?? thread.project_id
+                )}
               </dd>
+              {thread.branch ? (
+                <>
+                  <dt>Branch</dt>
+                  <dd>
+                    <code style={{ fontFamily: 'var(--font-mono)', fontSize: 12 }}>{thread.branch}</code>
+                  </dd>
+                </>
+              ) : null}
               <dt>Agent</dt>
               <dd>
                 <span className="agent-tag">{formatAgentLabel(thread.agent_type)}</span>

@@ -648,6 +648,11 @@ function ProjectSection({
                         <span className="overview-chevron" aria-hidden="true" />
                       </span>
                     </button>
+                    {project.origin_idea_id ? (
+                      <a className="project-origin-link" href={`/ideas?idea=${project.origin_idea_id}`}>
+                        Origin idea {project.origin_idea_short_id}
+                      </a>
+                    ) : null}
                     {collections.length > 0 && !testDataOn ? (
                       <div className="collection-toggles">
                         {collections.map((collection) => {

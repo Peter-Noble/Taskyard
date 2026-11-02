@@ -33,5 +33,10 @@ export function actorFromWebSession(
   if (session.mustChangePassword) {
     return { ok: false, response: jsonError('Set a new password before using Taskyard.', 403) };
   }
-  return { ok: true, actor: session.person.displayName };
+  return {
+    ok: true,
+    actor: session.kind === 'web'
+      ? session.person.displayName
+      : bodyActor?.trim() || session.person.displayName,
+  };
 }

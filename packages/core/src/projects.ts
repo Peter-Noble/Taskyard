@@ -1,5 +1,5 @@
-import { projects, tasks, threads } from '@taskyard/db';
-import { and, asc, count, eq, max, ne, notInArray } from 'drizzle-orm';
+import { ideas, projects, tasks, threads } from '@taskyard/db';
+import { and, asc, count, eq, inArray, max, ne, notInArray } from 'drizzle-orm';
 import { randomUUID } from 'node:crypto';
 import type { TaskyardDb } from '@taskyard/db';
 import type { CreateProjectRequest, ProjectTaskCounts, UpdateProjectRequest } from '@taskyard/protocol';
@@ -103,11 +103,24 @@ function projectOrder() {
 
 function presentProjects(db: TaskyardDb, rows: Array<typeof projects.$inferSelect>) {
   const counts = taskCountsByProject(db);
-  return rows.map((row) => ({
-    ...formatProject(row),
-    active_threads: countActiveThreads(db, row.id),
-    task_counts: counts.get(row.id) ?? emptyTaskCounts(),
-  }));
+  const origins = rows.length
+    ? db
+        .select({ id: ideas.id, shortId: ideas.shortId, projectId: ideas.promotedProjectId })
+        .from(ideas)
+        .where(inArray(ideas.promotedProjectId, rows.map((row) => row.id)))
+        .all()
+    : [];
+  const originByProject = new Map(origins.map((row) => [row.projectId, row]));
+  return rows.map((row) => {
+    const origin = originByProject.get(row.id);
+    return {
+      ...formatProject(row),
+      active_threads: countActiveThreads(db, row.id),
+      task_counts: counts.get(row.id) ?? emptyTaskCounts(),
+      origin_idea_id: origin?.id ?? null,
+      origin_idea_short_id: origin?.shortId ?? null,
+    };
+  });
 }
 
 export function listProjects(db: TaskyardDb, opts?: { includeArchived?: boolean }) {
