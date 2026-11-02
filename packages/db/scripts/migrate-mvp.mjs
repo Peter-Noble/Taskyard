@@ -6,7 +6,9 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
-const dbPath = process.env.TASKYARD_DB_PATH ?? path.join(root, 'data', 'taskyard.db');
+const dbPath = process.env.TASKYARD_DB_PATH
+  ? path.resolve(root, process.env.TASKYARD_DB_PATH)
+  : path.join(root, 'data', 'taskyard.db');
 const db = new Database(dbPath);
 db.pragma('foreign_keys = ON');
 

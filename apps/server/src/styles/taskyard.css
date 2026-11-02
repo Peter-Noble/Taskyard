@@ -4405,31 +4405,21 @@ html:has(body.launcher-page) {
 }
 
 .ideas-list-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
   border-right: 1px solid var(--border);
   background: var(--surface-elevated);
+  overflow: hidden;
+}
+
+.ideas-list-head {
+  border-right: 0;
+}
+
+.ideas-list-body {
+  min-height: 0;
   overflow-y: auto;
-}
-
-.ideas-status-tabs {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  border-bottom: 1px solid var(--border);
-}
-
-.ideas-status-tabs button {
-  border: 0;
-  border-right: 1px solid var(--border);
-  padding: 12px 8px;
-  background: transparent;
-  color: var(--muted);
-  text-transform: capitalize;
-  cursor: pointer;
-}
-
-.ideas-status-tabs button.is-active {
-  background: var(--surface);
-  color: var(--fg);
-  font-weight: 600;
 }
 
 .ideas-list {

@@ -3,7 +3,7 @@
   "private": true,
   "packageManager": "pnpm@9.15.0",
   "scripts": {
-    "dev:server": "pnpm --filter @taskyard/protocol build && pnpm --filter @taskyard/db build && pnpm --filter @taskyard/core build && pnpm db:sync-sandbox && pnpm --filter server dev",
+    "dev:server": "pnpm --filter @taskyard/protocol build && pnpm --filter @taskyard/db build && pnpm --filter @taskyard/core build && pnpm db:sync-sandbox && cross-env TASKYARD_DB_PATH=data/taskyard-dev.db pnpm db:migrate-mvp && pnpm --filter server dev",
     "dev:hub": "pnpm --filter hub dev",
     "dev:worker": "pnpm --filter cli dev:worker",
     "dev:tui": "pnpm --filter cli dev:tui",

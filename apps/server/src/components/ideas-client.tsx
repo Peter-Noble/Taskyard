@@ -257,60 +257,61 @@ export function IdeasClient({ initialIdeaId }: { initialIdeaId: string | null })
   }
 
   return (
-    <AppShell
-      pageTitle="Project ideas"
-      actions={
-        <button
-          type="button"
-          className="btn btn-primary btn-sm"
-          disabled={testDataOn}
-          onClick={() => {
-            setNewCollections(active ? [active.id] : []);
-            setCreateOpen(true);
-          }}
-        >
-          New idea
-        </button>
-      }
-    >
+    <AppShell>
       <div className="ideas-page">
         <aside className="ideas-list-panel">
-          <div className="ideas-status-tabs" aria-label="Idea status">
-            {(['active', 'archived', 'promoted'] as IdeaStatus[]).map((item) => (
-              <button
-                key={item}
-                type="button"
-                className={status === item ? 'is-active' : ''}
-                onClick={() => {
-                  setStatus(item);
+          <header className="panel-head task-rail-head ideas-list-head">
+            <span className="task-rail-head-label">Ideas</span>
+            <div className="task-rail-project-wrap">
+              <select
+                className="form-select task-rail-project"
+                aria-label="Idea status"
+                value={status}
+                onChange={(event) => {
+                  setStatus(event.target.value as IdeaStatus);
                   setSelected(null);
                 }}
               >
-                {item}
-              </button>
-            ))}
+                <option value="active">Active</option>
+                <option value="archived">Archived</option>
+                <option value="promoted">Promoted</option>
+              </select>
+            </div>
+            <button
+              type="button"
+              className="btn btn-primary btn-rail-new"
+              disabled={testDataOn}
+              onClick={() => {
+                setNewCollections(active ? [active.id] : []);
+                setCreateOpen(true);
+              }}
+            >
+              New idea
+            </button>
+          </header>
+          <div className="ideas-list-body">
+            {loading ? <p className="empty-state">Loading ideas…</p> : null}
+            {!loading && ideas.length === 0 ? (
+              <p className="empty-state">
+                {testDataOn ? 'Ideas are unavailable in test-data mode.' : `No ${status} ideas${active ? ` in ${active.name}` : ''}.`}
+              </p>
+            ) : null}
+            <ul className="ideas-list">
+              {ideas.map((idea) => (
+                <li key={idea.id}>
+                  <button
+                    type="button"
+                    className={selected?.id === idea.id ? 'is-selected' : ''}
+                    onClick={() => void loadDetail(idea.id)}
+                  >
+                    <span className="idea-short-id">{idea.short_id}</span>
+                    <strong>{idea.title}</strong>
+                    <span>{idea.collections.map((item) => item.name).join(' · ') || 'No collections'}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
           </div>
-          {loading ? <p className="empty-state">Loading ideas…</p> : null}
-          {!loading && ideas.length === 0 ? (
-            <p className="empty-state">
-              {testDataOn ? 'Ideas are unavailable in test-data mode.' : `No ${status} ideas${active ? ` in ${active.name}` : ''}.`}
-            </p>
-          ) : null}
-          <ul className="ideas-list">
-            {ideas.map((idea) => (
-              <li key={idea.id}>
-                <button
-                  type="button"
-                  className={selected?.id === idea.id ? 'is-selected' : ''}
-                  onClick={() => void loadDetail(idea.id)}
-                >
-                  <span className="idea-short-id">{idea.short_id}</span>
-                  <strong>{idea.title}</strong>
-                  <span>{idea.collections.map((item) => item.name).join(' · ') || 'No collections'}</span>
-                </button>
-              </li>
-            ))}
-          </ul>
         </aside>
 
         <section className="idea-detail-panel">
