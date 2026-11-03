@@ -49,6 +49,7 @@ describe('task board', () => {
         project_id: project.id,
         title: 'API',
         description: 'Routes',
+        task_type: 'design',
       });
 
       expect(first.short_id).toBe('TA-1');
@@ -57,6 +58,7 @@ describe('task board', () => {
       expect(first.priority).toBe('medium');
       expect(first.category).toBeNull();
       expect(second.short_id).toBe('TA-2');
+      expect(second.task_type).toBe('design');
 
       const labeled = updateTask(ctx.db, first.short_id, {
         task_type: 'bug',
