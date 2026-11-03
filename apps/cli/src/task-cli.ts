@@ -30,6 +30,8 @@ export type UpdateTaskResponse = { task: Task };
 export type AddCommentResponse = { activity: TaskActivity };
 export type GetThreadResponse = { thread: ThreadDetail };
 
+export const DEFAULT_SERVER_URL = 'http://taskyard.app';
+
 export type ShowThreadResult = {
   thread_id: string;
   project_id: string | null;
@@ -459,7 +461,7 @@ export async function cmdLink(
   const dir = opts.dir ?? process.cwd();
   const target = writeProjectFile(
     dir,
-    { project_id: opts.project, server_url: opts.server },
+    { project_id: opts.project, server_url: opts.server ?? DEFAULT_SERVER_URL },
     { overwrite: true },
   );
   writeOutput({ project_file: target, project_id: opts.project }, pretty);
@@ -479,7 +481,7 @@ export async function cmdSetup(
     });
   }
   const serverUrl =
-    opts.server?.trim() || existing?.server_url || process.env.TASKYARD_SERVER_URL?.trim() || 'http://127.0.0.1:3000';
+    opts.server?.trim() || existing?.server_url || process.env.TASKYARD_SERVER_URL?.trim() || DEFAULT_SERVER_URL;
   const projectFile = writeProjectFile(
     dir,
     { project_id: projectId, server_url: serverUrl },

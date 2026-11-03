@@ -406,9 +406,11 @@ function TaskEditor({
   const [waitingForReason, setWaitingForReason] = useState(false);
   const [waitReason, setWaitReason] = useState('');
   const [comment, setComment] = useState('');
+  const [commentBusy, setCommentBusy] = useState(false);
   const [decisionDraft, setDecisionDraft] = useState('');
   const [error, setError] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const commentSubmittingRef = useRef(false);
   const briefEditingRef = useRef(false);
   const remoteUpdatedAtRef = useRef(remoteUpdatedAt);
   const loadedUpdatedAt = useRef<string | null>(null);
@@ -542,19 +544,28 @@ function TaskEditor({
 
   async function sendComment(event: FormEvent) {
     event.preventDefault();
-    if (!comment.trim()) return;
+    if (commentSubmittingRef.current || !comment.trim()) return;
+    commentSubmittingRef.current = true;
+    setCommentBusy(true);
     setError(null);
-    const res = await fetch(`/api/tasks/${encodeURIComponent(taskId)}/comments`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: comment }),
-    });
-    if (!res.ok) {
-      setError(await readError(res));
-      return;
+    try {
+      const res = await fetch(`/api/tasks/${encodeURIComponent(taskId)}/comments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: comment }),
+      });
+      if (!res.ok) {
+        setError(await readError(res));
+        return;
+      }
+      setComment('');
+      onChanged();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to add comment');
+    } finally {
+      commentSubmittingRef.current = false;
+      setCommentBusy(false);
     }
-    setComment('');
-    onChanged();
   }
 
   async function addDecision(event: FormEvent) {
@@ -781,6 +792,7 @@ function TaskEditor({
             value={comment}
             onChange={setComment}
             onSubmit={sendComment}
+            busy={commentBusy}
           />
         </footer>
       </div>

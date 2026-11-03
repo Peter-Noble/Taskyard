@@ -17,6 +17,7 @@ import {
   cmdUpdate,
   runTaskCommand,
   writeError,
+  DEFAULT_SERVER_URL,
   TASK_STATUSES,
 } from './task-cli.js';
 
@@ -245,7 +246,7 @@ export function registerTaskCommands(program: Command): void {
     .description('Write .taskyard/project.json so task commands can find this project')
     .requiredOption('--project <id>', 'Taskyard project id')
     .option('--dir <path>', 'Project directory', process.cwd())
-    .option('--server <url>', 'Taskyard server URL', 'http://127.0.0.1:3000')
+    .option('--server <url>', 'Taskyard server URL', DEFAULT_SERVER_URL)
     .option('--pretty', 'Human-readable output instead of JSON')
     .action(async (opts: { project: string; dir?: string; server?: string; pretty?: boolean }) => {
       try {
