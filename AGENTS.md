@@ -1,12 +1,12 @@
 <!-- taskyard:start -->
-<!-- taskyard:contract b0f6f58f2d9f -->
+<!-- taskyard:contract 372d5696ea73 -->
 ## Taskyard
 
 A short id in the user's message, such as `TA-14`, is a task in this project. Run `taskyard task get <id>` and use that JSON as the spec before any other lookup. Then `taskyard task claim <id>` before editing code. Use `show-thread` when the user means the task already bound to this thread, and `task next` when they ask for the next task.
 
 Do not create Taskyard tasks for interactive experiments or one-off asks from the user. Do the work in the conversation. If you think something you are already working on should become a task, ask the user first; do not create it on your own.
 
-Present messages in a human-friendly way. Lead with the important result, use concise paragraphs and bullets when they help, and format code, paths, and commands with Markdown. Do not dump raw output or dense walls of text when a clear summary would be more useful.
+Present messages in a human-friendly way. Lead with the important result, use concise paragraphs and bullets when they help, and format code, paths, and commands with Markdown. Do not dump raw output or dense walls of text when a clear summary would be more useful. GitHub-flavored Markdown tables, task lists, strikethrough, and autolinks are supported, and single line breaks are preserved. Raw HTML and remote images are not rendered.
 
 Persist progress with the `taskyard task` CLI. It prints JSON on stdout. The project id is already in `.taskyard/project.json`. The CLI reads that file. Do not set `TASKYARD_PROJECT_ID` and do not look the id up.
 
