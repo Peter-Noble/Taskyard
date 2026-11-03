@@ -2,18 +2,25 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import type {
   AgentManifest,
   Idea,
   IdeaDetail,
-  IdeaStatus,
   PromoteIdeaResponse,
   Thread,
 } from '@taskyard/protocol';
 import { AppShell } from '@/components/app-shell';
 import { useCollections } from '@/components/collection-provider';
 import { useTestData } from '@/lib/hooks/use-test-data';
+import { ChatCommentComposer, ChatMessage } from '@/components/chat-message';
+import {
+  defaultIdeaRailFilter,
+  filterAndSortIdeas,
+  IdeaRailFilterButton,
+  onlyIdeaStatus,
+} from '@/components/idea-rail-filter';
+import { useSessionPerson } from '@/components/providers';
 
 type AgentInfo = AgentManifest & { id: string };
 
@@ -30,7 +37,8 @@ export function IdeasClient({ initialIdeaId }: { initialIdeaId: string | null })
   const router = useRouter();
   const { active, collections } = useCollections();
   const { useTestData: testDataOn } = useTestData();
-  const [status, setStatus] = useState<IdeaStatus>('active');
+  const person = useSessionPerson();
+  const [filter, setFilter] = useState(defaultIdeaRailFilter);
   const [ideas, setIdeas] = useState<Idea[]>([]);
   const [selected, setSelected] = useState<IdeaDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -52,6 +60,7 @@ export function IdeasClient({ initialIdeaId }: { initialIdeaId: string | null })
   const [agents, setAgents] = useState<AgentInfo[]>([]);
   const [agentType, setAgentType] = useState('');
   const [prompt, setPrompt] = useState('');
+  const visibleIdeas = useMemo(() => filterAndSortIdeas(ideas, filter), [ideas, filter]);
 
   const loadDetail = useCallback(async (id: string) => {
     const res = await fetch(`/api/ideas/${encodeURIComponent(id)}`);
@@ -69,24 +78,25 @@ export function IdeasClient({ initialIdeaId }: { initialIdeaId: string | null })
     }
     setLoading(true);
     try {
-      const params = new URLSearchParams({ status });
+      const params = new URLSearchParams();
       if (active) params.set('collection_id', active.id);
       const res = await fetch(`/api/ideas?${params.toString()}`);
       if (!res.ok) throw new Error(await readError(res));
       const data = (await res.json()) as { ideas: Idea[] };
       setIdeas(data.ideas);
       setError(null);
-      if (!selected && !initialIdeaId && data.ideas[0]) await loadDetail(data.ideas[0].id);
+      const initialIdeas = filterAndSortIdeas(data.ideas, defaultIdeaRailFilter());
+      if (!selected && !initialIdeaId && initialIdeas[0]) await loadDetail(initialIdeas[0].id);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load ideas');
     } finally {
       setLoading(false);
     }
-  }, [active, initialIdeaId, loadDetail, selected, status, testDataOn]);
+  }, [active, initialIdeaId, loadDetail, selected, testDataOn]);
 
   useEffect(() => {
     void loadIdeas();
-  }, [status, active?.id, testDataOn]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [active?.id, testDataOn]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (initialIdeaId && !testDataOn) {
@@ -117,6 +127,7 @@ export function IdeasClient({ initialIdeaId }: { initialIdeaId: string | null })
       if (!res.ok) throw new Error(await readError(res));
       const data = (await res.json()) as { idea: IdeaDetail };
       setSelected(data.idea);
+      setFilter(defaultIdeaRailFilter());
       setNewTitle('');
       setNewDescription('');
       setNewCollections([]);
@@ -163,7 +174,7 @@ export function IdeasClient({ initialIdeaId }: { initialIdeaId: string | null })
       if (!res.ok) throw new Error(await readError(res));
       const data = (await res.json()) as { idea: IdeaDetail };
       setSelected(data.idea);
-      setStatus(data.idea.status);
+      setFilter(onlyIdeaStatus(data.idea.status));
       await loadIdeas();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to archive idea');
@@ -211,7 +222,7 @@ export function IdeasClient({ initialIdeaId }: { initialIdeaId: string | null })
       const data = (await res.json()) as PromoteIdeaResponse;
       setSelected(data.idea);
       setPromoteOpen(false);
-      setStatus('promoted');
+      setFilter(onlyIdeaStatus('promoted'));
       await loadIdeas();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to promote idea');
@@ -260,23 +271,15 @@ export function IdeasClient({ initialIdeaId }: { initialIdeaId: string | null })
     <AppShell>
       <div className="ideas-page">
         <aside className="ideas-list-panel">
-          <header className="panel-head task-rail-head ideas-list-head">
+          <header className="panel-head task-rail-head ideas-list-head ta35-filter-head">
             <span className="task-rail-head-label">Ideas</span>
-            <div className="task-rail-project-wrap">
-              <select
-                className="form-select task-rail-project"
-                aria-label="Idea status"
-                value={status}
-                onChange={(event) => {
-                  setStatus(event.target.value as IdeaStatus);
-                  setSelected(null);
-                }}
-              >
-                <option value="active">Active</option>
-                <option value="archived">Archived</option>
-                <option value="promoted">Promoted</option>
-              </select>
-            </div>
+            <IdeaRailFilterButton
+              value={filter}
+              onChange={(next) => {
+                setFilter(next);
+                setSelected(null);
+              }}
+            />
             <button
               type="button"
               className="btn btn-primary btn-rail-new"
@@ -291,13 +294,13 @@ export function IdeasClient({ initialIdeaId }: { initialIdeaId: string | null })
           </header>
           <div className="ideas-list-body">
             {loading ? <p className="empty-state">Loading ideas…</p> : null}
-            {!loading && ideas.length === 0 ? (
+            {!loading && visibleIdeas.length === 0 ? (
               <p className="empty-state">
-                {testDataOn ? 'Ideas are unavailable in test-data mode.' : `No ${status} ideas${active ? ` in ${active.name}` : ''}.`}
+                {testDataOn ? 'Ideas are unavailable in test-data mode.' : `No ideas match the current filters${active ? ` in ${active.name}` : ''}.`}
               </p>
             ) : null}
             <ul className="ideas-list">
-              {ideas.map((idea) => (
+              {visibleIdeas.map((idea) => (
                 <li key={idea.id}>
                   <button
                     type="button"
@@ -314,18 +317,19 @@ export function IdeasClient({ initialIdeaId }: { initialIdeaId: string | null })
           </div>
         </aside>
 
-        <section className="idea-detail-panel">
-          {error ? <p className="form-error">{error}</p> : null}
-          {!selected ? (
-            <div className="empty-state idea-empty">Select an idea or capture a new one.</div>
-          ) : (
-            <>
-              <header className="idea-detail-head">
-                <div>
-                  <span className="overview-item-kind">{selected.short_id} · {selected.status}</span>
-                  <h1>{selected.title}</h1>
-                </div>
-                <div className="idea-actions">
+        <section className="stream-panel idea-detail-panel" aria-label="Idea detail">
+          <header className="panel-head stream-header" aria-label="Selected idea">
+            <div className="stream-header-view">
+              <div className="stream-header-main">
+                <h2 className="stream-title">{selected?.title ?? 'Select an idea'}</h2>
+                <p className="stream-sub">
+                  {selected
+                    ? `${selected.short_id} · ${selected.status} · ${selected.collections.map((item) => item.name).join(' · ') || 'No collections'}`
+                    : 'Choose an idea from the rail or capture a new one'}
+                </p>
+              </div>
+              {selected ? (
+                <div className="stream-header-actions">
                   {selected.promoted_project_id ? (
                     <Link className="btn btn-primary btn-sm" href={`/projects?origin=${selected.id}`}>
                       View project
@@ -347,55 +351,78 @@ export function IdeasClient({ initialIdeaId }: { initialIdeaId: string | null })
                     </button>
                   ) : null}
                 </div>
-              </header>
-
-              <form className="idea-brief-form" onSubmit={(event) => void saveIdea(event)}>
-                <label className="form-field">
-                  <span className="form-label">Title</span>
-                  <input className="form-input" value={title} disabled={!selected.can_write} onChange={(event) => setTitle(event.target.value)} />
-                </label>
-                <label className="form-field">
-                  <span className="form-label">Brief</span>
-                  <textarea className="form-textarea" rows={8} value={description} disabled={!selected.can_write} onChange={(event) => setDescription(event.target.value)} />
-                </label>
-                {selected.can_write ? (
-                  <fieldset className="idea-collections">
-                    <legend className="form-label">Collections</legend>
-                    {collections.map((collection) => (
-                      <label key={collection.id}>
-                        <input
-                          type="checkbox"
-                          checked={collectionIds.includes(collection.id)}
-                          onChange={() => toggleCollection(collection.id, collectionIds, setCollectionIds)}
-                        />
-                        {collection.name}
-                      </label>
-                    ))}
-                  </fieldset>
-                ) : null}
-                {selected.can_write ? (
-                  <button type="submit" className="btn btn-primary btn-sm" disabled={busy}>Save idea</button>
-                ) : null}
-              </form>
-
-              <div className="idea-history">
-                <h2>History</h2>
-                {selected.activity.map((item, index) => (
-                  <article key={`${item.created_at}-${index}`} className={item.type === 'comment' ? 'idea-comment' : 'idea-change'}>
-                    <header>{item.actor} · {new Date(item.created_at).toLocaleString()}</header>
-                    {item.type === 'comment' ? <p>{item.text}</p> : <p>{item.summary}</p>}
-                    {item.type === 'change' && item.detail ? <pre>{item.detail}</pre> : null}
-                  </article>
-                ))}
-                {selected.can_write ? (
-                  <form className="chat-compose" onSubmit={(event) => void addComment(event)}>
-                    <input className="chat-compose-input" value={comment} onChange={(event) => setComment(event.target.value)} placeholder="Add a comment…" aria-label="Add a comment" />
-                    <button type="submit" className="btn btn-primary" disabled={busy}>Comment</button>
+              ) : null}
+            </div>
+          </header>
+          <div className="stream-body">
+            {error ? <p className="form-error idea-error">{error}</p> : null}
+            {!selected ? (
+              <div className="empty-state idea-empty">Select an idea or capture a new one.</div>
+            ) : (
+              <div className="chat-thread idea-history" role="log" aria-live="polite" aria-label="Idea history">
+                <div className="chat-scroll">
+                  <form className="idea-brief-form" onSubmit={(event) => void saveIdea(event)}>
+                    <label className="form-field">
+                      <span className="form-label">Title</span>
+                      <input className="form-input" value={title} disabled={!selected.can_write} onChange={(event) => setTitle(event.target.value)} />
+                    </label>
+                    <label className="form-field">
+                      <span className="form-label">Brief</span>
+                      <textarea className="form-textarea" rows={8} value={description} disabled={!selected.can_write} onChange={(event) => setDescription(event.target.value)} />
+                    </label>
+                    {selected.can_write ? (
+                      <fieldset className="idea-collections">
+                        <legend className="form-label">Collections</legend>
+                        {collections.map((collection) => (
+                          <label key={collection.id}>
+                            <input
+                              type="checkbox"
+                              checked={collectionIds.includes(collection.id)}
+                              onChange={() => toggleCollection(collection.id, collectionIds, setCollectionIds)}
+                            />
+                            {collection.name}
+                          </label>
+                        ))}
+                      </fieldset>
+                    ) : null}
+                    {selected.can_write ? (
+                      <button type="submit" className="btn btn-primary btn-sm" disabled={busy}>Save idea</button>
+                    ) : null}
                   </form>
+
+                  {selected.activity.map((item, index) => (
+                    item.type === 'comment' ? (
+                      <ChatMessage
+                        key={`${item.created_at}-${index}`}
+                        role={item.actor.trim().toLowerCase() === person?.displayName.trim().toLowerCase() ? 'user' : 'assistant'}
+                        header={<>{item.actor} · {new Date(item.created_at).toLocaleString()}</>}
+                      >
+                        {item.text}
+                      </ChatMessage>
+                    ) : (
+                      <ChatMessage key={`${item.created_at}-${index}`}>
+                        {item.actor} {item.summary}
+                        {item.detail ? (
+                          <div className="task-view-action-detail task-view-brief-detail">{item.detail}</div>
+                        ) : null}
+                      </ChatMessage>
+                    )
+                  ))}
+                </div>
+                {selected.can_write ? (
+                  <footer className="task-compose-footer">
+                    <ChatCommentComposer
+                      id="idea-comment"
+                      value={comment}
+                      onChange={setComment}
+                      onSubmit={addComment}
+                      busy={busy}
+                    />
+                  </footer>
                 ) : null}
               </div>
-            </>
-          )}
+            )}
+          </div>
         </section>
       </div>
 

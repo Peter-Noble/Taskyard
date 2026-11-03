@@ -16,6 +16,7 @@ import {
   threadProjectKey,
 } from '@/lib/dashboard-tasks';
 import { fetchTasksForProject, type ApiTask } from '@/lib/tasks-api';
+import { ChatCommentComposer, ChatMessage } from '@/components/chat-message';
 
 type TaskRailProps = {
   /** When true, render design fixtures from dashboard-tasks.ts */
@@ -392,42 +393,28 @@ function activityRole(ev: { type: string; actor: string }): 'user' | 'assistant'
 function renderActivity(events: DashboardTask['activity']) {
   return events.map((ev, i) => {
     if (ev.type === 'comment') {
-      const role = activityRole(ev);
       return (
-        <article key={i} className={`chat-msg chat-msg-${role}`}>
-          <header className="chat-msg-head">
-            {ev.actor} · {ev.time}
-          </header>
-          <div className="chat-msg-body">{ev.text}</div>
-        </article>
+        <ChatMessage key={i} role={activityRole(ev)} header={<>{ev.actor} · {ev.time}</>}>
+          {ev.text}
+        </ChatMessage>
       );
     }
     if (ev.type === 'status') {
       return (
-        <article key={i} className="chat-msg chat-msg-system">
-          <div className="chat-msg-body">
-            {ev.actor} moved <strong>{ev.from}</strong> → <strong>{ev.to}</strong> · {ev.time}
-          </div>
-        </article>
+        <ChatMessage key={i}>
+          {ev.actor} moved <strong>{ev.from}</strong> → <strong>{ev.to}</strong> · {ev.time}
+        </ChatMessage>
       );
     }
     if (ev.type === 'attachment') {
       return (
-        <article key={i} className="chat-msg chat-msg-system">
-          <div className="chat-msg-body">
-            Attached <strong>{ev.name}</strong> ({ev.size}) · {ev.actor} · {ev.time}
-          </div>
-        </article>
+        <ChatMessage key={i}>
+          Attached <strong>{ev.name}</strong> ({ev.size}) · {ev.actor} · {ev.time}
+        </ChatMessage>
       );
     }
     if (ev.type === 'dependency') {
-      return (
-        <article key={i} className="chat-msg chat-msg-system">
-          <div className="chat-msg-body">
-            {ev.text} · {ev.time}
-          </div>
-        </article>
-      );
+      return <ChatMessage key={i}>{ev.text} · {ev.time}</ChatMessage>;
     }
     return null;
   });
@@ -440,6 +427,7 @@ export function TaskDetailPane({
   taskId: string;
   onSelectTask: (taskId: string) => void;
 }) {
+  const [comment, setComment] = useState('');
   const found = findTask(taskId);
   if (!found) return null;
   const { task, project } = found;
@@ -511,24 +499,20 @@ export function TaskDetailPane({
             </div>
           </dl>
           {depsSection}
-          <article className="chat-msg chat-msg-assistant task-desc-msg">
-            <header className="chat-msg-head">Description</header>
-            <div className="chat-msg-body">{task.description}</div>
-          </article>
+          <ChatMessage role="assistant" className="chat-msg-assistant task-desc-msg" header="Description">
+            {task.description}
+          </ChatMessage>
           <div className="feed-messages" aria-label="Activity">
             {renderActivity(task.activity)}
           </div>
         </div>
         <footer className="task-compose-footer">
-          <div className="chat-compose">
-            <label className="visually-hidden" htmlFor="task-comment-input">
-              Add comment
-            </label>
-            <input type="text" id="task-comment-input" className="chat-compose-input" placeholder="Add a comment…" />
-            <button type="button" className="btn btn-primary chat-compose-send">
-              Comment
-            </button>
-          </div>
+          <ChatCommentComposer
+            id="task-comment-input"
+            value={comment}
+            onChange={setComment}
+            onSubmit={(event) => event.preventDefault()}
+          />
         </footer>
       </div>
     </div>

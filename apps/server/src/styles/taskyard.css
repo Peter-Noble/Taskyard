@@ -4464,9 +4464,9 @@ html:has(body.launcher-page) {
 }
 
 .idea-detail-panel {
-  overflow-y: auto;
-  padding: var(--space-5);
-  background: var(--surface);
+  grid-area: auto;
+  overflow: hidden;
+  background: var(--bg);
 }
 
 .idea-empty {
@@ -4474,37 +4474,32 @@ html:has(body.launcher-page) {
   text-align: center;
 }
 
-.idea-detail-head {
-  display: flex;
-  justify-content: space-between;
-  gap: var(--space-4);
-  padding-bottom: var(--space-4);
-  border-bottom: 1px solid var(--border);
+.idea-error {
+  flex-shrink: 0;
+  margin: var(--space-3) var(--space-5) 0;
 }
 
-.idea-detail-head h1 {
-  margin: 4px 0 0;
-  font-size: 24px;
-}
-
-.idea-actions {
-  display: flex;
-  align-items: flex-start;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: var(--space-2);
+.idea-history {
+  flex: 1;
+  min-height: 0;
 }
 
 .idea-brief-form {
   display: grid;
   gap: var(--space-3);
-  padding: var(--space-4) 0;
+  width: 100%;
+  max-width: 42rem;
+  padding-bottom: var(--space-5);
   border-bottom: 1px solid var(--border);
 }
 
 .idea-brief-form .form-textarea {
   resize: vertical;
   white-space: pre-wrap;
+}
+
+.idea-brief-form .btn {
+  justify-self: start;
 }
 
 .idea-collections {
@@ -4527,56 +4522,6 @@ html:has(body.launcher-page) {
   font-size: 12px;
 }
 
-.idea-history {
-  padding-top: var(--space-4);
-}
-
-.idea-history h2 {
-  margin: 0 0 12px;
-  font-size: 14px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-
-.idea-comment,
-.idea-change {
-  margin-bottom: 10px;
-  border: 1px solid var(--border);
-  padding: 12px;
-}
-
-.idea-comment {
-  background: var(--surface-elevated);
-}
-
-.idea-change {
-  color: var(--muted);
-  font-size: 12px;
-}
-
-.idea-comment header,
-.idea-change header {
-  margin-bottom: 6px;
-  color: var(--muted);
-  font-size: 11px;
-}
-
-.idea-comment p,
-.idea-change p {
-  margin: 0;
-  white-space: pre-wrap;
-}
-
-.idea-change pre {
-  margin: 8px 0 0;
-  white-space: pre-wrap;
-  font-family: var(--font-body);
-}
-
-.idea-history .chat-compose {
-  margin-top: var(--space-4);
-}
-
 .project-origin-link {
   display: inline-block;
   margin: 6px 0 0 12px;
@@ -4588,13 +4533,5 @@ html:has(body.launcher-page) {
 @media (max-width: 800px) {
   .ideas-page {
     grid-template-columns: 220px minmax(0, 1fr);
-  }
-
-  .idea-detail-head {
-    flex-direction: column;
-  }
-
-  .idea-actions {
-    justify-content: flex-start;
   }
 }
