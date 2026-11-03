@@ -1,8 +1,8 @@
 /* Taskyard — high-contrast light, thin lines, zero radius */
 :root {
-  --bg: oklch(98% 0.002 250);
-  --surface: oklch(100% 0 0);
-  --surface-elevated: oklch(97% 0.003 250);
+  --bg: oklch(98% 0.005 250);
+  --surface: oklch(99.5% 0.004 250);
+  --surface-elevated: oklch(97% 0.007 250);
   --fg: oklch(12% 0.012 250);
   --muted: oklch(48% 0.012 250);
   --border: oklch(88% 0.006 250);
@@ -27,7 +27,7 @@
   --term-file: oklch(42% 0.12 145);
   --term-cmd: oklch(48% 0.12 85);
   --term-error: oklch(48% 0.16 25);
-  --term-bg: oklch(99% 0.001 250);
+  --term-bg: oklch(99% 0.004 250);
 
   --radius: 0;
   --space-1: 4px;
@@ -40,6 +40,7 @@
   --panel-head-h: 72px;
   --capacity-h: 156px;
   --label-subtle: oklch(72% 0.01 250);
+  --label-strong: oklch(62% 0.012 250);
   --thread-rail-w: 280px;
   --task-rail-w: 280px;
 }
@@ -345,11 +346,11 @@ a:hover {
 
 .task-rail-head-label {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 400;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--label-subtle);
+  color: var(--label-strong);
   flex-shrink: 0;
 }
 
@@ -785,11 +786,11 @@ a:hover {
 
 .thread-rail-head-label {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 400;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--label-subtle);
+  color: var(--label-strong);
   flex-shrink: 0;
 }
 
@@ -886,9 +887,12 @@ a:hover {
 }
 
 .task-item .entity-num,
+.task-view-top .entity-num,
 .task-detail-pane .stream-sub .entity-num {
   width: auto;
   min-width: 1.25rem;
+  color: var(--label-strong);
+  font-size: 11px;
   white-space: nowrap;
 }
 
