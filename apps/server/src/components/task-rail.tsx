@@ -17,6 +17,7 @@ import {
 } from '@/lib/dashboard-tasks';
 import { fetchTasksForProject, type ApiTask } from '@/lib/tasks-api';
 import { ChatCommentComposer, ChatMessage } from '@/components/chat-message';
+import { MarkdownMessage } from '@/components/markdown-message';
 
 type TaskRailProps = {
   /** When true, render design fixtures from dashboard-tasks.ts */
@@ -395,7 +396,7 @@ function renderActivity(events: DashboardTask['activity']) {
     if (ev.type === 'comment') {
       return (
         <ChatMessage key={i} role={activityRole(ev)} header={<>{ev.actor} · {ev.time}</>}>
-          {ev.text}
+          <MarkdownMessage text={ev.text} />
         </ChatMessage>
       );
     }

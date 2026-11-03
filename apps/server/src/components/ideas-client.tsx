@@ -7,6 +7,7 @@ import { AppShell } from '@/components/app-shell';
 import { useCollections } from '@/components/collection-provider';
 import { useTestData } from '@/lib/hooks/use-test-data';
 import { ChatCommentComposer, ChatMessage } from '@/components/chat-message';
+import { MarkdownMessage } from '@/components/markdown-message';
 import {
   defaultIdeaRailFilter,
   filterAndSortIdeas,
@@ -413,7 +414,7 @@ export function IdeasClient({ initialIdeaId }: { initialIdeaId: string | null })
                           role={item.actor.trim().toLowerCase() === person?.displayName.trim().toLowerCase() ? 'user' : 'assistant'}
                           header={<>{item.actor} · {new Date(item.created_at).toLocaleString()}</>}
                         >
-                          {item.text}
+                          <MarkdownMessage text={item.text} />
                         </ChatMessage>
                       ) : (
                         <ChatMessage key={`${item.created_at}-${index}`}>
