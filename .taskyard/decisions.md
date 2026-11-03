@@ -39,3 +39,18 @@
 
 - Status: accepted
 - Task: TA-35
+
+## D-009 — Ideas are private pre-project records with independent activity; promotion preserves a read-only origin and never creates an initial task automatically.
+
+- Status: accepted
+- Task: TA-44
+
+## D-010 — Idea discussions run in projectless scratch directories and become associated with the new project when promoted.
+
+- Status: accepted
+- Task: TA-44
+
+## D-011 — Non-owner readers of a promoted origin idea never receive the owner's collection memberships.
+
+- Status: accepted
+- Task: TA-44
