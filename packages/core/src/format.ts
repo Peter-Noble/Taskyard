@@ -75,13 +75,15 @@ function parseMachineJsonList(raw: string | null | undefined): string[] | null {
 
 export function formatThread(
   row: ThreadRow,
-  extras?: { project_name?: string; machine_name?: string },
+  extras?: { project_name?: string; idea_short_id?: string; machine_name?: string },
 ): Thread {
   return {
     id: row.id,
-    project_id: row.projectId ?? '',
+    project_id: row.projectId,
     project_name: extras?.project_name,
     task_id: row.taskId ?? null,
+    idea_id: row.ideaId ?? null,
+    idea_short_id: extras?.idea_short_id,
     machine_id: row.machineId,
     machine_name: extras?.machine_name,
     agent_type: row.agentType,

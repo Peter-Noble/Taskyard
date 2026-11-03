@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
-import { CollectionError, getDb, personFromToken, type CollectionRecord } from '@taskyard/core';
+import { CollectionError, type CollectionRecord } from '@taskyard/core';
 import { jsonError } from '@/lib/api-response';
-import { sessionTokenFromRequest } from '@/lib/web-session';
+import { requireIdeaPerson } from '@/lib/ideas-api';
 
 export function collectionJson(collection: CollectionRecord) {
   return {
@@ -19,12 +19,7 @@ export function collectionErrorResponse(err: unknown, fallback: string) {
 export function requireFullSession(
   req: Request,
 ): { ok: true; personId: string } | { ok: false; response: NextResponse } {
-  const token = sessionTokenFromRequest(req);
-  if (!token) return { ok: false, response: jsonError('Sign in required.', 401) };
-  const session = personFromToken(getDb(), token);
-  if (!session) return { ok: false, response: jsonError('Sign in required.', 401) };
-  if (session.mustChangePassword) {
-    return { ok: false, response: jsonError('Set a new password before using Taskyard.', 403) };
-  }
-  return { ok: true, personId: session.person.id };
+  const gate = requireIdeaPerson(req);
+  if (!gate.ok) return gate;
+  return { ok: true, personId: gate.person.id };
 }

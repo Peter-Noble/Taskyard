@@ -118,13 +118,73 @@ export const taskActivity = sqliteTable('task_activity', {
   timestamp: integer('timestamp', { mode: 'timestamp' }).$defaultFn(() => new Date()),
 });
 
+export const ideas = sqliteTable(
+  'ideas',
+  {
+    id: text('id').primaryKey(),
+    shortId: text('short_id').notNull(),
+    ownerId: text('owner_id')
+      .notNull()
+      .references(() => people.id),
+    title: text('title').notNull(),
+    description: text('description').notNull().default(''),
+    archivedAt: integer('archived_at', { mode: 'timestamp' }),
+    promotedProjectId: text('promoted_project_id').references(() => projects.id),
+    createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
+    updatedAt: integer('updated_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
+  },
+  (table) => [
+    uniqueIndex('ideas_short_id_unique').on(table.shortId),
+    uniqueIndex('ideas_promoted_project_unique').on(table.promotedProjectId),
+  ],
+);
+
+export const ideaActivity = sqliteTable('idea_activity', {
+  id: integer('id', { mode: 'number' }).primaryKey({ autoIncrement: true }),
+  ideaId: text('idea_id')
+    .notNull()
+    .references(() => ideas.id),
+  kind: text('kind', { enum: ['comment', 'change'] }).notNull(),
+  actor: text('actor').notNull(),
+  payload: text('payload').notNull(),
+  timestamp: integer('timestamp', { mode: 'timestamp' }).$defaultFn(() => new Date()),
+});
+
+export const collectionIdeas = sqliteTable(
+  'collection_ideas',
+  {
+    collectionId: text('collection_id')
+      .notNull()
+      .references(() => collections.id),
+    ideaId: text('idea_id')
+      .notNull()
+      .references(() => ideas.id),
+    sortOrder: integer('sort_order').notNull().default(0),
+  },
+  (table) => [primaryKey({ columns: [table.collectionId, table.ideaId] })],
+);
+
+export const projectGuests = sqliteTable(
+  'project_guests',
+  {
+    projectId: text('project_id')
+      .notNull()
+      .references(() => projects.id),
+    personId: text('person_id')
+      .notNull()
+      .references(() => people.id),
+  },
+  (table) => [primaryKey({ columns: [table.projectId, table.personId] })],
+);
+
 export const threads = sqliteTable('threads', {
   id: text('id').primaryKey(),
   projectId: text('project_id').references(() => projects.id),
   taskId: text('task_id').references(() => tasks.id),
+  ideaId: text('idea_id').references(() => ideas.id),
   machineId: text('machine_id').references(() => machines.id),
   agentType: text('agent_type').notNull(),
-  branch: text('branch').notNull(),
+  branch: text('branch'),
   prompt: text('prompt').notNull(),
   status: text('status', {
     enum: ['pending', 'spawning', 'running', 'paused', 'completed', 'error', 'closed'],

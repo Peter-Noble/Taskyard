@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import type { Task, TaskStatus, TaskType } from '@taskyard/protocol';
 import { PRIORITY_RANK, TASK_PRIORITIES, TASK_TYPES } from '@/lib/task-labels';
+import { RailFilterPopover } from '@/components/rail-filter';
 
 // D-007
 const STATUS_OPTIONS: Array<{ id: TaskStatus; label: string }> = [
@@ -116,14 +117,6 @@ function snapPriority(value: number): number {
   return Math.max(0, Math.min(PRIORITY_MAX, Math.round(value)));
 }
 
-function FilterFunnelIcon() {
-  return (
-    <svg viewBox="0 0 16 16" aria-hidden="true" width="14" height="14">
-      <path fill="currentColor" d="M1.5 2h13l-5 6.2V13l-3 1.5V8.2L1.5 2z" />
-    </svg>
-  );
-}
-
 function PriorityRangeSlider({
   min,
   max,
@@ -225,91 +218,82 @@ export function TaskRailFilterButton({
   }
 
   return (
-    <>
-      <button
-        type="button"
-        className={`ta35-filter-icon-btn${open || activeCount > 0 ? ' is-active' : ''}`}
-        aria-label="Filter tasks"
-        aria-expanded={open}
-        onClick={openPopover}
+    <RailFilterPopover
+      label="Filter tasks"
+      open={open}
+      activeCount={activeCount}
+      onToggle={openPopover}
+    >
+      <h3>Sort</h3>
+      <select
+        className="form-select ta35-filter-sort"
+        aria-label="Sort order"
+        value={draft.sort}
+        onChange={(event) =>
+          setDraft((prev) => ({ ...prev, sort: event.target.value as TaskRailSort }))
+        }
       >
-        <FilterFunnelIcon />
-        {activeCount > 0 ? <span className="ta35-filter-count">{activeCount}</span> : null}
-      </button>
-      {open ? (
-        <div className="ta35-filter-popover" role="dialog" aria-label="Filter tasks">
-          <h3>Sort</h3>
-          <select
-            className="form-select ta35-filter-sort"
-            aria-label="Sort order"
-            value={draft.sort}
-            onChange={(event) =>
-              setDraft((prev) => ({ ...prev, sort: event.target.value as TaskRailSort }))
-            }
-          >
-            {SORT_OPTIONS.map((opt) => (
-              <option key={opt.id} value={opt.id}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
+        {SORT_OPTIONS.map((opt) => (
+          <option key={opt.id} value={opt.id}>
+            {opt.label}
+          </option>
+        ))}
+      </select>
 
-          <h3>Type</h3>
-          <div className="ta35-filter-options">
-            {TASK_TYPES.map((opt) => (
-              <label key={opt.id} className="ta35-filter-option">
-                <input
-                  type="checkbox"
-                  checked={draft.types[opt.id]}
-                  onChange={() =>
-                    setDraft((prev) => ({
-                      ...prev,
-                      types: { ...prev.types, [opt.id]: !prev.types[opt.id] },
-                    }))
-                  }
-                />
-                <span className={`ta35-type-swatch ${opt.swatch}`} />
-                {opt.label}
-              </label>
-            ))}
-          </div>
+      <h3>Type</h3>
+      <div className="ta35-filter-options">
+        {TASK_TYPES.map((opt) => (
+          <label key={opt.id} className="ta35-filter-option">
+            <input
+              type="checkbox"
+              checked={draft.types[opt.id]}
+              onChange={() =>
+                setDraft((prev) => ({
+                  ...prev,
+                  types: { ...prev.types, [opt.id]: !prev.types[opt.id] },
+                }))
+              }
+            />
+            <span className={`ta35-type-swatch ${opt.swatch}`} />
+            {opt.label}
+          </label>
+        ))}
+      </div>
 
-          <h3>Priority</h3>
-          <PriorityRangeSlider
-            min={draft.priorityMin}
-            max={draft.priorityMax}
-            onChange={(priorityMin, priorityMax) => setDraft((prev) => ({ ...prev, priorityMin, priorityMax }))}
-          />
+      <h3>Priority</h3>
+      <PriorityRangeSlider
+        min={draft.priorityMin}
+        max={draft.priorityMax}
+        onChange={(priorityMin, priorityMax) => setDraft((prev) => ({ ...prev, priorityMin, priorityMax }))}
+      />
 
-          <h3>Status</h3>
-          <div className="ta35-filter-options">
-            {STATUS_OPTIONS.map((opt) => (
-              <label key={opt.id} className="ta35-filter-option">
-                <input
-                  type="checkbox"
-                  checked={draft.statuses[opt.id]}
-                  onChange={() =>
-                    setDraft((prev) => ({
-                      ...prev,
-                      statuses: { ...prev.statuses, [opt.id]: !prev.statuses[opt.id] },
-                    }))
-                  }
-                />
-                {opt.label}
-              </label>
-            ))}
-          </div>
+      <h3>Status</h3>
+      <div className="ta35-filter-options">
+        {STATUS_OPTIONS.map((opt) => (
+          <label key={opt.id} className="ta35-filter-option">
+            <input
+              type="checkbox"
+              checked={draft.statuses[opt.id]}
+              onChange={() =>
+                setDraft((prev) => ({
+                  ...prev,
+                  statuses: { ...prev.statuses, [opt.id]: !prev.statuses[opt.id] },
+                }))
+              }
+            />
+            {opt.label}
+          </label>
+        ))}
+      </div>
 
-          <div className="ta35-filter-popover-actions">
-            <button type="button" className="btn btn-ghost btn-sm" onClick={clear}>
-              Clear
-            </button>
-            <button type="button" className="btn btn-primary btn-sm" onClick={apply}>
-              Apply{activeCount > 0 ? ` · ${activeCount}` : ''}
-            </button>
-          </div>
-        </div>
-      ) : null}
-    </>
+      <div className="ta35-filter-popover-actions">
+        <button type="button" className="btn btn-ghost btn-sm" onClick={clear}>
+          Clear
+        </button>
+        <button type="button" className="btn btn-primary btn-sm" onClick={apply}>
+          Apply{activeCount > 0 ? ` · ${activeCount}` : ''}
+        </button>
+      </div>
+    </RailFilterPopover>
   );
 }

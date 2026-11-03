@@ -21,6 +21,8 @@ export type Project = {
   sort_order?: number;
   active_threads?: number;
   task_counts?: ProjectTaskCounts;
+  origin_idea_id?: string | null;
+  origin_idea_short_id?: string | null;
 };
 
 export type ReorderProjectsRequest = {
@@ -221,15 +223,89 @@ export type AddTaskCommentRequest = {
   actor?: string;
 };
 
+export type IdeaStatus = 'active' | 'archived' | 'promoted';
+
+export type IdeaCollection = {
+  id: string;
+  name: string;
+};
+
+export type Idea = {
+  id: string;
+  short_id: string;
+  owner_id: string;
+  title: string;
+  description: string;
+  status: IdeaStatus;
+  archived_at: string | null;
+  promoted_project_id: string | null;
+  collections: IdeaCollection[];
+  can_write: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type IdeaActivity =
+  | {
+      type: 'comment';
+      actor: string;
+      text: string;
+      created_at: string;
+    }
+  | {
+      type: 'change';
+      actor: string;
+      summary: string;
+      detail?: string;
+      created_at: string;
+    };
+
+export type IdeaDetail = Idea & {
+  activity: IdeaActivity[];
+};
+
+export type CreateIdeaRequest = {
+  title: string;
+  description?: string;
+  collection_ids?: string[];
+};
+
+export type UpdateIdeaRequest = {
+  title?: string;
+  description?: string;
+  collection_ids?: string[];
+  archived?: boolean;
+  actor?: string;
+};
+
+export type AddIdeaCommentRequest = {
+  text: string;
+  actor?: string;
+};
+
+export type PromoteIdeaRequest = {
+  name?: string;
+  repo_url?: string | null;
+  default_branch?: string;
+  actor?: string;
+};
+
+export type PromoteIdeaResponse = {
+  idea: IdeaDetail;
+  project: Project;
+};
+
 export type Thread = {
   id: string;
-  project_id: string;
+  project_id: string | null;
   project_name?: string;
   task_id: string | null;
+  idea_id: string | null;
+  idea_short_id?: string;
   machine_id: string | null;
   machine_name?: string;
   agent_type: string;
-  branch: string;
+  branch: string | null;
   prompt: string;
   status: ThreadState;
   worktree_path: string | null;
@@ -271,10 +347,11 @@ export type AgentManifest = {
 };
 
 export type CreateThreadRequest = {
-  project_id: string;
+  project_id?: string;
+  idea_id?: string;
   agent_type: string;
-  branch: string;
-  /** Required unless `task_id` is set (prompt is seeded from the task). */
+  branch?: string;
+  /** Required unless `task_id` or `idea_id` is set. */
   prompt?: string;
   task_id?: string;
   /** @deprecated Use `placement.mode: "machine"` */

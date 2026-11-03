@@ -16,6 +16,8 @@ export type WebGate =
   | { kind: 'app'; person: SessionPerson };
 
 export function sessionTokenFromRequest(req: Request): string | undefined {
+  const authorization = req.headers.get('authorization');
+  if (authorization?.startsWith('Bearer ')) return authorization.slice(7).trim() || undefined;
   const header = req.headers.get('cookie');
   if (!header) return undefined;
   for (const part of header.split(';')) {

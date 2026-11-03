@@ -14,6 +14,7 @@ import {
   type TaskRailFilterState,
 } from '@/components/task-rail-filter';
 import { categoriesFromTasks, taskPriorityLabel, taskPriorityTone, taskTypeMeta } from '@/lib/task-labels';
+import { ChatCommentComposer, ChatMessage } from '@/components/chat-message';
 
 function useProjectCategorySuggestions(projectId: string | null | undefined, refreshKey = 0) {
   const [suggestions, setSuggestions] = useState<string[]>([]);
@@ -739,63 +740,48 @@ function TaskEditor({
           {task.activity.map((item, index) => {
             if (item.type === 'comment') {
               return (
-                <article
+                <ChatMessage
                   key={`${item.created_at}-${index}`}
-                  className={`chat-msg ${isMine(item.actor, person?.displayName ?? null) ? 'task-view-mine' : 'task-view-agent'}`}
+                  className={isMine(item.actor, person?.displayName ?? null) ? 'task-view-mine' : 'task-view-agent'}
+                  header={<>{displayActor(item.actor)} · {new Date(item.created_at).toLocaleString()}</>}
                 >
-                  <header className="chat-msg-head">
-                    {displayActor(item.actor)} · {new Date(item.created_at).toLocaleString()}
-                  </header>
-                  <div className="chat-msg-body">{item.text}</div>
-                </article>
+                  {item.text}
+                </ChatMessage>
               );
             }
             if (item.type === 'status_change') {
               return (
-                <article key={`${item.created_at}-${index}`} className="chat-msg chat-msg-system">
-                  <div className="chat-msg-body">
-                    {displayActor(item.actor)} moved <strong>{statusLabel(item.from)}</strong> →{' '}
-                    <strong>{statusLabel(item.to)}</strong>
-                  </div>
-                </article>
+                <ChatMessage key={`${item.created_at}-${index}`}>
+                  {displayActor(item.actor)} moved <strong>{statusLabel(item.from)}</strong> →{' '}
+                  <strong>{statusLabel(item.to)}</strong>
+                </ChatMessage>
               );
             }
             return (
-              <article key={`${item.created_at}-${index}`} className="chat-msg chat-msg-system">
-                <div className="chat-msg-body">
-                  {displayActor(item.actor)} {item.summary}
-                  {item.detail ? (
-                    <div
-                      className={`task-view-action-detail${
-                        item.summary === 'set the brief' || item.summary === 'updated the brief'
-                          ? ' task-view-brief-detail'
-                          : ''
-                      }`}
-                    >
-                      {item.detail}
-                    </div>
-                  ) : null}
-                </div>
-              </article>
+              <ChatMessage key={`${item.created_at}-${index}`}>
+                {displayActor(item.actor)} {item.summary}
+                {item.detail ? (
+                  <div
+                    className={`task-view-action-detail${
+                      item.summary === 'set the brief' || item.summary === 'updated the brief'
+                        ? ' task-view-brief-detail'
+                        : ''
+                    }`}
+                  >
+                    {item.detail}
+                  </div>
+                ) : null}
+              </ChatMessage>
             );
           })}
         </div>
         <footer className="task-compose-footer">
-          <form className="chat-compose" onSubmit={(event) => void sendComment(event)}>
-            <label className="visually-hidden" htmlFor="live-task-comment">
-              Add comment
-            </label>
-            <input
-              id="live-task-comment"
-              className="chat-compose-input"
-              value={comment}
-              onChange={(event) => setComment(event.target.value)}
-              placeholder="Add a comment…"
-            />
-            <button type="submit" className="btn btn-primary chat-compose-send">
-              Comment
-            </button>
-          </form>
+          <ChatCommentComposer
+            id="live-task-comment"
+            value={comment}
+            onChange={setComment}
+            onSubmit={sendComment}
+          />
         </footer>
       </div>
     </div>

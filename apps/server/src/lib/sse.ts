@@ -1,7 +1,7 @@
 import type { TaskyardDb } from '@taskyard/db';
-import { getDb, listAllEvents, listTasks, listThreadEvents } from '@taskyard/core';
+import { canReadThread, getDb, listAllEvents, listTasks, listThreadEvents } from '@taskyard/core';
 
-type PollFn = (db: TaskyardDb, sinceId: number) => Array<{ id: number }>;
+type PollFn = (db: TaskyardDb, sinceId: number) => Array<{ id: number; skip?: boolean }>;
 
 export function createSseResponse(poll: PollFn, sinceParam: string | null): Response {
   const since = Number(sinceParam ?? '0');
@@ -18,7 +18,7 @@ export function createSseResponse(poll: PollFn, sinceParam: string | null): Resp
           const items = poll(db, lastId);
           for (const item of items) {
             lastId = Math.max(lastId, item.id);
-            controller.enqueue(encoder.encode(`data: ${JSON.stringify(item)}\n\n`));
+            if (!item.skip) controller.enqueue(encoder.encode(`data: ${JSON.stringify(item)}\n\n`));
           }
         } catch (err) {
           console.error('SSE poll error:', err);
@@ -49,8 +49,16 @@ export function threadEventsSse(threadId: string, sinceParam: string | null): Re
   );
 }
 
-export function allEventsSse(sinceParam: string | null): Response {
-  return createSseResponse((db, sinceId) => listAllEvents(db, { sinceId, limit: 100 }), sinceParam);
+export function allEventsSse(sinceParam: string | null, personId: string): Response {
+  return createSseResponse(
+    (db, sinceId) =>
+      listAllEvents(db, { sinceId, limit: 100 }).map((item) =>
+        !item.thread_id || canReadThread(db, item.thread_id, personId)
+          ? item
+          : { id: item.id, skip: true },
+      ),
+    sinceParam,
+  );
 }
 
 /** Pushes the project task list whenever it changes. The first frame is the current list. */

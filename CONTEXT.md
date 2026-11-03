@@ -8,6 +8,10 @@ A personal board for projects and the agents that work on them. The server may b
 A body of work with its own tasks, threads, and git checkout.
 _Avoid_: workspace, repo
 
+**Idea**:
+A private candidate for a project, with its own brief, collections, discussions, and history. Promotion creates a project and preserves the idea as its read-only origin.
+_Avoid_: task, thought
+
 **Person**:
 A username and password on the server. The header and task history show their display name.
 _Avoid_: user, account, email
@@ -21,11 +25,11 @@ A person added to one project by username.
 _Avoid_: member, collaborator, user
 
 **Collection**:
-A named set of projects kept by one person and used to filter that person's view.
+A named set of projects and ideas kept by one person and used to filter that person's view.
 _Avoid_: workspace, tag
 
 **Thread**:
-An agent session working a project.
+An agent session working a project or discussing an idea.
 _Avoid_: chat, workspace
 
 ## Relationships
@@ -37,7 +41,9 @@ _Avoid_: chat, workspace
 - A **Guest** can see that **Project** and work its tasks
 - A **Guest** cannot launch a **Thread** or change **Project** settings
 - A **Collection** belongs to one **Person**
-- A **Project** can sit in more than one of a **Person**'s **Collections**
+- A **Project** or **Idea** can sit in more than one of its owner's **Collections**
+- An **Idea** is private to its owner until promotion
+- A promoted **Idea** remains readable as the **Project**'s origin, including to that **Project**'s **Guests**, without exposing the owner's **Collections**
 - The command line on a machine is signed in as one **Person**
 
 ## Example dialogue

@@ -7,6 +7,7 @@ import { extractPendingInteraction } from '@/lib/pending-interaction';
 import { StatusBadge } from '@/components/status-badge';
 import { PendingInteractionWidget } from '@/components/pending-interaction-widget';
 import { ThreadFollowUp, canSendFollowUp } from '@/components/thread-follow-up';
+import { ChatMessage as ChatMessageView } from '@/components/chat-message';
 
 import type { TestChatFixture } from '@/lib/test-data/fixtures';
 
@@ -105,15 +106,12 @@ export function ChatStream({ thread, events, demoChat, liveMode = true }: ChatSt
     <div className="chat-thread" role="log" aria-live="polite" aria-label="Thread conversation">
       <div className="chat-scroll">
         {messages.length === 0 ? (
-          <article className="chat-msg chat-msg-system">
-            <div className="chat-msg-body">Waiting for agent output…</div>
-          </article>
+          <ChatMessageView>Waiting for agent output…</ChatMessageView>
         ) : (
           messages.map((m, i) => (
-            <article key={i} className={`chat-msg chat-msg-${m.role}`}>
-              <header className="chat-msg-head">{roleLabel(m.role)}</header>
-              <div className="chat-msg-body">{m.text}</div>
-            </article>
+            <ChatMessageView key={i} role={m.role} header={roleLabel(m.role)}>
+              {m.text}
+            </ChatMessageView>
           ))
         )}
       </div>

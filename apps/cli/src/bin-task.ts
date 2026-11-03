@@ -6,6 +6,7 @@
 import { Command } from 'commander';
 import { registerAgentsRefresh } from './agents-file.js';
 import { loadEnvLite } from './load-env-lite.js';
+import { registerIdeaCommands } from './register-idea-commands.js';
 import { registerTaskCommands } from './register-task-commands.js';
 import { writeError } from './task-cli.js';
 import { cmdUpdate, warnIfCliUpdateAvailable } from './update-check.js';
@@ -15,7 +16,7 @@ loadEnvLite();
 const program = new Command();
 program
   .name('taskyard')
-  .description('Taskyard agent/dev CLI (task board, setup, sync)')
+  .description('Taskyard agent/dev CLI (tasks, ideas, setup, sync)')
   .version('0.0.1');
 
 program.hook('preAction', async () => {
@@ -23,6 +24,7 @@ program.hook('preAction', async () => {
 });
 
 registerTaskCommands(program);
+registerIdeaCommands(program);
 
 program
   .command('update')

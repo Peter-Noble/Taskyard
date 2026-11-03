@@ -1,9 +1,10 @@
+import fs from 'node:fs';
 import chalk from 'chalk';
 import { isOfferedAgent } from '@taskyard/core';
 import type { AgentEvent, ServerMessage, ThreadState, WorkerMessage } from '@taskyard/protocol';
 import { ensureMirror, createWorktree, removeWorktree } from './git.js';
 import { readAgentManifest } from './manifest.js';
-import { mirrorPath } from './config.js';
+import { mirrorPath, worktreePath } from './config.js';
 import { AcpClient, acpCommandAvailable } from './acp/index.js';
 import { buildThreadAgentEnv } from './agent-env.js';
 import { spawnStub, stopStub } from './stub-runner.js';
@@ -11,9 +12,10 @@ import { spawnStub, stopStub } from './stub-runner.js';
 type SendFn = (msg: WorkerMessage) => void;
 
 type ThreadMeta = {
-  projectId: string;
-  mirror: string;
+  projectId: string | null;
+  mirror: string | null;
   worktreePath: string;
+  scratch: boolean;
   agentType: string;
   runtime: 'acp' | 'process';
 };
@@ -97,8 +99,14 @@ export async function handleSpawn(
   console.log(chalk.cyan(`Spawning thread ${threadId} (${message.agent_type})`));
 
   try {
-    const mirror = await ensureMirror(message.project_id, message.repo_url);
-    const wtPath = await createWorktree(mirror, threadId, message.branch);
+    const scratch = Boolean(message.idea_id);
+    const mirror = scratch
+      ? null
+      : await ensureMirror(message.project_id!, message.repo_url!);
+    const wtPath = scratch
+      ? worktreePath(threadId)
+      : await createWorktree(mirror!, threadId, message.branch!);
+    if (scratch) fs.mkdirSync(wtPath, { recursive: true });
     const manifest = readAgentManifest(message.agent_type, ctx.agentsDir);
     if (!isOfferedAgent(message.agent_type, manifest)) {
       throw new Error(`Unknown agent type: ${message.agent_type}`);
@@ -139,6 +147,7 @@ export async function handleSpawn(
         projectId: message.project_id,
         mirror,
         worktreePath: wtPath,
+        scratch,
         agentType: message.agent_type,
         runtime: 'acp',
       });
@@ -155,6 +164,7 @@ export async function handleSpawn(
       projectId: message.project_id,
       mirror,
       worktreePath: wtPath,
+      scratch,
       agentType: message.agent_type,
       runtime: 'process',
     });
@@ -180,6 +190,7 @@ export async function handleSpawn(
     sendEvent(send, threadId, { type: 'error', message: msg });
     sendState(send, threadId, 'error');
     await cleanupThread(threadId, true, message.project_id).catch(() => {});
+    if (message.idea_id) fs.rmSync(worktreePath(threadId), { recursive: true, force: true });
   }
 }
 
@@ -245,7 +256,7 @@ export async function handleClose(
 async function cleanupThread(
   threadId: string,
   force: boolean,
-  projectId?: string,
+  projectId?: string | null,
 ): Promise<void> {
   const acp = acpThreads.get(threadId);
   if (acp) {
@@ -256,5 +267,6 @@ async function cleanupThread(
   const entry = threadMeta.get(threadId);
   const mirror = entry?.mirror ?? (projectId ? mirrorPath(projectId) : null);
   if (mirror) await removeWorktree(mirror, threadId, force);
+  if (entry?.scratch) fs.rmSync(entry.worktreePath, { recursive: true, force: true });
   threadMeta.delete(threadId);
 }

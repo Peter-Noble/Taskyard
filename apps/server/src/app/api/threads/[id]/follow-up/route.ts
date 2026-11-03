@@ -1,10 +1,13 @@
 import { followUpThread, getDb } from '@taskyard/core';
 import { jsonError, jsonOk } from '@/lib/api-response';
+import { requireThreadWrite } from '@/lib/thread-access';
 
 type Params = { params: Promise<{ id: string }> };
 
 export async function POST(req: Request, { params }: Params) {
   const { id } = await params;
+  const access = requireThreadWrite(req, id);
+  if (!access.ok) return access.response;
   let body: { prompt?: string };
   try {
     body = (await req.json()) as { prompt?: string };

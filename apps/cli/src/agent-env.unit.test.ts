@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { TASK_CLI_CONTRACT } from '@taskyard/core';
+import { IDEA_CLI_CONTRACT, TASK_CLI_CONTRACT } from '@taskyard/core';
 import type { ServerMessage } from '@taskyard/protocol';
 import { describe, expect, it } from 'vitest';
 import { buildThreadAgentEnv } from './agent-env.js';
@@ -78,6 +78,32 @@ describe('thread worktree preparation', () => {
       expect(text.startsWith(`${TASKYARD_AGENTS_START}\n`)).toBe(true);
       expect(text).toContain(TASK_CLI_CONTRACT.trim());
       expect(text.trimEnd().endsWith(TASKYARD_AGENTS_END)).toBe(true);
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('prepares a projectless idea scratch directory with owner and idea context', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ty-agent-env-'));
+    try {
+      const env = buildThreadAgentEnv(
+        {
+          ...spawnMessage(),
+          project_id: null,
+          idea_id: 'idea-1',
+          repo_url: null,
+          branch: null,
+          env: { TASKYARD_PERSON_ID: 'person-1' },
+        },
+        dir,
+      );
+      expect(env.TASKYARD_PROJECT_ID).toBeUndefined();
+      expect(env.TASKYARD_IDEA_ID).toBe('idea-1');
+      expect(env.TASKYARD_PERSON_ID).toBe('person-1');
+      expect(fs.existsSync(path.join(dir, '.taskyard', 'project.json'))).toBe(false);
+      const text = fs.readFileSync(path.join(dir, 'AGENTS.md'), 'utf8');
+      expect(text).toContain(IDEA_CLI_CONTRACT.trim());
+      expect(text).not.toContain(TASK_CLI_CONTRACT.trim());
     } finally {
       fs.rmSync(dir, { recursive: true, force: true });
     }

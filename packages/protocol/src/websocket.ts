@@ -34,10 +34,11 @@ export type ServerMessage =
   | {
       type: 'spawn_thread';
       thread_id: string;
-      project_id: string;
+      project_id: string | null;
+      idea_id?: string | null;
       project: string;
-      repo_url: string;
-      branch: string;
+      repo_url: string | null;
+      branch: string | null;
       agent_type: string;
       prompt: string;
       task_id?: string | null;

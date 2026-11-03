@@ -1,5 +1,6 @@
 import { getDb, resolveThreadPrompt } from '@taskyard/core';
 import { jsonError, jsonOk } from '@/lib/api-response';
+import { requireThreadWrite } from '@/lib/thread-access';
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -44,6 +45,8 @@ function toAcpResult(body: ResolveBody): unknown {
 
 export async function POST(req: Request, { params }: Params) {
   const { id } = await params;
+  const access = requireThreadWrite(req, id);
+  if (!access.ok) return access.response;
   let body: ResolveBody;
   try {
     body = (await req.json()) as ResolveBody;
