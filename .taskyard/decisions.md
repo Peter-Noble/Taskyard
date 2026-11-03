@@ -54,3 +54,8 @@
 
 - Status: accepted
 - Task: TA-44
+
+## D-012 — Thread Markdown does not render raw HTML or remote images.
+
+- Status: accepted
+- Task: TA-49
