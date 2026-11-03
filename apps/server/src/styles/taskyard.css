@@ -3918,6 +3918,10 @@ html:has(body.launcher-page) {
   background: oklch(48% 0.12 85);
 }
 
+.ta35-type-swatch.type-design {
+  background: oklch(48% 0.16 300);
+}
+
 .ta35-priority-swatch.priority-low {
   background: oklch(72% 0.01 250);
 }
@@ -4294,6 +4298,10 @@ html:has(body.launcher-page) {
 
 .ta35-label-pill-type.type-thought {
   border-color: oklch(48% 0.12 85);
+}
+
+.ta35-label-pill-type.type-design {
+  border-color: oklch(48% 0.16 300);
 }
 
 .ta35-label-pill-priority {

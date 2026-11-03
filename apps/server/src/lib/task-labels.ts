@@ -5,6 +5,7 @@ export const TASK_TYPES: Array<{ id: TaskType; label: string; swatch: string }> 
   { id: 'bug', label: 'Bug', swatch: 'type-bug' },
   { id: 'documentation', label: 'Documentation', swatch: 'type-docs' },
   { id: 'thought', label: 'Thought', swatch: 'type-thought' },
+  { id: 'design', label: 'Design', swatch: 'type-design' },
 ];
 
 export const TASK_PRIORITIES: Array<{ id: TaskPriority; label: string; short: string; tone: string }> = [

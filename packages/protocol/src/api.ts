@@ -83,7 +83,7 @@ export type TaskStatus =
   | 'completed'
   | 'cancelled';
 
-export type TaskType = 'feature' | 'bug' | 'documentation' | 'thought';
+export type TaskType = 'feature' | 'bug' | 'documentation' | 'thought' | 'design';
 
 export type TaskPriority = 'low' | 'medium' | 'high' | 'critical';
 

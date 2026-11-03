@@ -57,7 +57,7 @@ export const tasks = sqliteTable(
       .default('ready'),
     // D-008 — fixed Type / Priority; Category is free text (grouping stays TA-27)
     taskType: text('task_type', {
-      enum: ['feature', 'bug', 'documentation', 'thought'],
+      enum: ['feature', 'bug', 'documentation', 'thought', 'design'],
     })
       .notNull()
       .default('feature'),

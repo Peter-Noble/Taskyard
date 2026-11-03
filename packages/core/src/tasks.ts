@@ -44,7 +44,7 @@ const TASK_STATUSES: TaskStatus[] = [
   'cancelled',
 ];
 
-const TASK_TYPES: TaskType[] = ['feature', 'bug', 'documentation', 'thought'];
+const TASK_TYPES: TaskType[] = ['feature', 'bug', 'documentation', 'thought', 'design'];
 
 const TASK_PRIORITIES: TaskPriority[] = ['low', 'medium', 'high', 'critical'];
 
