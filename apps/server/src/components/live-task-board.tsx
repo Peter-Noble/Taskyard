@@ -15,6 +15,7 @@ import {
 } from '@/components/task-rail-filter';
 import { categoriesFromTasks, taskPriorityLabel, taskPriorityTone, taskTypeMeta } from '@/lib/task-labels';
 import { ChatCommentComposer, ChatMessage } from '@/components/chat-message';
+import { MarkdownMessage } from '@/components/markdown-message';
 
 function useProjectCategorySuggestions(projectId: string | null | undefined, refreshKey = 0) {
   const [suggestions, setSuggestions] = useState<string[]>([]);
@@ -756,7 +757,7 @@ function TaskEditor({
                   className={isMine(item.actor, person?.displayName ?? null) ? 'task-view-mine' : 'task-view-agent'}
                   header={<>{displayActor(item.actor)} · {new Date(item.created_at).toLocaleString()}</>}
                 >
-                  {item.text}
+                  <MarkdownMessage text={item.text} />
                 </ChatMessage>
               );
             }

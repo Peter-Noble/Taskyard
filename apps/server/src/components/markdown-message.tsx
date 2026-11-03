@@ -1,5 +1,6 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
+import remarkBreaks from 'remark-breaks';
 import remarkGfm from 'remark-gfm';
 
 export function MarkdownMessage({ text }: { text: string }) {
@@ -7,7 +8,7 @@ export function MarkdownMessage({ text }: { text: string }) {
   return (
     <div className="chat-markdown">
       <ReactMarkdown
-        remarkPlugins={[remarkGfm]}
+        remarkPlugins={[remarkGfm, remarkBreaks]}
         components={{
           a({ href, title, children }) {
             return (

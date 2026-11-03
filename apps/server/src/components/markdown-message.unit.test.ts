@@ -19,6 +19,14 @@ describe('MarkdownMessage', () => {
     expect(html).toContain('<table>');
   });
 
+  it('preserves single line breaks and recognizes standard heading syntax', () => {
+    const html = renderMarkdown('##Test##\n Test _markdown_');
+
+    expect(html).toContain('<br/>');
+    expect(html).toContain('<em>markdown</em>');
+    expect(renderMarkdown('## Test ##')).toContain('<h2>Test</h2>');
+  });
+
   it('opens links safely in a new tab', () => {
     const html = renderMarkdown('[Taskyard](https://taskyard.app)');
 
