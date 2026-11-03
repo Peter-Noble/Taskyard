@@ -16,7 +16,7 @@ cd ~/Taskyard
 ./docker-update.sh
 ```
 
-Pulls latest git, rebuilds the image, recreates the container with `./data` mounted and `--network cloudflare-net`. The live DB is kept.
+Pulls latest git, rebuilds the image, applies additive SQLite migrations, and recreates the container with `./data` mounted and `--network cloudflare-net`. The live DB is kept.
 
 ## First-time network (once)
 

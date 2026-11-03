@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Pull latest, rebuild the Taskyard web image, and recreate the container.
+# Pull latest, rebuild the Taskyard web image, migrate SQLite, and recreate the container.
 # SQLite under ./data is bind-mounted and kept across updates.
 set -euo pipefail
 
@@ -15,6 +15,9 @@ git pull
 
 echo "==> docker build -t ${IMAGE}"
 sudo docker build -t "${IMAGE}" .
+
+echo "==> migrate database"
+pnpm db:migrate-mvp
 
 if sudo docker inspect "${NAME}" >/dev/null 2>&1; then
   echo "==> stop/remove ${NAME}"
