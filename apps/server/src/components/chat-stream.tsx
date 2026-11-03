@@ -8,6 +8,7 @@ import { StatusBadge } from '@/components/status-badge';
 import { PendingInteractionWidget } from '@/components/pending-interaction-widget';
 import { ThreadFollowUp, canSendFollowUp } from '@/components/thread-follow-up';
 import { ChatMessage as ChatMessageView } from '@/components/chat-message';
+import { MarkdownMessage } from '@/components/markdown-message';
 
 import type { TestChatFixture } from '@/lib/test-data/fixtures';
 
@@ -110,7 +111,7 @@ export function ChatStream({ thread, events, demoChat, liveMode = true }: ChatSt
         ) : (
           messages.map((m, i) => (
             <ChatMessageView key={i} role={m.role} header={roleLabel(m.role)}>
-              {m.text}
+              {m.role === 'system' ? m.text : <MarkdownMessage text={m.text} />}
             </ChatMessageView>
           ))
         )}

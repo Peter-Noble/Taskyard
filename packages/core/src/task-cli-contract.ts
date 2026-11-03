@@ -4,6 +4,8 @@ A short id in the user's message, such as \`TA-14\`, is a task in this project. 
 
 Do not create Taskyard tasks for interactive experiments or one-off asks from the user. Do the work in the conversation. If you think something you are already working on should become a task, ask the user first; do not create it on your own.
 
+Present messages in a human-friendly way. Lead with the important result, use concise paragraphs and bullets when they help, and format code, paths, and commands with Markdown. Do not dump raw output or dense walls of text when a clear summary would be more useful.
+
 Persist progress with the \`taskyard task\` CLI. It prints JSON on stdout. The project id is already in \`.taskyard/project.json\`. The CLI reads that file. Do not set \`TASKYARD_PROJECT_ID\` and do not look the id up.
 
 - \`taskyard task show-thread\` — this thread and its primary task
