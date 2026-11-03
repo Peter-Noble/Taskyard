@@ -1,15 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
-import type {
-  AgentManifest,
-  Idea,
-  IdeaDetail,
-  PromoteIdeaResponse,
-  Thread,
-} from '@taskyard/protocol';
+import type { Idea, IdeaDetail, PromoteIdeaResponse } from '@taskyard/protocol';
 import { AppShell } from '@/components/app-shell';
 import { useCollections } from '@/components/collection-provider';
 import { useTestData } from '@/lib/hooks/use-test-data';
@@ -22,8 +15,6 @@ import {
 } from '@/components/idea-rail-filter';
 import { useSessionPerson } from '@/components/providers';
 
-type AgentInfo = AgentManifest & { id: string };
-
 async function readError(res: Response): Promise<string> {
   try {
     const data = (await res.json()) as { error?: string };
@@ -34,13 +25,14 @@ async function readError(res: Response): Promise<string> {
 }
 
 export function IdeasClient({ initialIdeaId }: { initialIdeaId: string | null }) {
-  const router = useRouter();
-  const { active, collections } = useCollections();
+  const { active, collections, select } = useCollections();
   const { useTestData: testDataOn } = useTestData();
   const person = useSessionPerson();
   const [filter, setFilter] = useState(defaultIdeaRailFilter);
   const [ideas, setIdeas] = useState<Idea[]>([]);
   const [selected, setSelected] = useState<IdeaDetail | null>(null);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [detailsEditing, setDetailsEditing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
@@ -56,10 +48,6 @@ export function IdeasClient({ initialIdeaId }: { initialIdeaId: string | null })
   const [projectName, setProjectName] = useState('');
   const [repoUrl, setRepoUrl] = useState('');
   const [defaultBranch, setDefaultBranch] = useState('main');
-  const [discussOpen, setDiscussOpen] = useState(false);
-  const [agents, setAgents] = useState<AgentInfo[]>([]);
-  const [agentType, setAgentType] = useState('');
-  const [prompt, setPrompt] = useState('');
   const visibleIdeas = useMemo(() => filterAndSortIdeas(ideas, filter), [ideas, filter]);
 
   const loadDetail = useCallback(async (id: string) => {
@@ -114,6 +102,11 @@ export function IdeasClient({ initialIdeaId }: { initialIdeaId: string | null })
     setProjectName(selected.title);
   }, [selected]);
 
+  useEffect(() => {
+    setDetailsOpen(false);
+    setDetailsEditing(false);
+  }, [selected?.id]);
+
   async function createIdea(event: FormEvent) {
     event.preventDefault();
     setBusy(true);
@@ -154,6 +147,7 @@ export function IdeasClient({ initialIdeaId }: { initialIdeaId: string | null })
       if (!res.ok) throw new Error(await readError(res));
       const data = (await res.json()) as { idea: IdeaDetail };
       setSelected(data.idea);
+      setDetailsEditing(false);
       await loadIdeas();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update idea');
@@ -231,38 +225,6 @@ export function IdeasClient({ initialIdeaId }: { initialIdeaId: string | null })
     }
   }
 
-  async function openDiscussion() {
-    setDiscussOpen(true);
-    setError(null);
-    const res = await fetch('/api/agents');
-    if (!res.ok) {
-      setError(await readError(res));
-      return;
-    }
-    const data = (await res.json()) as { agents: AgentInfo[] };
-    setAgents(data.agents);
-    if (!agentType && data.agents[0]) setAgentType(data.agents[0].id);
-  }
-
-  async function startDiscussion(event: FormEvent) {
-    event.preventDefault();
-    if (!selected) return;
-    setBusy(true);
-    try {
-      const res = await fetch('/api/threads', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ idea_id: selected.id, agent_type: agentType, prompt }),
-      });
-      if (!res.ok) throw new Error(await readError(res));
-      const data = (await res.json()) as { thread: Thread };
-      router.push(`/threads/${data.thread.id}`);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to start discussion');
-      setBusy(false);
-    }
-  }
-
   function toggleCollection(id: string, values: string[], update: (next: string[]) => void) {
     update(values.includes(id) ? values.filter((item) => item !== id) : [...values, id]);
   }
@@ -273,6 +235,21 @@ export function IdeasClient({ initialIdeaId }: { initialIdeaId: string | null })
         <aside className="ideas-list-panel">
           <header className="panel-head task-rail-head ideas-list-head ta35-filter-head">
             <span className="task-rail-head-label">Ideas</span>
+            <div className="task-rail-project-wrap">
+              <select
+                className="form-select task-rail-project"
+                aria-label="Collection"
+                value={active?.id ?? ''}
+                onChange={(event) => select(event.target.value || null)}
+              >
+                <option value="">All</option>
+                {collections.map((collection) => (
+                  <option key={collection.id} value={collection.id}>
+                    {collection.name}
+                  </option>
+                ))}
+              </select>
+            </div>
             <IdeaRailFilterButton
               value={filter}
               onChange={(next) => {
@@ -330,20 +307,26 @@ export function IdeasClient({ initialIdeaId }: { initialIdeaId: string | null })
               </div>
               {selected ? (
                 <div className="stream-header-actions">
+                  <button
+                    type="button"
+                    className="task-view-details-toggle"
+                    aria-expanded={detailsOpen}
+                    onClick={() => {
+                      setDetailsOpen((open) => !open);
+                      setDetailsEditing(false);
+                    }}
+                  >
+                    Details
+                  </button>
                   {selected.promoted_project_id ? (
                     <Link className="btn btn-primary btn-sm" href={`/projects?origin=${selected.id}`}>
                       View project
                     </Link>
                   ) : null}
                   {selected.can_write && selected.status === 'active' ? (
-                    <>
-                      <button type="button" className="btn btn-ghost btn-sm" onClick={() => void openDiscussion()}>
-                        Discuss with agent
-                      </button>
-                      <button type="button" className="btn btn-primary btn-sm" onClick={() => setPromoteOpen(true)}>
-                        Promote to project
-                      </button>
-                    </>
+                    <button type="button" className="btn btn-primary btn-sm" onClick={() => setPromoteOpen(true)}>
+                      Promote to project
+                    </button>
                   ) : null}
                   {selected.can_write && selected.status !== 'promoted' ? (
                     <button type="button" className="btn btn-ghost btn-sm" onClick={() => void archiveIdea(selected.status === 'archived')}>
@@ -359,67 +342,101 @@ export function IdeasClient({ initialIdeaId }: { initialIdeaId: string | null })
             {!selected ? (
               <div className="empty-state idea-empty">Select an idea or capture a new one.</div>
             ) : (
-              <div className="chat-thread idea-history" role="log" aria-live="polite" aria-label="Idea history">
-                <div className="chat-scroll">
-                  <form className="idea-brief-form" onSubmit={(event) => void saveIdea(event)}>
-                    <label className="form-field">
-                      <span className="form-label">Title</span>
-                      <input className="form-input" value={title} disabled={!selected.can_write} onChange={(event) => setTitle(event.target.value)} />
-                    </label>
-                    <label className="form-field">
-                      <span className="form-label">Brief</span>
-                      <textarea className="form-textarea" rows={8} value={description} disabled={!selected.can_write} onChange={(event) => setDescription(event.target.value)} />
-                    </label>
-                    {selected.can_write ? (
-                      <fieldset className="idea-collections">
-                        <legend className="form-label">Collections</legend>
-                        {collections.map((collection) => (
-                          <label key={collection.id}>
-                            <input
-                              type="checkbox"
-                              checked={collectionIds.includes(collection.id)}
-                              onChange={() => toggleCollection(collection.id, collectionIds, setCollectionIds)}
-                            />
-                            {collection.name}
-                          </label>
-                        ))}
-                      </fieldset>
-                    ) : null}
-                    {selected.can_write ? (
-                      <button type="submit" className="btn btn-primary btn-sm" disabled={busy}>Save idea</button>
-                    ) : null}
-                  </form>
-
-                  {selected.activity.map((item, index) => (
-                    item.type === 'comment' ? (
-                      <ChatMessage
-                        key={`${item.created_at}-${index}`}
-                        role={item.actor.trim().toLowerCase() === person?.displayName.trim().toLowerCase() ? 'user' : 'assistant'}
-                        header={<>{item.actor} · {new Date(item.created_at).toLocaleString()}</>}
-                      >
-                        {item.text}
-                      </ChatMessage>
+              <div className="idea-content">
+                {detailsOpen ? (
+                  <section className="idea-details" aria-label="Idea details">
+                    {detailsEditing && selected.can_write ? (
+                      <form className="idea-brief-form" onSubmit={(event) => void saveIdea(event)}>
+                        <label className="form-field">
+                          <span className="form-label">Title</span>
+                          <input className="form-input" value={title} required onChange={(event) => setTitle(event.target.value)} />
+                        </label>
+                        <label className="form-field">
+                          <span className="form-label">Brief</span>
+                          <textarea className="form-textarea" rows={6} value={description} onChange={(event) => setDescription(event.target.value)} />
+                        </label>
+                        <fieldset className="idea-collections">
+                          <legend className="form-label">Collections</legend>
+                          {collections.map((collection) => (
+                            <label key={collection.id}>
+                              <input
+                                type="checkbox"
+                                checked={collectionIds.includes(collection.id)}
+                                onChange={() => toggleCollection(collection.id, collectionIds, setCollectionIds)}
+                              />
+                              {collection.name}
+                            </label>
+                          ))}
+                        </fieldset>
+                        <button type="submit" className="btn btn-primary btn-sm" disabled={busy}>Update</button>
+                      </form>
                     ) : (
-                      <ChatMessage key={`${item.created_at}-${index}`}>
-                        {item.actor} {item.summary}
-                        {item.detail ? (
-                          <div className="task-view-action-detail task-view-brief-detail">{item.detail}</div>
-                        ) : null}
-                      </ChatMessage>
-                    )
-                  ))}
-                </div>
-                {selected.can_write ? (
-                  <footer className="task-compose-footer">
-                    <ChatCommentComposer
-                      id="idea-comment"
-                      value={comment}
-                      onChange={setComment}
-                      onSubmit={addComment}
-                      busy={busy}
-                    />
-                  </footer>
+                      <div className="task-view-details">
+                        <div className="task-view-detail-block">
+                          <div className="task-view-detail-label-row">
+                            <span className="form-label">Title</span>
+                            {selected.can_write ? (
+                              <button
+                                type="button"
+                                className="btn btn-ghost btn-sm"
+                                onClick={() => {
+                                  setTitle(selected.title);
+                                  setDescription(selected.description);
+                                  setCollectionIds(selected.collections.map((item) => item.id));
+                                  setDetailsEditing(true);
+                                }}
+                              >
+                                Edit
+                              </button>
+                            ) : null}
+                          </div>
+                          <p className="task-view-brief">{selected.title}</p>
+                        </div>
+                        <div className="task-view-detail-block">
+                          <span className="form-label">Brief</span>
+                          <div className="task-view-brief">{selected.description || 'No brief yet.'}</div>
+                        </div>
+                        <div className="task-view-detail-block">
+                          <span className="form-label">Collections</span>
+                          <p className="task-view-brief">{selected.collections.map((item) => item.name).join(' · ') || 'No collections'}</p>
+                        </div>
+                      </div>
+                    )}
+                  </section>
                 ) : null}
+                <div className="chat-thread idea-history" role="log" aria-live="polite" aria-label="Idea history">
+                  <div className="chat-scroll">
+                    {selected.activity.map((item, index) => (
+                      item.type === 'comment' ? (
+                        <ChatMessage
+                          key={`${item.created_at}-${index}`}
+                          role={item.actor.trim().toLowerCase() === person?.displayName.trim().toLowerCase() ? 'user' : 'assistant'}
+                          header={<>{item.actor} · {new Date(item.created_at).toLocaleString()}</>}
+                        >
+                          {item.text}
+                        </ChatMessage>
+                      ) : (
+                        <ChatMessage key={`${item.created_at}-${index}`}>
+                          {item.actor} {item.summary}
+                          {item.detail ? (
+                            <div className="task-view-action-detail task-view-brief-detail">{item.detail}</div>
+                          ) : null}
+                        </ChatMessage>
+                      )
+                    ))}
+                  </div>
+                  {selected.can_write ? (
+                    <footer className="task-compose-footer">
+                      <ChatCommentComposer
+                        id="idea-comment"
+                        value={comment}
+                        onChange={setComment}
+                        onSubmit={addComment}
+                        busy={busy}
+                      />
+                    </footer>
+                  ) : null}
+                </div>
               </div>
             )}
           </div>
@@ -459,21 +476,6 @@ export function IdeasClient({ initialIdeaId }: { initialIdeaId: string | null })
         </div>
       ) : null}
 
-      {discussOpen && selected ? (
-        <div className="modal-overlay" role="presentation" onClick={() => setDiscussOpen(false)}>
-          <div className="modal" role="dialog" aria-modal="true" aria-labelledby="discuss-idea-title" onClick={(event) => event.stopPropagation()}>
-            <header className="modal-head"><h2 id="discuss-idea-title">Discuss {selected.short_id}</h2></header>
-            <form onSubmit={(event) => void startDiscussion(event)}>
-              <div className="modal-body">
-                <p className="form-help">The agent can refine and promote this idea, then create initial tasks in the new project. No repository is needed for this discussion.</p>
-                <label className="form-field"><span className="form-label">Agent</span><select className="form-select" value={agentType} required onChange={(event) => setAgentType(event.target.value)}>{agents.map((agent) => <option key={agent.id} value={agent.id}>{agent.name}</option>)}</select></label>
-                <label className="form-field"><span className="form-label">Starting prompt (optional)</span><textarea className="form-textarea" rows={6} value={prompt} onChange={(event) => setPrompt(event.target.value)} placeholder="Help me evaluate and shape this project idea." /></label>
-              </div>
-              <footer className="modal-foot"><button type="button" className="btn btn-ghost" onClick={() => setDiscussOpen(false)}>Cancel</button><button type="submit" className="btn btn-primary" disabled={busy || !agentType}>Start discussion</button></footer>
-            </form>
-          </div>
-        </div>
-      ) : null}
     </AppShell>
   );
 }

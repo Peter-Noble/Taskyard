@@ -4479,6 +4479,26 @@ html:has(body.launcher-page) {
   margin: var(--space-3) var(--space-5) 0;
 }
 
+.idea-content {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.idea-details {
+  flex-shrink: 0;
+  max-height: 60%;
+  overflow-y: auto;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.idea-details .idea-brief-form {
+  padding: var(--space-3) var(--space-5);
+  border-bottom: 0;
+}
+
 .idea-history {
   flex: 1;
   min-height: 0;
