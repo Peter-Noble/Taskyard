@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import type { Machine, Project, SearchResult, Thread } from '@taskyard/protocol';
 import { AppShell } from '@/components/app-shell';
 import { SearchDialog } from '@/components/search-dialog';
-import type { SearchDesign } from '@/lib/search-design';
 import { ChatStream, StreamHeaderSub } from '@/components/chat-stream';
 import { MachineDock, ThreadRailAside, ThreadRailHead } from '@/components/machine-dock';
 import { NewThreadModal } from '@/components/new-thread-modal';
@@ -46,11 +45,9 @@ type ProjectsResponse = { projects: Project[] };
 export function DashboardClient({
   initialPanels,
   initialTaskId = null,
-  design,
 }: {
   initialPanels?: PanelVisibility;
   initialTaskId?: string | null;
-  design: SearchDesign;
 }) {
   const router = useRouter();
   const { useTestData: testDataOn, hydrated } = useTestData();
@@ -172,7 +169,6 @@ export function DashboardClient({
   function updateDashboardUrl(taskId?: string) {
     const params = new URLSearchParams();
     if (taskId) params.set('task', taskId);
-    if (design !== 'A') params.set('ta-20-design', design);
     const query = params.size ? `?${params.toString()}` : '';
     window.history.replaceState(null, '', `/dashboard${query}`);
   }
@@ -416,7 +412,6 @@ export function DashboardClient({
           entity="task"
           scopeId={liveProjectId}
           scopeLabel={liveProjectName}
-          design={design}
           disabled={testDataOn || !liveProjectId}
           onSelect={handleSearchSelect}
         />

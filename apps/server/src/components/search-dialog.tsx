@@ -2,29 +2,21 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { SearchResponse, SearchResult } from '@taskyard/protocol';
-import type { SearchDesign } from '@/lib/search-design';
 
 type SearchDialogProps = {
   entity: 'task' | 'idea';
   scopeId: string | null;
   scopeLabel: string;
-  design: SearchDesign;
   disabled?: boolean;
   onSelect: (result: SearchResult) => void;
 };
 
-const DESIGN_LABELS = {
-  A: 'Palette',
-  B: 'Drawer',
-  C: 'Top sheet',
-};
-
 // D-013 — search scope is page-local; no app-wide current-project state is introduced.
+// D-015 — the selected UI is the centered command palette, with no alternate layouts.
 export function SearchDialog({
   entity,
   scopeId,
   scopeLabel,
-  design,
   disabled = false,
   onSelect,
 }: SearchDialogProps) {
@@ -144,7 +136,7 @@ export function SearchDialog({
       <button
         ref={triggerRef}
         type="button"
-        className="ta20-search-trigger"
+        className="search-search-trigger"
         onClick={openSearch}
         disabled={disabled}
         aria-label={`Search ${entityLabel}`}
@@ -157,20 +149,20 @@ export function SearchDialog({
         <kbd>Ctrl P</kbd>
       </button>
       {open ? (
-        <div className={`ta20-search-overlay ta20-design-${design}`} role="presentation" onClick={closeSearch}>
+        <div className="search-search-overlay" role="presentation" onClick={closeSearch}>
           <section
-            className="ta20-search-dialog"
+            className="search-search-dialog"
             role="dialog"
             aria-modal="true"
             aria-label={`Search ${entityLabel}`}
             onClick={(event) => event.stopPropagation()}
           >
-            <header className="ta20-search-head">
-              <div className="ta20-search-heading">
-                <span className="ta20-search-eyebrow">{entity === 'task' ? 'Task search' : 'Idea search'}</span>
-                <span className="ta20-search-scope-name">{searchAll || !scopeId ? allScopeLabel : scopeLabel}</span>
+            <header className="search-search-head">
+              <div className="search-search-heading">
+                <span className="search-search-eyebrow">{entity === 'task' ? 'Task search' : 'Idea search'}</span>
+                <span className="search-search-scope-name">{searchAll || !scopeId ? allScopeLabel : scopeLabel}</span>
               </div>
-              <div className="ta20-search-input-row">
+              <div className="search-search-input-row">
                 <svg viewBox="0 0 20 20" aria-hidden="true">
                   <circle cx="8.5" cy="8.5" r="5.25" />
                   <path d="m12.5 12.5 4 4" />
@@ -184,14 +176,14 @@ export function SearchDialog({
                     ? 'Search titles, briefs, comments, decisions…'
                     : 'Search titles, briefs, and comments…'}
                   aria-label={`Search ${entityLabel}`}
-                  aria-controls="ta20-search-results"
-                  aria-activedescendant={results[activeIndex] ? `ta20-result-${activeIndex}` : undefined}
+                  aria-controls="search-search-results"
+                  aria-activedescendant={results[activeIndex] ? `search-result-${activeIndex}` : undefined}
                   autoComplete="off"
                   spellCheck={false}
                 />
-                <button type="button" className="ta20-search-close" onClick={closeSearch}>Esc</button>
+                <button type="button" className="search-search-close" onClick={closeSearch}>Esc</button>
               </div>
-              <div className="ta20-search-scopes" aria-label="Search scope">
+              <div className="search-search-scopes" aria-label="Search scope">
                 {scopeId ? (
                   <>
                     <button
@@ -215,44 +207,44 @@ export function SearchDialog({
               </div>
             </header>
 
-            <div className="ta20-search-body">
+            <div className="search-search-body">
               {!query.trim() ? (
-                <div className="ta20-search-empty">
+                <div className="search-search-empty">
                   <strong>Find {entityLabel} by word, prefix, or ID.</strong>
                   <span>Results include archived and completed items.</span>
                 </div>
               ) : null}
-              {loading ? <p className="ta20-search-status">Searching…</p> : null}
-              {error ? <p className="ta20-search-status is-error">{error}</p> : null}
+              {loading ? <p className="search-search-status">Searching…</p> : null}
+              {error ? <p className="search-search-status is-error">{error}</p> : null}
               {!loading && !error && query.trim() && results.length === 0 ? (
-                <p className="ta20-search-status">No {entityLabel} match “{query.trim()}”.</p>
+                <p className="search-search-status">No {entityLabel} match “{query.trim()}”.</p>
               ) : null}
-              <div className="ta20-search-results" id="ta20-search-results" role="listbox" aria-label="Search results">
+              <div className="search-search-results" id="search-search-results" role="listbox" aria-label="Search results">
                 {results.map((result, index) => (
                   <button
                     key={`${result.type}-${result.id}`}
                     ref={index === activeIndex ? activeResultRef : undefined}
-                    id={`ta20-result-${index}`}
+                    id={`search-result-${index}`}
                     type="button"
                     role="option"
                     aria-selected={index === activeIndex}
-                    className={`ta20-search-result${index === activeIndex ? ' is-active' : ''}`}
+                    className={`search-search-result${index === activeIndex ? ' is-active' : ''}`}
                     onMouseEnter={() => setActiveIndex(index)}
                     onClick={() => selectResult(result)}
                   >
-                    <span className="ta20-result-topline">
-                      <span className="ta20-result-id">{result.short_id}</span>
-                      <span className="ta20-result-status">{result.status.replaceAll('_', ' ')}</span>
+                    <span className="search-result-topline">
+                      <span className="search-result-id">{result.short_id}</span>
+                      <span className="search-result-status">{result.status.replaceAll('_', ' ')}</span>
                     </span>
-                    <strong className="ta20-result-title">{result.title}</strong>
-                    <span className="ta20-result-snippet">
+                    <strong className="search-result-title">{result.title}</strong>
+                    <span className="search-result-snippet">
                       {result.snippet.map((part, partIndex) => part.match ? (
                         <mark key={partIndex}>{part.text}</mark>
                       ) : (
                         <span key={partIndex}>{part.text}</span>
                       ))}
                     </span>
-                    <span className="ta20-result-meta">
+                    <span className="search-result-meta">
                       {result.type === 'task' ? result.project_name : 'Idea'}
                       <span aria-hidden="true">↵</span>
                     </span>
@@ -261,21 +253,8 @@ export function SearchDialog({
               </div>
             </div>
 
-            <footer className="ta20-search-footer">
+            <footer className="search-search-footer">
               <span><kbd>↑</kbd><kbd>↓</kbd> Navigate <kbd>↵</kbd> Open</span>
-              <nav aria-label="Search layout prototypes">
-                <span>Layout</span>
-                {(['A', 'B', 'C'] as const).map((option) => (
-                  <a
-                    key={option}
-                    href={`?ta-20-design=${option}`}
-                    aria-current={design === option ? 'page' : undefined}
-                    title={DESIGN_LABELS[option]}
-                  >
-                    {option}
-                  </a>
-                ))}
-              </nav>
             </footer>
           </section>
         </div>
