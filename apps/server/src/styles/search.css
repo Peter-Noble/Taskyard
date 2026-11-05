@@ -92,17 +92,17 @@
 }
 
 .search-design-C::before {
-  inset: 0 -14px;
+  inset: 0 -56px;
   background:
-    linear-gradient(90deg, transparent, oklch(55% 0.006 250) 14px, oklch(55% 0.006 250) calc(100% - 14px), transparent) top / 100% 1px no-repeat,
-    linear-gradient(90deg, transparent, oklch(55% 0.006 250) 14px, oklch(55% 0.006 250) calc(100% - 14px), transparent) bottom / 100% 1px no-repeat;
+    linear-gradient(90deg, transparent, oklch(55% 0.006 250) 56px, oklch(55% 0.006 250) calc(100% - 56px), transparent) top / 100% 1px no-repeat,
+    linear-gradient(90deg, transparent, oklch(55% 0.006 250) 56px, oklch(55% 0.006 250) calc(100% - 56px), transparent) bottom / 100% 1px no-repeat;
 }
 
 .search-design-C::after {
-  inset: -14px 0;
+  inset: -56px 0;
   background:
-    linear-gradient(180deg, transparent, oklch(55% 0.006 250) 14px, oklch(55% 0.006 250) calc(100% - 14px), transparent) left / 1px 100% no-repeat,
-    linear-gradient(180deg, transparent, oklch(55% 0.006 250) 14px, oklch(55% 0.006 250) calc(100% - 14px), transparent) right / 1px 100% no-repeat;
+    linear-gradient(180deg, transparent, oklch(55% 0.006 250) 56px, oklch(55% 0.006 250) calc(100% - 56px), transparent) left / 1px 100% no-repeat,
+    linear-gradient(180deg, transparent, oklch(55% 0.006 250) 56px, oklch(55% 0.006 250) calc(100% - 56px), transparent) right / 1px 100% no-repeat;
 }
 
 .search-head {
