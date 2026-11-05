@@ -136,7 +136,7 @@ export function SearchDialog({
       <button
         ref={triggerRef}
         type="button"
-        className="search-search-trigger"
+        className="search-trigger"
         onClick={openSearch}
         disabled={disabled}
         aria-label={`Search ${entityLabel}`}
@@ -149,20 +149,20 @@ export function SearchDialog({
         <kbd>Ctrl P</kbd>
       </button>
       {open ? (
-        <div className="search-search-overlay" role="presentation" onClick={closeSearch}>
+        <div className="search-overlay" role="presentation" onClick={closeSearch}>
           <section
-            className="search-search-dialog"
+            className="search-dialog"
             role="dialog"
             aria-modal="true"
             aria-label={`Search ${entityLabel}`}
             onClick={(event) => event.stopPropagation()}
           >
-            <header className="search-search-head">
-              <div className="search-search-heading">
-                <span className="search-search-eyebrow">{entity === 'task' ? 'Task search' : 'Idea search'}</span>
-                <span className="search-search-scope-name">{searchAll || !scopeId ? allScopeLabel : scopeLabel}</span>
+            <header className="search-head">
+              <div className="search-heading">
+                <span className="search-eyebrow">{entity === 'task' ? 'Task search' : 'Idea search'}</span>
+                <span className="search-scope-name">{searchAll || !scopeId ? allScopeLabel : scopeLabel}</span>
               </div>
-              <div className="search-search-input-row">
+              <div className="search-input-row">
                 <svg viewBox="0 0 20 20" aria-hidden="true">
                   <circle cx="8.5" cy="8.5" r="5.25" />
                   <path d="m12.5 12.5 4 4" />
@@ -176,14 +176,14 @@ export function SearchDialog({
                     ? 'Search titles, briefs, comments, decisions…'
                     : 'Search titles, briefs, and comments…'}
                   aria-label={`Search ${entityLabel}`}
-                  aria-controls="search-search-results"
+                  aria-controls="search-results"
                   aria-activedescendant={results[activeIndex] ? `search-result-${activeIndex}` : undefined}
                   autoComplete="off"
                   spellCheck={false}
                 />
-                <button type="button" className="search-search-close" onClick={closeSearch}>Esc</button>
+                <button type="button" className="search-close" onClick={closeSearch}>Esc</button>
               </div>
-              <div className="search-search-scopes" aria-label="Search scope">
+              <div className="search-scopes" aria-label="Search scope">
                 {scopeId ? (
                   <>
                     <button
@@ -207,19 +207,19 @@ export function SearchDialog({
               </div>
             </header>
 
-            <div className="search-search-body">
+            <div className="search-body">
               {!query.trim() ? (
-                <div className="search-search-empty">
+                <div className="search-empty">
                   <strong>Find {entityLabel} by word, prefix, or ID.</strong>
                   <span>Results include archived and completed items.</span>
                 </div>
               ) : null}
-              {loading ? <p className="search-search-status">Searching…</p> : null}
-              {error ? <p className="search-search-status is-error">{error}</p> : null}
+              {loading ? <p className="search-status">Searching…</p> : null}
+              {error ? <p className="search-status is-error">{error}</p> : null}
               {!loading && !error && query.trim() && results.length === 0 ? (
-                <p className="search-search-status">No {entityLabel} match “{query.trim()}”.</p>
+                <p className="search-status">No {entityLabel} match “{query.trim()}”.</p>
               ) : null}
-              <div className="search-search-results" id="search-search-results" role="listbox" aria-label="Search results">
+              <div className="search-results" id="search-results" role="listbox" aria-label="Search results">
                 {results.map((result, index) => (
                   <button
                     key={`${result.type}-${result.id}`}
@@ -228,7 +228,7 @@ export function SearchDialog({
                     type="button"
                     role="option"
                     aria-selected={index === activeIndex}
-                    className={`search-search-result${index === activeIndex ? ' is-active' : ''}`}
+                    className={`search-result${index === activeIndex ? ' is-active' : ''}`}
                     onMouseEnter={() => setActiveIndex(index)}
                     onClick={() => selectResult(result)}
                   >
@@ -253,7 +253,7 @@ export function SearchDialog({
               </div>
             </div>
 
-            <footer className="search-search-footer">
+            <footer className="search-footer">
               <span><kbd>↑</kbd><kbd>↓</kbd> Navigate <kbd>↵</kbd> Open</span>
             </footer>
           </section>
