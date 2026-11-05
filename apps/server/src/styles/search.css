@@ -70,6 +70,41 @@
   color: var(--fg);
 }
 
+.search-design-B {
+  border-color: var(--border);
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.search-design-C {
+  position: relative;
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.search-design-C::before,
+.search-design-C::after {
+  content: '';
+  position: absolute;
+  pointer-events: none;
+}
+
+.search-design-C::before {
+  inset: 0 -14px;
+  background:
+    linear-gradient(90deg, transparent, var(--border) 14px, var(--border) calc(100% - 14px), transparent) top / 100% 1px no-repeat,
+    linear-gradient(90deg, transparent, var(--border) 14px, var(--border) calc(100% - 14px), transparent) bottom / 100% 1px no-repeat;
+}
+
+.search-design-C::after {
+  inset: -14px 0;
+  background:
+    linear-gradient(180deg, transparent, var(--border) 14px, var(--border) calc(100% - 14px), transparent) left / 1px 100% no-repeat,
+    linear-gradient(180deg, transparent, var(--border) 14px, var(--border) calc(100% - 14px), transparent) right / 1px 100% no-repeat;
+}
+
 .search-head {
   flex-shrink: 0;
   padding: 17px 18px 0;

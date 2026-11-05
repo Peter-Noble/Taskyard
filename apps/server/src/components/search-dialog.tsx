@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import type { SearchResponse, SearchResult } from '@taskyard/protocol';
 
 type SearchDialogProps = {
@@ -20,6 +21,8 @@ export function SearchDialog({
   disabled = false,
   onSelect,
 }: SearchDialogProps) {
+  const designParam = useSearchParams().get('ta-20-design');
+  const design = designParam === 'B' || designParam === 'C' ? designParam : 'A';
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [searchAll, setSearchAll] = useState(!scopeId);
@@ -151,7 +154,7 @@ export function SearchDialog({
       {open ? (
         <div className="search-overlay" role="presentation" onClick={closeSearch}>
           <section
-            className="search-dialog"
+            className={`search-dialog search-design-${design}`}
             role="dialog"
             aria-modal="true"
             aria-label={`Search ${entityLabel}`}
