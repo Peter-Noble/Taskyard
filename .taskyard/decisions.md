@@ -59,3 +59,23 @@
 
 - Status: accepted
 - Task: TA-49
+
+## D-013 — Task search is scoped to the Dashboard's selected project by default, idea search is scoped to the active collection, and no app-wide current-project state is shared.
+
+- Status: accepted
+- Task: TA-20
+
+## D-014 — Full-text search documents are maintained by SQLite triggers so write callers do not need to update the index.
+
+- Status: accepted
+- Task: TA-20
+
+## D-015 — The permanent search UI is a centered command palette; alternate drawer and top-sheet prototypes are not retained.
+
+- Status: accepted
+- Task: TA-20
+
+## D-016 — The search palette uses a rectangular frame with 56px fading line extensions and an oklch(12% 0.012 250 / 0.18) backdrop.
+
+- Status: accepted
+- Task: TA-20
