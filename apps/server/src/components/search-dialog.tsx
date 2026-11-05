@@ -23,7 +23,7 @@ export function SearchDialog({
 }: SearchDialogProps) {
   const designParam = useSearchParams().get('ta-20-design');
   const design = designParam === 'B' || designParam === 'C' ? designParam : 'A';
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(design === 'B' || design === 'C');
   const [query, setQuery] = useState('');
   const [searchAll, setSearchAll] = useState(!scopeId);
   const [results, setResults] = useState<SearchResult[]>([]);
