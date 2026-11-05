@@ -2,8 +2,10 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import type { Machine, Project, Thread } from '@taskyard/protocol';
+import type { Machine, Project, SearchResult, Thread } from '@taskyard/protocol';
 import { AppShell } from '@/components/app-shell';
+import { SearchDialog } from '@/components/search-dialog';
+import type { SearchDesign } from '@/lib/search-design';
 import { ChatStream, StreamHeaderSub } from '@/components/chat-stream';
 import { MachineDock, ThreadRailAside, ThreadRailHead } from '@/components/machine-dock';
 import { NewThreadModal } from '@/components/new-thread-modal';
@@ -43,12 +45,16 @@ type ProjectsResponse = { projects: Project[] };
 
 export function DashboardClient({
   initialPanels,
+  initialTaskId = null,
+  design,
 }: {
   initialPanels?: PanelVisibility;
+  initialTaskId?: string | null;
+  design: SearchDesign;
 }) {
   const router = useRouter();
   const { useTestData: testDataOn, hydrated } = useTestData();
-  const { active } = useCollections();
+  const { active, loaded: collectionsLoaded, select: selectCollection } = useCollections();
   const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [centerMode, setCenterMode] = useState<'chat' | 'task'>('chat');
@@ -121,6 +127,27 @@ export function DashboardClient({
     setLiveProjectId(visibleProjects[0]?.id ?? null);
   }, [active, liveProjectId, testDataOn, visibleProjects]);
 
+  useEffect(() => {
+    if (!initialTaskId || testDataOn || !hydrated || !collectionsLoaded) return;
+    let cancelled = false;
+    void fetch(`/api/tasks/${encodeURIComponent(initialTaskId)}`)
+      .then(async (res) => {
+        if (!res.ok) return null;
+        return (await res.json()) as { task: { id: string; project_id: string } };
+      })
+      .then((data) => {
+        if (cancelled || !data) return;
+        if (active && !active.project_ids.includes(data.task.project_id)) selectCollection(null);
+        setLiveProjectId(data.task.project_id);
+        setSelectedTaskId(data.task.id);
+        setComposingTask(false);
+        setCenterMode('task');
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [initialTaskId, testDataOn, hydrated, collectionsLoaded]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const liveTaskOpen = !testDataOn && centerMode === 'task' && !composingTask && Boolean(selectedTaskId);
   const liveProjectName = visibleProjects.find((project) => project.id === liveProjectId)?.name ?? 'project';
 
@@ -142,16 +169,33 @@ export function DashboardClient({
     [testDataOn],
   );
 
+  function updateDashboardUrl(taskId?: string) {
+    const params = new URLSearchParams();
+    if (taskId) params.set('task', taskId);
+    if (design !== 'A') params.set('ta-20-design', design);
+    const query = params.size ? `?${params.toString()}` : '';
+    window.history.replaceState(null, '', `/dashboard${query}`);
+  }
+
   function showChat() {
     setCenterMode('chat');
     setSelectedTaskId(null);
     setComposingTask(false);
+    updateDashboardUrl();
   }
 
-  function showTaskDetail(taskId: string) {
+  function showTaskDetail(taskId: string, urlId = taskId) {
     setComposingTask(false);
     setSelectedTaskId(taskId);
     setCenterMode('task');
+    updateDashboardUrl(urlId);
+  }
+
+  function handleSearchSelect(result: SearchResult) {
+    if (result.type !== 'task') return;
+    if (active && !active.project_ids.includes(result.project_id)) selectCollection(null);
+    setLiveProjectId(result.project_id);
+    showTaskDetail(result.id, result.short_id);
   }
 
   function handleSelectTask(taskId: string) {
@@ -366,7 +410,18 @@ export function DashboardClient({
   );
 
   return (
-    <AppShell>
+    <AppShell
+      actions={(
+        <SearchDialog
+          entity="task"
+          scopeId={liveProjectId}
+          scopeLabel={liveProjectName}
+          design={design}
+          disabled={testDataOn || !liveProjectId}
+          onSelect={handleSearchSelect}
+        />
+      )}
+    >
       <WorkspaceSeams
         initialPanels={initialPanels}
         taskHead={taskHead}

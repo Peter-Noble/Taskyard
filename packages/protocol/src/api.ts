@@ -223,6 +223,40 @@ export type AddTaskCommentRequest = {
   actor?: string;
 };
 
+export type SearchType = 'task' | 'idea' | 'all';
+export type SearchResultType = Exclude<SearchType, 'all'>;
+
+export type SearchSnippetPart = {
+  text: string;
+  match: boolean;
+};
+
+export type TaskSearchResult = {
+  type: 'task';
+  id: string;
+  short_id: string;
+  title: string;
+  status: TaskStatus;
+  project_id: string;
+  project_name: string;
+  updated_at: string;
+  snippet: SearchSnippetPart[];
+};
+
+export type IdeaSearchResult = {
+  type: 'idea';
+  id: string;
+  short_id: string;
+  title: string;
+  status: IdeaStatus;
+  promoted_project_id: string | null;
+  updated_at: string;
+  snippet: SearchSnippetPart[];
+};
+
+export type SearchResult = TaskSearchResult | IdeaSearchResult;
+export type SearchResponse = { results: SearchResult[] };
+
 export type IdeaStatus = 'active' | 'archived' | 'promoted';
 
 export type IdeaCollection = {

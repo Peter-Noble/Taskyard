@@ -18,4 +18,5 @@ export * from './passwords.js';
 export * from './people.js';
 export * from './collections.js';
 export * from './ideas.js';
+export * from './search.js';
 export * from './idea-cli-contract.js';

@@ -3,6 +3,7 @@ import { loadTaskyardEnv } from '@taskyard/core';
 import { Command } from 'commander';
 import { registerAgentsRefresh } from './agents-file.js';
 import { registerIdeaCommands } from './register-idea-commands.js';
+import { registerSearchCommands } from './register-search-commands.js';
 import { registerTaskCommands } from './register-task-commands.js';
 
 loadTaskyardEnv();
@@ -45,6 +46,7 @@ program
 
 registerTaskCommands(program);
 registerIdeaCommands(program);
+registerSearchCommands(program);
 registerAgentsRefresh(program);
 
 program.parse();

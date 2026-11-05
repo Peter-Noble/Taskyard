@@ -7,6 +7,7 @@ import { Command } from 'commander';
 import { registerAgentsRefresh } from './agents-file.js';
 import { loadEnvLite } from './load-env-lite.js';
 import { registerIdeaCommands } from './register-idea-commands.js';
+import { registerSearchCommands } from './register-search-commands.js';
 import { registerTaskCommands } from './register-task-commands.js';
 import { writeError } from './task-cli.js';
 import { cmdUpdate, warnIfCliUpdateAvailable } from './update-check.js';
@@ -25,6 +26,7 @@ program.hook('preAction', async () => {
 
 registerTaskCommands(program);
 registerIdeaCommands(program);
+registerSearchCommands(program);
 
 program
   .command('update')
