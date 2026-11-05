@@ -137,6 +137,49 @@ describe('full-text search', () => {
     }).results[0]).toMatchObject({ id: idea.id, status: 'promoted' });
   });
 
+  it('ranks active tasks first unless a closed task is a substantially stronger match', () => {
+    const project = createProject(context.db, { name: 'Taskyard' });
+    const active = createTask(context.db, {
+      project_id: project.id,
+      title: 'Equal ranking vocabulary',
+    });
+    const completed = createTask(context.db, {
+      project_id: project.id,
+      title: 'Equal ranking vocabulary',
+    });
+    const cancelled = createTask(context.db, {
+      project_id: project.id,
+      title: 'Equal ranking vocabulary',
+    });
+    updateTask(context.db, completed.id, { status: 'completed' });
+    updateTask(context.db, cancelled.id, { status: 'cancelled' });
+
+    const equalMatches = search(context.db, {
+      query: 'ranking vocabulary',
+      projectId: project.id,
+    }).results;
+    expect(equalMatches[0]?.id).toBe(active.id);
+    expect(new Set(equalMatches.map((result) => result.id))).toEqual(
+      new Set([active.id, completed.id, cancelled.id]),
+    );
+
+    const strongerCompleted = createTask(context.db, {
+      project_id: project.id,
+      title: 'Exceptional relevance',
+    });
+    updateTask(context.db, strongerCompleted.id, { status: 'completed' });
+    const weakerActive = createTask(context.db, {
+      project_id: project.id,
+      title: 'Open task',
+    });
+    addTaskComment(context.db, weakerActive.id, { text: 'Exceptional relevance' });
+
+    expect(search(context.db, {
+      query: 'exceptional relevance',
+      projectId: project.id,
+    }).results[0]?.id).toBe(strongerCompleted.id);
+  });
+
   it('combines tasks and ideas and handles query and scope boundaries', () => {
     const project = createProject(context.db, { name: 'Taskyard' });
     const task = createTask(context.db, {

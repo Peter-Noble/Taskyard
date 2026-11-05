@@ -108,7 +108,8 @@ function taskSearch(
       tasks.updated_at,
       snippet(task_search, -1, char(1), char(2), ' … ', 24) AS snippet,
       CASE WHEN upper(tasks.short_id) = upper(${query}) THEN 1 ELSE 0 END AS exact,
-      bm25(task_search, 10.0, 6.0, 2.0, 1.0, 1.0) AS rank
+      bm25(task_search, 10.0, 6.0, 2.0, 1.0, 1.0)
+        + CASE WHEN tasks.status IN ('completed', 'cancelled') THEN 0.5 ELSE 0.0 END AS rank
     FROM task_search
     INNER JOIN tasks ON tasks.id = task_search.task_id
     INNER JOIN projects ON projects.id = tasks.project_id

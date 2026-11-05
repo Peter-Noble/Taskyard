@@ -3,6 +3,20 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { SearchResponse, SearchResult } from '@taskyard/protocol';
 
+const STATUS_BADGES: Record<SearchResult['status'], { className: string; label: string }> = {
+  backlog: { className: 'badge-task-backlog', label: 'Backlog' },
+  ready: { className: 'badge-task-ready', label: 'Ready for agent' },
+  in_progress: { className: 'badge-task-progress', label: 'In progress' },
+  review: { className: 'badge-task-review', label: 'Ready to review' },
+  merge: { className: 'badge-task-merge', label: 'Ready to merge' },
+  waiting: { className: 'badge-task-waiting', label: 'Waiting for user' },
+  completed: { className: 'badge-task-done', label: 'Completed' },
+  cancelled: { className: 'badge-task-backlog', label: 'Cancelled' },
+  active: { className: 'badge-task-ready', label: 'Active' },
+  archived: { className: 'badge-task-backlog', label: 'Archived' },
+  promoted: { className: 'badge-task-done', label: 'Promoted' },
+};
+
 type SearchDialogProps = {
   entity: 'task' | 'idea';
   scopeId: string | null;
@@ -229,25 +243,36 @@ export function SearchDialog({
                     type="button"
                     role="option"
                     aria-selected={index === activeIndex}
-                    className={`search-result${index === activeIndex ? ' is-active' : ''}`}
+                    className={`search-result task-item${result.status === 'completed' ? ' task-item-completed' : ''}`}
                     onMouseEnter={() => setActiveIndex(index)}
                     onClick={() => selectResult(result)}
                   >
-                    <span className="search-result-topline">
-                      <span className="search-result-id">{result.short_id}</span>
-                      <span className="search-result-status">{result.status.replaceAll('_', ' ')}</span>
-                    </span>
-                    <strong className="search-result-title">{result.title}</strong>
-                    <span className="search-result-snippet">
-                      {result.snippet.map((part, partIndex) => part.match ? (
-                        <mark key={partIndex}>{part.text}</mark>
-                      ) : (
-                        <span key={partIndex}>{part.text}</span>
-                      ))}
-                    </span>
-                    <span className="search-result-meta">
-                      {result.type === 'task' ? result.project_name : 'Idea'}
-                      <span aria-hidden="true">↵</span>
+                    <span className="task-item-row">
+                      <span className="task-item-id-col">
+                        <span className="entity-num">{result.short_id}</span>
+                      </span>
+                      <span className="task-item-main">
+                        <span className="task-item-title-row">
+                          <strong className="task-item-title">{result.title}</strong>
+                        </span>
+                        <span className="task-item-badges">
+                          <span className={`badge ${STATUS_BADGES[result.status].className}`}>
+                            <span className="badge-dot" />
+                            {STATUS_BADGES[result.status].label}
+                          </span>
+                        </span>
+                        <span className="search-result-snippet">
+                          {result.snippet.map((part, partIndex) => part.match ? (
+                            <mark key={partIndex}>{part.text}</mark>
+                          ) : (
+                            <span key={partIndex}>{part.text}</span>
+                          ))}
+                        </span>
+                        <span className="search-result-meta">
+                          {result.type === 'task' ? result.project_name : 'Idea'}
+                          <span aria-hidden="true">↵</span>
+                        </span>
+                      </span>
                     </span>
                   </button>
                 ))}
