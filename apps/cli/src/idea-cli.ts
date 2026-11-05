@@ -9,7 +9,7 @@ export const IDEA_STATUSES: IdeaStatus[] = ['active', 'archived', 'promoted'];
 
 type Collection = { id: string; name: string; project_ids: string[] };
 
-async function resolveCollections(values: string[] | undefined): Promise<string[] | undefined> {
+export async function resolveCollections(values: string[] | undefined): Promise<string[] | undefined> {
   if (!values?.length) return undefined;
   const data = await apiFetch<{ collections: Collection[] }>('/api/collections');
   const byId = new Map(data.collections.map((item) => [item.id, item]));

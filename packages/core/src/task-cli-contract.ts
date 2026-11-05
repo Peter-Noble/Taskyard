@@ -10,6 +10,7 @@ Persist progress with the \`taskyard task\` CLI. It prints JSON on stdout. The p
 
 - \`taskyard task show-thread\` — this thread and its primary task
 - \`taskyard task list [--status ready]\` — tasks in this project
+- \`taskyard search <query> [--all-projects] [--type task|idea|all] [--collection <name-or-id>]\` — full-text search; JSON by default
 - \`taskyard task next\` — oldest ready or merge, unblocked, unclaimed task; merge tasks go first
 - \`taskyard task get <id>\` — task, children, dependencies, decisions, and activity
 - \`taskyard task claim <id>\` — take a ready or merge task; fails if someone else holds it or it is blocked

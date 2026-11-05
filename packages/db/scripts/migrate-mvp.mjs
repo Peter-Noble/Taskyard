@@ -311,5 +311,155 @@ if (!ideaThreadCols.has('idea_id')) {
   console.log('added threads.idea_id');
 }
 
+// D-014 — triggers own search-index maintenance, keeping write callers unaware of it.
+function taskDocumentSelect(where) {
+  return `
+    SELECT
+      tasks.short_id,
+      tasks.title,
+      tasks.description,
+      COALESCE((
+        SELECT group_concat(json_extract(activity.payload, '$.text'), ' ')
+        FROM task_activity AS activity
+        WHERE activity.task_id = tasks.id AND activity.kind = 'comment'
+      ), ''),
+      COALESCE((
+        SELECT group_concat(decision.choice || ' ' || decision.why, ' ')
+        FROM task_decisions AS decision
+        WHERE decision.task_id = tasks.id
+      ), ''),
+      tasks.id
+    FROM tasks
+    WHERE ${where}
+  `;
+}
+
+function ideaDocumentSelect(where) {
+  return `
+    SELECT
+      ideas.short_id,
+      ideas.title,
+      ideas.description,
+      COALESCE((
+        SELECT group_concat(json_extract(activity.payload, '$.text'), ' ')
+        FROM idea_activity AS activity
+        WHERE activity.idea_id = ideas.id AND activity.kind = 'comment'
+      ), ''),
+      ideas.id
+    FROM ideas
+    WHERE ${where}
+  `;
+}
+
+function refreshTaskSearch(id) {
+  return `
+    DELETE FROM task_search WHERE task_id = ${id};
+    INSERT INTO task_search (short_id, title, brief, comments, decisions, task_id)
+    ${taskDocumentSelect(`tasks.id = ${id}`)};
+  `;
+}
+
+function refreshIdeaSearch(id) {
+  return `
+    DELETE FROM idea_search WHERE idea_id = ${id};
+    INSERT INTO idea_search (short_id, title, brief, comments, idea_id)
+    ${ideaDocumentSelect(`ideas.id = ${id}`)};
+  `;
+}
+
+const taskSearchExisted = hasTable('task_search');
+const ideaSearchExisted = hasTable('idea_search');
+db.exec(`
+  CREATE VIRTUAL TABLE IF NOT EXISTS task_search USING fts5(
+    short_id,
+    title,
+    brief,
+    comments,
+    decisions,
+    task_id UNINDEXED,
+    tokenize = 'unicode61 remove_diacritics 2'
+  );
+  CREATE VIRTUAL TABLE IF NOT EXISTS idea_search USING fts5(
+    short_id,
+    title,
+    brief,
+    comments,
+    idea_id UNINDEXED,
+    tokenize = 'unicode61 remove_diacritics 2'
+  );
+`);
+if (!taskSearchExisted) {
+  db.exec(`
+    INSERT INTO task_search (short_id, title, brief, comments, decisions, task_id)
+    ${taskDocumentSelect('1 = 1')};
+  `);
+}
+if (!ideaSearchExisted) {
+  db.exec(`
+    INSERT INTO idea_search (short_id, title, brief, comments, idea_id)
+    ${ideaDocumentSelect('1 = 1')};
+  `);
+}
+
+db.exec(`
+  CREATE TRIGGER IF NOT EXISTS task_search_task_insert AFTER INSERT ON tasks BEGIN
+    ${refreshTaskSearch('new.id')}
+  END;
+  CREATE TRIGGER IF NOT EXISTS task_search_task_update
+  AFTER UPDATE OF short_id, title, description ON tasks BEGIN
+    ${refreshTaskSearch('new.id')}
+  END;
+  CREATE TRIGGER IF NOT EXISTS task_search_task_delete AFTER DELETE ON tasks BEGIN
+    DELETE FROM task_search WHERE task_id = old.id;
+  END;
+
+  CREATE TRIGGER IF NOT EXISTS task_search_activity_insert AFTER INSERT ON task_activity BEGIN
+    ${refreshTaskSearch('new.task_id')}
+  END;
+  CREATE TRIGGER IF NOT EXISTS task_search_activity_update
+  AFTER UPDATE OF task_id, kind, payload ON task_activity BEGIN
+    ${refreshTaskSearch('old.task_id')}
+    ${refreshTaskSearch('new.task_id')}
+  END;
+  CREATE TRIGGER IF NOT EXISTS task_search_activity_delete AFTER DELETE ON task_activity BEGIN
+    ${refreshTaskSearch('old.task_id')}
+  END;
+
+  CREATE TRIGGER IF NOT EXISTS task_search_decision_insert AFTER INSERT ON task_decisions BEGIN
+    ${refreshTaskSearch('new.task_id')}
+  END;
+  CREATE TRIGGER IF NOT EXISTS task_search_decision_update
+  AFTER UPDATE OF task_id, choice, why ON task_decisions BEGIN
+    ${refreshTaskSearch('old.task_id')}
+    ${refreshTaskSearch('new.task_id')}
+  END;
+  CREATE TRIGGER IF NOT EXISTS task_search_decision_delete AFTER DELETE ON task_decisions BEGIN
+    ${refreshTaskSearch('old.task_id')}
+  END;
+
+  CREATE TRIGGER IF NOT EXISTS idea_search_idea_insert AFTER INSERT ON ideas BEGIN
+    ${refreshIdeaSearch('new.id')}
+  END;
+  CREATE TRIGGER IF NOT EXISTS idea_search_idea_update
+  AFTER UPDATE OF short_id, title, description ON ideas BEGIN
+    ${refreshIdeaSearch('new.id')}
+  END;
+  CREATE TRIGGER IF NOT EXISTS idea_search_idea_delete AFTER DELETE ON ideas BEGIN
+    DELETE FROM idea_search WHERE idea_id = old.id;
+  END;
+
+  CREATE TRIGGER IF NOT EXISTS idea_search_activity_insert AFTER INSERT ON idea_activity BEGIN
+    ${refreshIdeaSearch('new.idea_id')}
+  END;
+  CREATE TRIGGER IF NOT EXISTS idea_search_activity_update
+  AFTER UPDATE OF idea_id, kind, payload ON idea_activity BEGIN
+    ${refreshIdeaSearch('old.idea_id')}
+    ${refreshIdeaSearch('new.idea_id')}
+  END;
+  CREATE TRIGGER IF NOT EXISTS idea_search_activity_delete AFTER DELETE ON idea_activity BEGIN
+    ${refreshIdeaSearch('old.idea_id')}
+  END;
+`);
+
 console.log('migrate-mvp OK:', dbPath);
 db.close();

@@ -65,7 +65,7 @@ export function getServerUrl(): string {
   return resolveProjectContext().serverUrl;
 }
 
-function requireProjectId(explicit?: string): string {
+export function requireProjectId(explicit?: string): string {
   const projectId = resolveProjectContext(explicit).projectId;
   if (!projectId) {
     throw new TaskCliError(1, {

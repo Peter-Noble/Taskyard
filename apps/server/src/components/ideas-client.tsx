@@ -2,8 +2,9 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
-import type { Idea, IdeaDetail, PromoteIdeaResponse } from '@taskyard/protocol';
+import type { Idea, IdeaDetail, PromoteIdeaResponse, SearchResult } from '@taskyard/protocol';
 import { AppShell } from '@/components/app-shell';
+import { SearchDialog } from '@/components/search-dialog';
 import { useCollections } from '@/components/collection-provider';
 import { useTestData } from '@/lib/hooks/use-test-data';
 import { ChatCommentComposer, ChatMessage } from '@/components/chat-message';
@@ -25,7 +26,11 @@ async function readError(res: Response): Promise<string> {
   }
 }
 
-export function IdeasClient({ initialIdeaId }: { initialIdeaId: string | null }) {
+export function IdeasClient({
+  initialIdeaId,
+}: {
+  initialIdeaId: string | null;
+}) {
   const { active, collections, select } = useCollections();
   const { useTestData: testDataOn } = useTestData();
   const person = useSessionPerson();
@@ -58,6 +63,16 @@ export function IdeasClient({ initialIdeaId }: { initialIdeaId: string | null })
     setSelected(data.idea);
     return data.idea;
   }, []);
+
+  function handleSearchSelect(result: SearchResult) {
+    if (result.type !== 'idea') return;
+    setFilter(onlyIdeaStatus(result.status));
+    void loadDetail(result.id).catch((err: unknown) => {
+      setError(err instanceof Error ? err.message : 'Failed to load idea');
+    });
+    const params = new URLSearchParams({ idea: result.short_id });
+    window.history.replaceState(null, '', `/ideas?${params.toString()}`);
+  }
 
   const loadIdeas = useCallback(async () => {
     if (testDataOn) {
@@ -231,7 +246,17 @@ export function IdeasClient({ initialIdeaId }: { initialIdeaId: string | null })
   }
 
   return (
-    <AppShell>
+    <AppShell
+      actions={(
+        <SearchDialog
+          entity="idea"
+          scopeId={active?.id ?? null}
+          scopeLabel={active?.name ?? 'All collections'}
+          disabled={testDataOn}
+          onSelect={handleSearchSelect}
+        />
+      )}
+    >
       <div className="ideas-page">
         <aside className="ideas-list-panel">
           <header className="panel-head task-rail-head ideas-list-head ta35-filter-head">

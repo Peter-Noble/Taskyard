@@ -25,14 +25,28 @@ function pushSchema(dbPath: string): void {
   });
 }
 
+function migrateSchema(dbPath: string): void {
+  const repoRoot = findRepoRoot();
+  execSync('node ./scripts/migrate-mvp.mjs', {
+    cwd: path.join(repoRoot, 'packages', 'db'),
+    env: {
+      ...process.env,
+      TASKYARD_DB_PATH: dbPath,
+      TASKYARD_REPO_ROOT: repoRoot,
+    },
+    stdio: 'pipe',
+  });
+}
+
 function initSchema(dbPath: string): void {
   const template = process.env.TASKYARD_TEST_SCHEMA_TEMPLATE;
   if (template && fs.existsSync(template)) {
     fs.mkdirSync(path.dirname(dbPath), { recursive: true });
     fs.copyFileSync(template, dbPath);
-    return;
+  } else {
+    pushSchema(dbPath);
   }
-  pushSchema(dbPath);
+  migrateSchema(dbPath);
 }
 
 export function createTestDb(): TestDbContext {
