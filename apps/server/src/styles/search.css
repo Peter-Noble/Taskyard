@@ -34,8 +34,10 @@
 
 .search-trigger kbd,
 .search-footer kbd {
+  flex-shrink: 0;
   padding: 1px 4px;
   border: 1px solid var(--border);
+  white-space: nowrap;
   background: var(--surface-elevated);
   color: var(--muted);
   font: inherit;
