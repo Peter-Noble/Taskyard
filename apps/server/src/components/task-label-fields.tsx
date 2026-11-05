@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useId, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
 import type { TaskPriority, TaskType } from '@taskyard/protocol';
 import {
   TASK_PRIORITIES,
@@ -50,6 +50,7 @@ function CategoryInput({
   const inputRef = useRef<HTMLInputElement>(null);
   const [known, setKnown] = useState(suggestions);
   const [highlight, setHighlight] = useState(-1);
+  const [focused, setFocused] = useState(false);
   const listId = `${id}-suggestions`;
 
   useEffect(() => {
@@ -67,6 +68,7 @@ function CategoryInput({
     const list = !q ? known : known.filter((item) => item.toLowerCase().includes(q));
     return list.slice(0, SUGGESTION_LIMIT);
   }, [known, value]);
+  const showSuggestions = focused && filtered.length > 0;
 
   useEffect(() => {
     setHighlight(-1);
@@ -94,10 +96,15 @@ function CategoryInput({
         role="combobox"
         aria-autocomplete="list"
         aria-controls={listId}
-        aria-expanded={filtered.length > 0}
+        aria-expanded={showSuggestions}
         aria-activedescendant={highlight >= 0 ? `${listId}-${highlight}` : undefined}
         value={value}
         onChange={(event) => onChange(event.target.value)}
+        onFocus={() => setFocused(true)}
+        onBlur={() => {
+          setFocused(false);
+          setHighlight(-1);
+        }}
         onKeyDown={(event) => {
           if (event.key === 'ArrowDown') {
             if (filtered.length === 0) return;
@@ -119,7 +126,7 @@ function CategoryInput({
         placeholder="e.g. Performance"
         autoComplete="off"
       />
-      {filtered.length > 0 ? (
+      {showSuggestions ? (
         <div id={listId} className="ta35-category-suggest" role="listbox" aria-label="Category suggestions">
           {filtered.map((item, index) => (
             <button
@@ -175,18 +182,21 @@ export function TaskLabelCreateFields({
       </label>
       <label className="ta35-labels-field">
         <span className="form-label">Priority</span>
-        <select
-          className="form-select form-select-compact ta35-labels-control"
-          aria-label="Priority"
-          value={value.priority}
-          onChange={(event) => onChange({ ...value, priority: event.target.value as TaskPriority })}
-        >
-          {TASK_PRIORITIES.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.label}
-            </option>
-          ))}
-        </select>
+        <span className="ta35-labels-select-wrap">
+          <PrioritySwatch priority={value.priority} />
+          <select
+            className="form-select form-select-compact ta35-labels-control"
+            aria-label="Priority"
+            value={value.priority}
+            onChange={(event) => onChange({ ...value, priority: event.target.value as TaskPriority })}
+          >
+            {TASK_PRIORITIES.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.label}
+              </option>
+            ))}
+          </select>
+        </span>
       </label>
       <label className="ta35-labels-field ta35-labels-field-grow">
         <span className="form-label">Category</span>

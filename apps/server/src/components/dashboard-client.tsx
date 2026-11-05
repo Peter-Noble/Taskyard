@@ -122,6 +122,7 @@ export function DashboardClient({
   }, [active, liveProjectId, testDataOn, visibleProjects]);
 
   const liveTaskOpen = !testDataOn && centerMode === 'task' && !composingTask && Boolean(selectedTaskId);
+  const liveProjectName = visibleProjects.find((project) => project.id === liveProjectId)?.name ?? 'project';
 
   const useLiveEvents = Boolean(selectedThreadId) && !testDataOn;
   const events = useEventStream(selectedThreadId, useLiveEvents);
@@ -260,7 +261,9 @@ export function DashboardClient({
             ) : (
               <div className="stream-header-view stream-header-task">
                 <div className="stream-header-main">
-                  <h2 className="stream-title">{composingTask ? 'New task' : 'Task'}</h2>
+                  <h2 className="stream-title">
+                    {composingTask ? `Add new task to ${liveProjectName}` : 'Task'}
+                  </h2>
                 </div>
                 <div className="stream-header-actions">
                   <button type="button" className="btn btn-ghost btn-sm" onClick={showChat}>
