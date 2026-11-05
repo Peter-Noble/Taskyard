@@ -71,7 +71,7 @@
 }
 
 .search-design-B {
-  border-color: oklch(88% 0.006 250);
+  border-color: oklch(55% 0.006 250);
   border-radius: 0;
   box-shadow: none;
 }
@@ -94,15 +94,15 @@
 .search-design-C::before {
   inset: 0 -14px;
   background:
-    linear-gradient(90deg, transparent, oklch(88% 0.006 250) 14px, oklch(88% 0.006 250) calc(100% - 14px), transparent) top / 100% 1px no-repeat,
-    linear-gradient(90deg, transparent, oklch(88% 0.006 250) 14px, oklch(88% 0.006 250) calc(100% - 14px), transparent) bottom / 100% 1px no-repeat;
+    linear-gradient(90deg, transparent, oklch(55% 0.006 250) 14px, oklch(55% 0.006 250) calc(100% - 14px), transparent) top / 100% 1px no-repeat,
+    linear-gradient(90deg, transparent, oklch(55% 0.006 250) 14px, oklch(55% 0.006 250) calc(100% - 14px), transparent) bottom / 100% 1px no-repeat;
 }
 
 .search-design-C::after {
   inset: -14px 0;
   background:
-    linear-gradient(180deg, transparent, oklch(88% 0.006 250) 14px, oklch(88% 0.006 250) calc(100% - 14px), transparent) left / 1px 100% no-repeat,
-    linear-gradient(180deg, transparent, oklch(88% 0.006 250) 14px, oklch(88% 0.006 250) calc(100% - 14px), transparent) right / 1px 100% no-repeat;
+    linear-gradient(180deg, transparent, oklch(55% 0.006 250) 14px, oklch(55% 0.006 250) calc(100% - 14px), transparent) left / 1px 100% no-repeat,
+    linear-gradient(180deg, transparent, oklch(55% 0.006 250) 14px, oklch(55% 0.006 250) calc(100% - 14px), transparent) right / 1px 100% no-repeat;
 }
 
 .search-head {
