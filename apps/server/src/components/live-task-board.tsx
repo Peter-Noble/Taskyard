@@ -236,6 +236,7 @@ export function LiveTaskRail({
 
 export function LiveTaskDetail({
   projectId,
+  projects,
   taskId,
   composing,
   refreshKey,
@@ -256,10 +257,12 @@ export function LiveTaskDetail({
   onCreated: (taskId: string) => void;
   onCancelCreate: () => void;
 }) {
+  const projectName = projects.find((project) => project.id === projectId)?.name ?? 'project';
   if (composing) {
     return (
       <CreateTaskForm
         projectId={projectId}
+        projectName={projectName}
         onCreated={onCreated}
         onCancel={onCancelCreate}
       />
@@ -285,10 +288,12 @@ export function LiveTaskDetail({
 
 function CreateTaskForm({
   projectId,
+  projectName,
   onCreated,
   onCancel,
 }: {
   projectId: string | null;
+  projectName: string;
   onCreated: (taskId: string) => void;
   onCancel: () => void;
 }) {
@@ -366,7 +371,7 @@ function CreateTaskForm({
         {error ? <p className="form-help">{error}</p> : null}
         <div className="task-editor-actions">
           <button type="submit" className="btn btn-primary" disabled={saving || !projectId}>
-            Create task
+            Create task in {projectName}
           </button>
           <button type="button" className="btn btn-ghost" onClick={onCancel}>
             Cancel

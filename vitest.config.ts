@@ -11,6 +11,7 @@ function packageSrc(name: string) {
 export default defineConfig({
   resolve: {
     alias: {
+      '@': path.resolve(root, 'apps', 'server', 'src'),
       '@taskyard/protocol': packageSrc('protocol'),
       '@taskyard/db': packageSrc('db'),
       '@taskyard/core/task-cli-contract': path.resolve(
