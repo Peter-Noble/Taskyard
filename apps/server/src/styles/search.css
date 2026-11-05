@@ -52,53 +52,37 @@
   align-items: flex-start;
   justify-content: center;
   padding: 10vh var(--space-4) var(--space-4);
-  background: oklch(12% 0.012 250 / 0.48);
+  background: oklch(12% 0.012 250 / 0.18);
   backdrop-filter: blur(3px);
 }
 
 .search-dialog {
+  position: relative;
   display: flex;
   flex-direction: column;
   width: min(680px, 100%);
   min-width: 0;
   max-height: 76dvh;
-  overflow: hidden;
-  border: 1px solid oklch(70% 0.02 250 / 0.5);
-  border-radius: 14px;
+  overflow: visible;
   background: var(--surface);
-  box-shadow: 0 24px 80px oklch(10% 0.02 250 / 0.35);
   color: var(--fg);
 }
 
-.search-design-B {
-  border-color: oklch(55% 0.006 250);
-  border-radius: 0;
-  box-shadow: none;
-}
-
-.search-design-C {
-  position: relative;
-  overflow: visible;
-  border: 0;
-  border-radius: 0;
-  box-shadow: none;
-}
-
-.search-design-C::before,
-.search-design-C::after {
+.search-dialog::before,
+.search-dialog::after {
   content: '';
   position: absolute;
   pointer-events: none;
 }
 
-.search-design-C::before {
+.search-dialog::before {
   inset: 0 -56px;
   background:
     linear-gradient(90deg, transparent, oklch(55% 0.006 250) 56px, oklch(55% 0.006 250) calc(100% - 56px), transparent) top / 100% 1px no-repeat,
     linear-gradient(90deg, transparent, oklch(55% 0.006 250) 56px, oklch(55% 0.006 250) calc(100% - 56px), transparent) bottom / 100% 1px no-repeat;
 }
 
-.search-design-C::after {
+.search-dialog::after {
   inset: -56px 0;
   background:
     linear-gradient(180deg, transparent, oklch(55% 0.006 250) 56px, oklch(55% 0.006 250) calc(100% - 56px), transparent) left / 1px 100% no-repeat,

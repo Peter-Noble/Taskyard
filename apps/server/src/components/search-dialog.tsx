@@ -1,7 +1,6 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
 import type { SearchResponse, SearchResult } from '@taskyard/protocol';
 
 type SearchDialogProps = {
@@ -14,6 +13,7 @@ type SearchDialogProps = {
 
 // D-013 — search scope is page-local; no app-wide current-project state is introduced.
 // D-015 — the selected UI is the centered command palette, with no alternate layouts.
+// D-016 — the palette uses extended fading frame lines and a low-opacity backdrop.
 export function SearchDialog({
   entity,
   scopeId,
@@ -21,9 +21,7 @@ export function SearchDialog({
   disabled = false,
   onSelect,
 }: SearchDialogProps) {
-  const designParam = useSearchParams().get('ta-20-design');
-  const design = designParam === 'B' || designParam === 'C' ? designParam : 'A';
-  const [open, setOpen] = useState(design === 'B' || design === 'C');
+  const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [searchAll, setSearchAll] = useState(!scopeId);
   const [results, setResults] = useState<SearchResult[]>([]);
@@ -154,7 +152,7 @@ export function SearchDialog({
       {open ? (
         <div className="search-overlay" role="presentation" onClick={closeSearch}>
           <section
-            className={`search-dialog search-design-${design}`}
+            className="search-dialog"
             role="dialog"
             aria-modal="true"
             aria-label={`Search ${entityLabel}`}
