@@ -785,7 +785,11 @@ function TaskEditor({
                         : ''
                     }`}
                   >
-                    {item.detail}
+                    {item.summary === 'set the brief' || item.summary === 'updated the brief' ? (
+                      <MarkdownMessage text={item.detail} />
+                    ) : (
+                      item.detail
+                    )}
                   </div>
                 ) : null}
               </ChatMessage>
