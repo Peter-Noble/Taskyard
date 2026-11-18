@@ -52,8 +52,7 @@ export function DashboardClient({
   attentionPrototype?: boolean;
 }) {
   const router = useRouter();
-  const { useTestData: testDataEnabled, hydrated } = useTestData();
-  const testDataOn = attentionPrototype || testDataEnabled;
+  const { useTestData: testDataOn, hydrated } = useTestData();
   const { active, loaded: collectionsLoaded, select: selectCollection } = useCollections();
   const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
@@ -97,14 +96,14 @@ export function DashboardClient({
     if (!hydrated) return;
     if (testDataOn) {
       setSelectedThreadId((prev) => (prev && isDemoThreadId(prev) ? prev : DEFAULT_TEST_THREAD_ID));
-      setCenterMode(attentionPrototype && initialTaskId ? 'task' : 'chat');
-      setSelectedTaskId(attentionPrototype ? initialTaskId : null);
+      setCenterMode('chat');
+      setSelectedTaskId(null);
     } else {
       setSelectedThreadId((prev) => (prev && isDemoThreadId(prev) ? null : prev));
       setSelectedTaskId(null);
       setCenterMode('chat');
     }
-  }, [testDataOn, hydrated, attentionPrototype, initialTaskId]);
+  }, [testDataOn, hydrated]);
 
   const selectedThread = useMemo(
     () => visibleThreads.find((t) => t.id === selectedThreadId) ?? null,
@@ -324,7 +323,6 @@ export function DashboardClient({
   const taskBody = testDataOn ? (
             <TaskRail
               key={taskTick}
-              attentionPrototype={attentionPrototype}
               useFixtures={testDataOn}
               threadSlug={threadSlug}
               projectId={selectedThread?.project_id ?? null}
@@ -335,6 +333,8 @@ export function DashboardClient({
             />
           ) : (
             <LiveTaskRail
+              key={liveProjectId ?? 'no-project'}
+              attentionPrototype={attentionPrototype}
               projectId={liveProjectId}
               selectedTaskId={selectedTaskId}
               onSelectTask={handleSelectTask}
@@ -412,7 +412,6 @@ export function DashboardClient({
 
   return (
     <AppShell
-      fixturePreviewExitHref={attentionPrototype ? '/dashboard' : undefined}
       actions={(
         <SearchDialog
           entity="task"

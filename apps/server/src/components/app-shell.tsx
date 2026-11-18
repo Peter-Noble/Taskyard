@@ -12,15 +12,14 @@ type AppShellProps = {
   children: React.ReactNode;
   pageTitle?: string;
   actions?: React.ReactNode;
-  fixturePreviewExitHref?: string;
 };
 
-export function AppShell({ children, pageTitle, actions, fixturePreviewExitHref }: AppShellProps) {
+export function AppShell({ children, pageTitle, actions }: AppShellProps) {
   const pathname = usePathname();
   const person = useSessionPerson();
   const { collections, activeId, select } = useCollections();
   const { useTestData: testDataOn } = useTestDataContext();
-  const avatarSrc = testDataOn || fixturePreviewExitHref ? '/user-avatar-test.png' : '/user-avatar.svg';
+  const avatarSrc = testDataOn ? '/user-avatar-test.png' : '/user-avatar.svg';
 
   const nav = [
     { href: '/overview', label: 'Overview' },
@@ -57,11 +56,7 @@ export function AppShell({ children, pageTitle, actions, fixturePreviewExitHref 
         {pageTitle ? <p className="page-title">{pageTitle}</p> : null}
         <div className="header-actions">
           {actions}
-          {fixturePreviewExitHref ? (
-            <Link href={fixturePreviewExitHref} className="btn btn-ghost">Exit preview</Link>
-          ) : (
-            <TestDataToggle />
-          )}
+          <TestDataToggle />
           {person ? (
             <select
               className="form-select collection-switcher"

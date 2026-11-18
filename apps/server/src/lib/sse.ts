@@ -1,5 +1,5 @@
 import type { TaskyardDb } from '@taskyard/db';
-import { canReadThread, getDb, listAllEvents, listTasks, listThreadEvents } from '@taskyard/core';
+import { canReadThread, getDb, listAllEvents, listProjectTaskDependencies, listTasks, listThreadEvents } from '@taskyard/core';
 
 type PollFn = (db: TaskyardDb, sinceId: number) => Array<{ id: number; skip?: boolean }>;
 
@@ -62,7 +62,7 @@ export function allEventsSse(sinceParam: string | null, personId: string): Respo
 }
 
 /** Pushes the project task list whenever it changes. The first frame is the current list. */
-export function projectTasksSse(projectId: string): Response {
+export function projectTasksSse(projectId: string, includeDependencies = false): Response {
   const encoder = new TextEncoder();
   let interval: ReturnType<typeof setInterval> | undefined;
 
@@ -73,7 +73,10 @@ export function projectTasksSse(projectId: string): Response {
 
       const tick = () => {
         try {
-          const payload = JSON.stringify(listTasks(db, { projectId }));
+          const tasks = listTasks(db, { projectId });
+          const payload = JSON.stringify(includeDependencies
+            ? { tasks, dependencies: listProjectTaskDependencies(db, projectId) }
+            : tasks);
           if (payload === last) return;
           last = payload;
           controller.enqueue(encoder.encode(`data: ${payload}\n\n`));

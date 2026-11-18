@@ -102,35 +102,43 @@ async function readError(res: Response): Promise<string> {
   }
 }
 
+type TaskDependency = { taskId: string; dependsOnId: string };
+type ProjectTaskSnapshot = { tasks: Task[]; dependencies: TaskDependency[] };
+
 export function LiveTaskRail({
   projectId,
   selectedTaskId,
   onSelectTask,
   onSelectedUpdatedAt,
   filter,
+  attentionPrototype = false,
 }: {
   projectId: string | null;
   selectedTaskId: string | null;
   onSelectTask: (taskId: string) => void;
   onSelectedUpdatedAt?: (updatedAt: string | null) => void;
   filter?: TaskRailFilterState;
+  attentionPrototype?: boolean;
 }) {
-  const [tasks, setTasks] = useState<Task[]>([]);
+  const [{ tasks, dependencies }, setSnapshot] = useState<ProjectTaskSnapshot>({ tasks: [], dependencies: [] });
   const [loading, setLoading] = useState(false);
+  const [branchExpansion, setBranchExpansion] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     if (!projectId) {
-      setTasks([]);
+      setSnapshot({ tasks: [], dependencies: [] });
       return;
     }
     let cancelled = false;
     setLoading(true);
-    const source = new EventSource(`/api/tasks/stream?project_id=${encodeURIComponent(projectId)}`);
+    const params = new URLSearchParams({ project_id: projectId });
+    if (attentionPrototype) params.set('include_dependencies', '1');
+    const source = new EventSource(`/api/tasks/stream?${params}`);
     source.onmessage = (event) => {
       if (cancelled) return;
       try {
-        const next = JSON.parse(event.data) as Task[];
-        setTasks(Array.isArray(next) ? next : []);
+        const next = JSON.parse(event.data) as Task[] | ProjectTaskSnapshot;
+        setSnapshot(Array.isArray(next) ? { tasks: next, dependencies: [] } : next);
         setLoading(false);
       } catch {
         setLoading(false);
@@ -143,7 +151,7 @@ export function LiveTaskRail({
       cancelled = true;
       source.close();
     };
-  }, [projectId]);
+  }, [projectId, attentionPrototype]);
 
   useEffect(() => {
     if (!onSelectedUpdatedAt) return;
@@ -156,20 +164,59 @@ export function LiveTaskRail({
     : tasks.filter((task) => task.status !== 'cancelled');
   const sort = filter?.sort ?? 'priority_desc';
   const visible = sortTasksForRail(filtered, sort);
-  const ids = new Set(visible.map((task) => task.id));
-  const roots = visible.filter((task) => !task.parent_id || !ids.has(task.parent_id));
+  const byId = new Map(visible.map((task) => [task.id, task]));
+  const roots = visible.filter((task) => !task.parent_id || !byId.has(task.parent_id));
   const open = roots.filter((task) => task.status !== 'completed');
   const completed = roots.filter((task) => task.status === 'completed');
-  const childrenOf = (id: string) =>
-    sortTasksForRail(
-      visible.filter((task) => task.parent_id === id),
-      sort,
-    );
+  const parentIdsByTask = new Map<string, Set<string>>();
+  for (const task of visible) {
+    parentIdsByTask.set(task.id, new Set(task.parent_id ? [task.parent_id] : []));
+  }
+  for (const { taskId, dependsOnId } of dependencies) {
+    parentIdsByTask.get(taskId)?.add(dependsOnId);
+  }
+  const childrenByTask = new Map<string, Task[]>();
+  for (const task of visible) {
+    for (const parentId of parentIdsByTask.get(task.id) ?? []) {
+      const children = childrenByTask.get(parentId);
+      if (children) children.push(task);
+      else childrenByTask.set(parentId, [task]);
+    }
+  }
 
-  function renderTask(task: Task, nested = false) {
+  function renderTask(task: Task, ancestors: string[] = [], revealWaiting = false) {
     const type = taskTypeMeta(task.task_type);
+    const nested = ancestors.length > 0;
+    const path = [...ancestors, task.id];
+    const branchId = path.join('/');
+    const children = (childrenByTask.get(task.id) ?? []).filter((child) => !path.includes(child.id));
+    const branch = attentionPrototype && children.length > 0;
+    let waiting = 0;
+    let containsSelection = false;
+    if (branch) {
+      const seen = new Set(path);
+      const pending = [...children];
+      while (pending.length > 0) {
+        const child = pending.pop()!;
+        if (seen.has(child.id)) continue;
+        seen.add(child.id);
+        if (child.status === 'waiting') waiting++;
+        if (child.id === selectedTaskId) containsSelection = true;
+        pending.push(...(childrenByTask.get(child.id) ?? []));
+      }
+    }
+    const override = branchExpansion[branchId];
+    const expanded = !branch || (override ?? (
+      selectedTaskId === task.id || containsSelection || (revealWaiting && waiting > 0)
+    ));
+    const showAttention = branch && !expanded && waiting > 0;
+    const controlLabel = expanded ? 'Collapse' : showAttention ? `${waiting} waiting` : 'Related tasks';
+    const childRows = expanded
+      ? children.map((child) => renderTask(child, path, revealWaiting || override === true))
+      : null;
+
     return (
-      <div key={task.id} className="task-item-wrap">
+      <div key={task.id} className={`task-item-wrap${branch ? ' ta-28-attention-branch' : ''}`}>
         <button
           type="button"
           className={`task-item${nested ? ' task-item-dependent' : ''}${task.status === 'completed' ? ' task-item-completed' : ''}`}
@@ -202,7 +249,23 @@ export function LiveTaskRail({
             </div>
           </div>
         </button>
-        {childrenOf(task.id).map((child) => renderTask(child, true))}
+        {branch ? (
+          <button
+            type="button"
+            className={`badge ta-28-attention-toggle${showAttention ? ' badge-task-waiting' : ''}`}
+            aria-label={`${controlLabel} under ${task.short_id}`}
+            aria-expanded={expanded}
+            onClick={() => setBranchExpansion((previous) => ({ ...previous, [branchId]: !expanded }))}
+          >
+            {showAttention ? <span aria-hidden="true">!</span> : null}
+            {controlLabel} <span aria-hidden="true">{expanded ? '⌃' : '⌄'}</span>
+          </button>
+        ) : null}
+        {branch && expanded ? (
+          <div className="task-deps-rail" aria-label={`Tasks related to ${task.short_id}`}>
+            {childRows}
+          </div>
+        ) : childRows}
       </div>
     );
   }
