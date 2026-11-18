@@ -1,5 +1,6 @@
 <!-- taskyard:start -->
-<!-- taskyard:contract 372d5696ea73 -->
+<!-- taskyard:contract 02f0bf0188e3 -->
+<!-- taskyard:contract-revision 1 -->
 ## Taskyard
 
 A short id in the user's message, such as `TA-14`, is a task in this project. Run `taskyard task get <id>` and use that JSON as the spec before any other lookup. Then `taskyard task claim <id>` before editing code. Use `show-thread` when the user means the task already bound to this thread, and `task next` when they ask for the next task.
@@ -12,6 +13,7 @@ Persist progress with the `taskyard task` CLI. It prints JSON on stdout. The pro
 
 - `taskyard task show-thread` — this thread and its primary task
 - `taskyard task list [--status ready]` — tasks in this project
+- `taskyard search <query> [--all-projects] [--type task|idea|all] [--collection <name-or-id>]` — full-text search; JSON by default
 - `taskyard task next` — oldest ready or merge, unblocked, unclaimed task; merge tasks go first
 - `taskyard task get <id>` — task, children, dependencies, decisions, and activity
 - `taskyard task claim <id>` — take a ready or merge task; fails if someone else holds it or it is blocked
