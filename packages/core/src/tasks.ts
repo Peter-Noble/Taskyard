@@ -326,6 +326,16 @@ export function listTasks(
   return rows.map((row) => toTask(db, row, blocked, parents));
 }
 
+export function listProjectTaskDependencies(db: TaskyardDb, projectId: string) {
+  return db
+    .select({ taskId: taskDependencies.taskId, dependsOnId: taskDependencies.dependsOnTaskId })
+    .from(taskDependencies)
+    .innerJoin(tasks, eq(tasks.id, taskDependencies.taskId))
+    .where(eq(tasks.projectId, projectId))
+    .orderBy(taskDependencies.taskId, taskDependencies.dependsOnTaskId)
+    .all();
+}
+
 function decisionsForTask(db: TaskyardDb, taskId: string, taskShortId: string): TaskDecision[] {
   return db
     .select()

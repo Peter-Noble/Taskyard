@@ -8,7 +8,8 @@ export async function GET(req: Request) {
   const gate = requireFullSession(req);
   if (!gate.ok) return gate.response;
 
-  const projectId = new URL(req.url).searchParams.get('project_id')?.trim();
+  const params = new URL(req.url).searchParams;
+  const projectId = params.get('project_id')?.trim();
   if (!projectId) return jsonError('project_id is required', 400);
-  return projectTasksSse(projectId);
+  return projectTasksSse(projectId, params.get('include_dependencies') === '1');
 }

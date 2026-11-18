@@ -330,6 +330,7 @@ export function DashboardClient({
             />
           ) : (
             <LiveTaskRail
+              key={liveProjectId}
               projectId={liveProjectId}
               selectedTaskId={selectedTaskId}
               onSelectTask={handleSelectTask}

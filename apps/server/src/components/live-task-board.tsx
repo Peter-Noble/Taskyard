@@ -102,6 +102,9 @@ async function readError(res: Response): Promise<string> {
   }
 }
 
+type TaskDependency = { taskId: string; dependsOnId: string };
+type ProjectTaskSnapshot = { tasks: Task[]; dependencies: TaskDependency[] };
+
 export function LiveTaskRail({
   projectId,
   selectedTaskId,
@@ -115,22 +118,23 @@ export function LiveTaskRail({
   onSelectedUpdatedAt?: (updatedAt: string | null) => void;
   filter?: TaskRailFilterState;
 }) {
-  const [tasks, setTasks] = useState<Task[]>([]);
+  const [{ tasks, dependencies }, setSnapshot] = useState<ProjectTaskSnapshot>({ tasks: [], dependencies: [] });
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (!projectId) {
-      setTasks([]);
+      setSnapshot({ tasks: [], dependencies: [] });
       return;
     }
     let cancelled = false;
     setLoading(true);
-    const source = new EventSource(`/api/tasks/stream?project_id=${encodeURIComponent(projectId)}`);
+    const params = new URLSearchParams({ project_id: projectId, include_dependencies: '1' });
+    const source = new EventSource(`/api/tasks/stream?${params}`);
     source.onmessage = (event) => {
       if (cancelled) return;
       try {
-        const next = JSON.parse(event.data) as Task[];
-        setTasks(Array.isArray(next) ? next : []);
+        const next = JSON.parse(event.data) as ProjectTaskSnapshot;
+        if (Array.isArray(next.tasks) && Array.isArray(next.dependencies)) setSnapshot(next);
         setLoading(false);
       } catch {
         setLoading(false);
@@ -156,24 +160,57 @@ export function LiveTaskRail({
     : tasks.filter((task) => task.status !== 'cancelled');
   const sort = filter?.sort ?? 'priority_desc';
   const visible = sortTasksForRail(filtered, sort);
-  const ids = new Set(visible.map((task) => task.id));
-  const roots = visible.filter((task) => !task.parent_id || !ids.has(task.parent_id));
+  const visibleIds = new Set(visible.map((task) => task.id));
+  const roots = visible.filter((task) => !task.parent_id || !visibleIds.has(task.parent_id));
   const open = roots.filter((task) => task.status !== 'completed');
   const completed = roots.filter((task) => task.status === 'completed');
-  const childrenOf = (id: string) =>
-    sortTasksForRail(
-      visible.filter((task) => task.parent_id === id),
-      sort,
-    );
+  const parentIdsByTask = new Map<string, Set<string>>();
+  for (const task of visible) {
+    parentIdsByTask.set(task.id, new Set(task.parent_id ? [task.parent_id] : []));
+  }
+  for (const { taskId, dependsOnId } of dependencies) {
+    parentIdsByTask.get(taskId)?.add(dependsOnId);
+  }
+  const childrenByTask = new Map<string, Task[]>();
+  for (const task of visible) {
+    for (const parentId of parentIdsByTask.get(task.id) ?? []) {
+      const children = childrenByTask.get(parentId);
+      if (children) children.push(task);
+      else childrenByTask.set(parentId, [task]);
+    }
+  }
 
-  function renderTask(task: Task, nested = false) {
+  function renderTask(task: Task, ancestors: string[] = []) {
     const type = taskTypeMeta(task.task_type);
+    const nested = ancestors.length > 0;
+    const path = [...ancestors, task.id];
+    const children = (childrenByTask.get(task.id) ?? []).filter((child) => !path.includes(child.id));
+    const branch = children.length > 0;
+    let waiting = 0;
+    let containsSelection = false;
+    if (branch) {
+      const seen = new Set(path);
+      const pending = [...children];
+      while (pending.length > 0) {
+        const child = pending.pop()!;
+        if (seen.has(child.id)) continue;
+        seen.add(child.id);
+        if (child.status === 'waiting') waiting++;
+        if (child.id === selectedTaskId) containsSelection = true;
+        pending.push(...(childrenByTask.get(child.id) ?? []));
+      }
+    }
+    const expanded = branch && (selectedTaskId === task.id || containsSelection);
+    const indicatorLabel = waiting > 0
+      ? `${waiting} related task${waiting === 1 ? '' : 's'} waiting`
+      : 'Has related tasks';
     return (
       <div key={task.id} className="task-item-wrap">
         <button
           type="button"
           className={`task-item${nested ? ' task-item-dependent' : ''}${task.status === 'completed' ? ' task-item-completed' : ''}`}
           aria-selected={selectedTaskId === task.id}
+          aria-expanded={branch ? expanded : undefined}
           onClick={() => onSelectTask(task.id)}
         >
           <div className="task-item-row">
@@ -201,14 +238,26 @@ export function LiveTaskRail({
               </div>
             </div>
           </div>
+          {branch ? (
+            <span
+              className={`task-blocks-indicator${waiting > 0 ? ' task-blocks-indicator-waiting' : ''}`}
+              role="img"
+              aria-label={indicatorLabel}
+              title={indicatorLabel}
+            />
+          ) : null}
         </button>
-        {childrenOf(task.id).map((child) => renderTask(child, true))}
+        {expanded ? (
+          <div className="task-deps-rail" role="group" aria-label={`Tasks related to ${task.short_id}`}>
+            {children.map((child) => renderTask(child, path))}
+          </div>
+        ) : null}
       </div>
     );
   }
 
   return (
-    <aside className="task-rail" aria-label="Tasks">
+    <aside className="task-rail live-task-rail" aria-label="Tasks">
       <div className="task-list-scroll">
         {!projectId ? (
           <p className="tasks-empty">Create a project first.</p>

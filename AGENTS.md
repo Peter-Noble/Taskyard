@@ -50,3 +50,5 @@ Completing a task writes its decisions into `.taskyard/decisions.md`, next to `p
 ## UI prototypes
 
 When a person asks for design prototypes or UI options to pick from, host them on the running app (`pnpm dev:server`), not as static HTML under `design/`. Use a query param on the real screen, e.g. `/dashboard?ta-35-design=A`. See `design/PROTOTYPES.md`.
+
+The dev server running in this workspace is available at `https://dev.taskyard.app`. Use that address for test and prototype links you share with the user.

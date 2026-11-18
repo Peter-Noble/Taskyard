@@ -558,6 +558,40 @@ a:hover {
   background: var(--fg);
 }
 
+.live-task-rail .task-deps-rail {
+  border-bottom: 0;
+}
+
+.live-task-rail .task-deps-rail .task-item-dependent {
+  width: calc(100% - var(--space-2));
+  border-bottom: 0;
+}
+
+.live-task-rail .task-deps-rail .task-item-dependent::after {
+  content: "";
+  position: absolute;
+  left: calc(-1 * (var(--task-nest-branch) + var(--space-2)));
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: var(--border);
+  pointer-events: none;
+}
+
+.live-task-rail .task-blocks-indicator {
+  pointer-events: auto;
+}
+
+.live-task-rail .task-item[aria-expanded="true"] > .task-blocks-indicator {
+  border-color: var(--fg);
+  background: var(--fg);
+}
+
+.live-task-rail .task-item[aria-expanded="false"] > .task-blocks-indicator-waiting {
+  border-color: var(--waiting);
+  background: oklch(82% 0.16 85);
+}
+
 .task-item {
   position: relative;
   display: block;
