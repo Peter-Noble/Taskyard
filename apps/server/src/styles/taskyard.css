@@ -1233,9 +1233,41 @@ a:hover {
   pointer-events: auto;
 }
 
-.task-item .task-blocks-indicator.ta-28-waiting-indicator {
-  border-color: var(--waiting);
-  background: var(--waiting);
+.ta-28-task-rail .task-item[aria-expanded="true"] > .task-blocks-indicator {
+  border-color: var(--fg);
+  background: var(--fg);
+}
+
+.ta-28-task-rail .task-item:has(> .ta-28-waiting-indicator) {
+  padding-inline-end: calc(var(--space-3) + 1.5rem);
+}
+
+.ta-28-task-rail .ta-28-waiting-indicator {
+  position: absolute;
+  right: var(--space-3);
+  bottom: var(--space-3);
+  padding-inline: 1px;
+}
+
+.ta-28-waiting-indicator::before {
+  content: "";
+  width: 1lh;
+  height: 1lh;
+}
+
+.ta-28-waiting-indicator::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 6px;
+  height: 6px;
+  border: 1px solid currentColor;
+  transform: rotate(45deg);
+}
+
+.task-item[aria-expanded="true"] > .ta-28-waiting-indicator::after {
+  background: currentColor;
 }
 
 .badge-task-done {
