@@ -28,22 +28,18 @@ export async function fetchRemoteVersion(serverUrl: string): Promise<CliVersionI
   };
 }
 
-/** Warn on stderr when this instance serves a different CLI artifact. Fail open on errors. */
-export async function warnIfCliUpdateAvailable(): Promise<void> {
-  if (process.env.TASKYARD_SKIP_UPDATE_CHECK?.trim()) return;
+/** Returns the server offering a different CLI artifact, or null if the check fails. */
+export async function findCliUpdate(): Promise<string | null> {
+  if (process.env.TASKYARD_SKIP_UPDATE_CHECK?.trim()) return null;
   const local = readInstalledVersion();
-  if (!local) return;
+  if (!local) return null;
 
   const { serverUrl } = resolveProjectContext();
   try {
     const remote = await fetchRemoteVersion(serverUrl);
-    if (!remote) return;
-    if (remote.sha256 === local.sha256) return;
-    process.stderr.write(
-      `taskyard: update available for ${serverUrl} (local ${local.sha256.slice(0, 12)}… → ${remote.sha256.slice(0, 12)}…). Run: taskyard update\n`,
-    );
+    return remote && remote.sha256 !== local.sha256 ? serverUrl : null;
   } catch {
-    // offline / timeout — fail open
+    return null;
   }
 }
 

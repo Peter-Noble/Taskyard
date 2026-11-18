@@ -2,8 +2,9 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { TASK_CLI_CONTRACT } from '@taskyard/core';
+import { TASK_CLI_CONTRACT_REVISION } from '@taskyard/core/task-cli-contract';
 import { Command } from 'commander';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   TASKYARD_AGENTS_END,
   TASKYARD_AGENTS_START,
@@ -21,6 +22,13 @@ import { writeProjectFile } from './project-file.js';
 const BLOCK = `${TASKYARD_AGENTS_START}\n## Taskyard\nUse the CLI.\n${TASKYARD_AGENTS_END}`;
 
 describe('AGENTS.md taskyard block', () => {
+  it('matches the published revision history', () => {
+    // Append the new hash when increasing the contract revision. Published hashes stay fixed.
+    const publishedHashes = ['02f0bf0188e3'];
+    expect(TASK_CLI_CONTRACT_REVISION).toBe(publishedHashes.length);
+    expect(agentsContractHash()).toBe(publishedHashes.at(-1));
+  });
+
   it('creates AGENTS.md from the CLI contract when the file is missing', () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ty-agents-'));
     try {
@@ -28,6 +36,7 @@ describe('AGENTS.md taskyard block', () => {
       const text = fs.readFileSync(file, 'utf8');
       expect(text.startsWith(`${TASKYARD_AGENTS_START}\n`)).toBe(true);
       expect(text).toContain(`<!-- taskyard:contract ${agentsContractHash()} -->`);
+      expect(text).toContain(`<!-- taskyard:contract-revision ${TASK_CLI_CONTRACT_REVISION} -->`);
       expect(agentsContractHashIn(text)).toBe(agentsContractHash());
       expect(text).toContain(TASK_CLI_CONTRACT.trim());
       expect(text.trimEnd().endsWith(TASKYARD_AGENTS_END)).toBe(true);
@@ -57,7 +66,7 @@ describe('AGENTS.md taskyard block', () => {
     expect(upsertTaskyardAgentsBlock(original, BLOCK)).toBe(`# Intro\n\n${BLOCK}\n# More\n`);
   });
 
-  it('rewrites the section when the contract hash is missing or stale, and leaves a match untouched', () => {
+  it('upgrades older revisions and leaves a match untouched', () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ty-agents-'));
     try {
       const file = path.join(dir, 'AGENTS.md');
@@ -70,7 +79,7 @@ describe('AGENTS.md taskyard block', () => {
 
       fs.writeFileSync(
         file,
-        `${TASKYARD_AGENTS_START}\n<!-- taskyard:contract 000000000000 -->\n## Taskyard\nstale\n${TASKYARD_AGENTS_END}\n`,
+        taskyardAgentsBlock().replace(/contract-revision \d+/, 'contract-revision 0'),
       );
       ensureAgentsInstructions(dir);
       const refreshed = fs.readFileSync(file, 'utf8');
@@ -86,16 +95,53 @@ describe('AGENTS.md taskyard block', () => {
     }
   });
 
+  it('preserves newer, conflicting, and unknown instructions', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ty-agents-'));
+    const stderr = vi.spyOn(process.stderr, 'write').mockReturnValue(true);
+    try {
+      const file = path.join(dir, 'AGENTS.md');
+      const block = taskyardAgentsBlock();
+      const examples = [
+        {
+          text: block.replace(/contract-revision \d+/, `contract-revision ${TASK_CLI_CONTRACT_REVISION + 1}`),
+          warning: 'CLI update required to refresh project instructions',
+        },
+        {
+          text: block.replace(agentsContractHash(), '000000000000'),
+          warning: 'could not be verified',
+        },
+        {
+          text: block.replace(/<!-- taskyard:contract-revision \d+ -->\n/, '')
+            .replace(agentsContractHash(), '000000000000'),
+          warning: 'could not be verified',
+        },
+        {
+          text: block.replace('## Taskyard', '## Edited instructions'),
+          warning: 'could not be verified',
+        },
+      ];
+      for (const { text, warning } of examples) {
+        fs.writeFileSync(file, text);
+        expect(writeAgentsInstructions(dir).updated).toBe(false);
+        expect(fs.readFileSync(file, 'utf8')).toBe(text);
+        expect(stderr).toHaveBeenLastCalledWith(expect.stringContaining(warning));
+      }
+    } finally {
+      stderr.mockRestore();
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
   it('refreshes AGENTS.md for a project checkout and skips a directory that is not one', async () => {
     const project = fs.mkdtempSync(path.join(os.tmpdir(), 'ty-agents-project-'));
     const loose = fs.mkdtempSync(path.join(os.tmpdir(), 'ty-agents-loose-'));
     const previous = process.env.TASKYARD_WORKSPACE;
     const chunks: string[] = [];
-    const originalWrite = process.stdout.write.bind(process.stdout);
-    process.stdout.write = ((chunk: string | Uint8Array) => {
+    const originalWrite = process.stderr.write;
+    process.stderr.write = ((chunk: string | Uint8Array) => {
       chunks.push(typeof chunk === 'string' ? chunk : Buffer.from(chunk).toString('utf8'));
       return true;
-    }) as typeof process.stdout.write;
+    }) as typeof process.stderr.write;
     try {
       writeProjectFile(project, { project_id: 'proj-1' });
       fs.writeFileSync(path.join(project, 'AGENTS.md'), '# Keep\n');
@@ -134,7 +180,7 @@ describe('AGENTS.md taskyard block', () => {
       await program.parseAsync(['ping'], { from: 'user' });
       expect(chunks.join('')).toBe('');
     } finally {
-      process.stdout.write = originalWrite;
+      process.stderr.write = originalWrite;
       if (previous === undefined) delete process.env.TASKYARD_WORKSPACE;
       else process.env.TASKYARD_WORKSPACE = previous;
       fs.rmSync(project, { recursive: true, force: true });

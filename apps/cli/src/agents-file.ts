@@ -1,13 +1,22 @@
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
-import { TASK_CLI_CONTRACT } from '@taskyard/core/task-cli-contract';
+import { TASK_CLI_CONTRACT, TASK_CLI_CONTRACT_REVISION } from '@taskyard/core/task-cli-contract';
 import { findProjectFile, readProjectFile, resolveProjectContext } from './project-file.js';
 
 export const TASKYARD_AGENTS_START = '<!-- taskyard:start -->';
 export const TASKYARD_AGENTS_END = '<!-- taskyard:end -->';
 
 const CONTRACT_MARKER = /<!-- taskyard:contract ([0-9a-f]+) -->/;
+const REVISION_MARKER = /<!-- taskyard:contract-revision (\d+) -->/;
+const LEGACY_TASK_CONTRACTS = new Set([
+  '34674ce0c372',
+  '5db78cd2988d',
+  'f7680bd98b26',
+  'b0f6f58f2d9f',
+  '372d5696ea73',
+  '02f0bf0188e3',
+]);
 
 export function agentsFilePath(workspace: string): string {
   return path.join(workspace, 'AGENTS.md');
@@ -21,16 +30,52 @@ export function agentsContractHash(contract: string = TASK_CLI_CONTRACT): string
 /** The managed block setup writes into `AGENTS.md`. Body is `TASK_CLI_CONTRACT`. */
 export function taskyardAgentsBlock(contract: string = TASK_CLI_CONTRACT): string {
   const hash = agentsContractHash(contract);
-  return `${TASKYARD_AGENTS_START}\n<!-- taskyard:contract ${hash} -->\n${contract.trim()}\n${TASKYARD_AGENTS_END}`;
+  const revision = contract === TASK_CLI_CONTRACT
+    ? `<!-- taskyard:contract-revision ${TASK_CLI_CONTRACT_REVISION} -->\n`
+    : '';
+  return `${TASKYARD_AGENTS_START}\n<!-- taskyard:contract ${hash} -->\n${revision}${contract.trim()}\n${TASKYARD_AGENTS_END}`;
+}
+
+function managedBlock(text: string): string | null {
+  const start = text.indexOf(TASKYARD_AGENTS_START);
+  if (start === -1) return null;
+  const bodyStart = start + TASKYARD_AGENTS_START.length;
+  const end = text.indexOf(TASKYARD_AGENTS_END, bodyStart);
+  return end === -1 ? null : text.slice(bodyStart, end);
 }
 
 /** Hash recorded in the first Taskyard block, or null when the block or marker is absent. */
 export function agentsContractHashIn(text: string): string | null {
-  const start = text.indexOf(TASKYARD_AGENTS_START);
-  if (start === -1) return null;
-  const end = text.indexOf(TASKYARD_AGENTS_END, start + TASKYARD_AGENTS_START.length);
-  const region = end === -1 ? text.slice(start) : text.slice(start, end);
-  return region.match(CONTRACT_MARKER)?.[1] ?? null;
+  return managedBlock(text)?.match(CONTRACT_MARKER)?.[1] ?? null;
+}
+
+function preserveTaskContract(existing: string, file: string): boolean {
+  const block = managedBlock(existing);
+  if (block === null) return false;
+  const recordedHash = block.match(CONTRACT_MARKER)?.[1];
+  const revision = block.match(REVISION_MARKER)?.[1];
+  if (revision !== undefined && Number(revision) > TASK_CLI_CONTRACT_REVISION) {
+    process.stderr.write(
+      `taskyard: CLI update required to refresh project instructions. Preserved newer ${file}. Run taskyard update if authorized, or ask your user to update.\n`,
+    );
+    return true;
+  }
+
+  const actualHash = agentsContractHash(
+    block.replace(CONTRACT_MARKER, '').replace(REVISION_MARKER, '').replace(/\r\n/g, '\n'),
+  );
+  if (revision === undefined && (
+    !recordedHash || (LEGACY_TASK_CONTRACTS.has(recordedHash) && recordedHash === actualHash)
+  )) return false;
+  if (Number(revision) === TASK_CLI_CONTRACT_REVISION &&
+      recordedHash === agentsContractHash() && recordedHash === actualHash) return true;
+  if (revision !== undefined && Number(revision) < TASK_CLI_CONTRACT_REVISION &&
+      recordedHash === actualHash) return false;
+
+  process.stderr.write(
+    `taskyard: preserved ${file} because its managed instructions could not be verified. Review the managed block before replacing it.\n`,
+  );
+  return true;
 }
 
 function withTrailingNewline(text: string): string {
@@ -66,30 +111,26 @@ export function writeAgentsInstructions(
 ): { file: string; updated: boolean } {
   const file = agentsFilePath(workspace);
   const existing = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
+  if (contract === TASK_CLI_CONTRACT && preserveTaskContract(existing, file)) {
+    return { file, updated: false };
+  }
   const next = upsertTaskyardAgentsBlock(existing, taskyardAgentsBlock(contract));
   const updated = next !== existing;
   if (updated) fs.writeFileSync(file, next);
   return { file, updated };
 }
 
-/** Prints the notice and the new Taskyard section. Goes to stdout so the caller, including an agent, receives it. */
+/** Prints the new instructions on stderr so command results remain valid JSON. */
 export function announceUpdatedInstructions(file: string): void {
   const text = fs.readFileSync(file, 'utf8');
   const start = text.indexOf(TASKYARD_AGENTS_START);
   const end = start === -1 ? -1 : text.indexOf(TASKYARD_AGENTS_END, start);
   const block =
     start === -1 || end === -1 ? text.trimEnd() : text.slice(start, end + TASKYARD_AGENTS_END.length);
-  process.stdout.write(`taskyard: updated ${file}. Follow these instructions:\n\n${block}\n\n`);
+  process.stderr.write(`taskyard: updated ${file}. Follow these instructions:\n\n${block}\n\n`);
 }
 
-/**
- * Rewrites the Taskyard section when its contract hash is missing or stale.
- * A matching hash leaves the file untouched, including any text outside the block.
- */
 export function ensureAgentsInstructions(workspace: string, contract: string = TASK_CLI_CONTRACT): string {
-  const file = agentsFilePath(workspace);
-  const existing = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
-  if (agentsContractHashIn(existing) === agentsContractHash(contract)) return file;
   return writeAgentsInstructions(workspace, contract).file;
 }
 
@@ -104,8 +145,6 @@ function projectRoot(): string | null {
 export function refreshAgentsInstructions(): void {
   const root = projectRoot();
   if (!root) return;
-  const existing = fs.existsSync(agentsFilePath(root)) ? fs.readFileSync(agentsFilePath(root), 'utf8') : '';
-  if (agentsContractHashIn(existing) === agentsContractHash()) return;
   const written = writeAgentsInstructions(root);
   if (written.updated) announceUpdatedInstructions(written.file);
 }

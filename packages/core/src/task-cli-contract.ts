@@ -1,3 +1,6 @@
+// Bump this whenever the contract text changes. Keep the revision check in agents-file.unit.test.ts current.
+export const TASK_CLI_CONTRACT_REVISION = 1;
+
 export const TASK_CLI_CONTRACT = `## Taskyard
 
 A short id in the user's message, such as \`TA-14\`, is a task in this project. Run \`taskyard task get <id>\` and use that JSON as the spec before any other lookup. Then \`taskyard task claim <id>\` before editing code. Use \`show-thread\` when the user means the task already bound to this thread, and \`task next\` when they ask for the next task.
