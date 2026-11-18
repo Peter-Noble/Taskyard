@@ -105,6 +105,10 @@ async function readError(res: Response): Promise<string> {
 type TaskDependency = { taskId: string; dependsOnId: string };
 type ProjectTaskSnapshot = { tasks: Task[]; dependencies: TaskDependency[] };
 
+export const ATTENTION_EXAMPLE_TASK_ID = 'ta-28-waiting-example';
+const ATTENTION_EXAMPLE_TITLE = 'Test task — confirm the layout';
+const ATTENTION_EXAMPLE_REQUEST = 'Should the task rail use the compact or spacious layout?';
+
 export function LiveTaskRail({
   projectId,
   selectedTaskId,
@@ -112,6 +116,7 @@ export function LiveTaskRail({
   onSelectedUpdatedAt,
   filter,
   attentionPrototype = false,
+  attentionExampleParent,
 }: {
   projectId: string | null;
   selectedTaskId: string | null;
@@ -119,10 +124,10 @@ export function LiveTaskRail({
   onSelectedUpdatedAt?: (updatedAt: string | null) => void;
   filter?: TaskRailFilterState;
   attentionPrototype?: boolean;
+  attentionExampleParent?: string;
 }) {
   const [{ tasks, dependencies }, setSnapshot] = useState<ProjectTaskSnapshot>({ tasks: [], dependencies: [] });
   const [loading, setLoading] = useState(false);
-  const [branchExpansion, setBranchExpansion] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     if (!projectId) {
@@ -162,6 +167,26 @@ export function LiveTaskRail({
   const filtered = filter
     ? tasks.filter((task) => taskPassesRailFilter(task, filter))
     : tasks.filter((task) => task.status !== 'cancelled');
+  const exampleParent = attentionExampleParent
+    ? filtered.find((task) => task.short_id === attentionExampleParent)
+    : undefined;
+  if (exampleParent) {
+    const example: Task = {
+      ...exampleParent,
+      id: ATTENTION_EXAMPLE_TASK_ID,
+      short_id: 'TEST',
+      parent_id: exampleParent.id,
+      parent_short_id: exampleParent.short_id,
+      title: ATTENTION_EXAMPLE_TITLE,
+      description: ATTENTION_EXAMPLE_REQUEST,
+      status: 'waiting',
+      task_type: 'design',
+      category: null,
+      assignee: null,
+      blocked: false,
+    };
+    if (!filter || taskPassesRailFilter(example, filter)) filtered.push(example);
+  }
   const sort = filter?.sort ?? 'priority_desc';
   const visible = sortTasksForRail(filtered, sort);
   const byId = new Map(visible.map((task) => [task.id, task]));
@@ -184,11 +209,10 @@ export function LiveTaskRail({
     }
   }
 
-  function renderTask(task: Task, ancestors: string[] = [], revealWaiting = false) {
+  function renderTask(task: Task, ancestors: string[] = []) {
     const type = taskTypeMeta(task.task_type);
     const nested = ancestors.length > 0;
     const path = [...ancestors, task.id];
-    const branchId = path.join('/');
     const children = (childrenByTask.get(task.id) ?? []).filter((child) => !path.includes(child.id));
     const branch = attentionPrototype && children.length > 0;
     let waiting = 0;
@@ -205,22 +229,21 @@ export function LiveTaskRail({
         pending.push(...(childrenByTask.get(child.id) ?? []));
       }
     }
-    const override = branchExpansion[branchId];
-    const expanded = !branch || (override ?? (
-      selectedTaskId === task.id || containsSelection || (revealWaiting && waiting > 0)
-    ));
-    const showAttention = branch && !expanded && waiting > 0;
-    const controlLabel = expanded ? 'Collapse' : showAttention ? `${waiting} waiting` : 'Related tasks';
+    const expanded = !branch || selectedTaskId === task.id || containsSelection;
+    const indicatorLabel = waiting > 0
+      ? `${waiting} related task${waiting === 1 ? '' : 's'} waiting`
+      : 'Has related tasks';
     const childRows = expanded
-      ? children.map((child) => renderTask(child, path, revealWaiting || override === true))
+      ? children.map((child) => renderTask(child, path))
       : null;
 
     return (
-      <div key={task.id} className={`task-item-wrap${branch ? ' ta-28-attention-branch' : ''}`}>
+      <div key={task.id} className="task-item-wrap">
         <button
           type="button"
           className={`task-item${nested ? ' task-item-dependent' : ''}${task.status === 'completed' ? ' task-item-completed' : ''}`}
           aria-selected={selectedTaskId === task.id}
+          aria-expanded={branch ? expanded : undefined}
           onClick={() => onSelectTask(task.id)}
         >
           <div className="task-item-row">
@@ -242,27 +265,23 @@ export function LiveTaskRail({
               <div className="task-item-badges">
                 <span className={`badge ${badgeClass(task.status)}`}>
                   <span className="badge-dot" />
-                  {statusLabel(task.status)}
+                  {task.id === ATTENTION_EXAMPLE_TASK_ID ? 'Waiting for input' : statusLabel(task.status)}
                 </span>
                 {task.blocked ? <span className="badge badge-task-waiting">Blocked</span> : null}
               </div>
             </div>
           </div>
+          {branch ? (
+            <span
+              className={`task-blocks-indicator${waiting > 0 ? ' ta-28-waiting-indicator' : ''}`}
+              role="img"
+              aria-label={indicatorLabel}
+              title={indicatorLabel}
+            />
+          ) : null}
         </button>
-        {branch ? (
-          <button
-            type="button"
-            className={`badge ta-28-attention-toggle${showAttention ? ' badge-task-waiting' : ''}`}
-            aria-label={`${controlLabel} under ${task.short_id}`}
-            aria-expanded={expanded}
-            onClick={() => setBranchExpansion((previous) => ({ ...previous, [branchId]: !expanded }))}
-          >
-            {showAttention ? <span aria-hidden="true">!</span> : null}
-            {controlLabel} <span aria-hidden="true">{expanded ? '⌃' : '⌄'}</span>
-          </button>
-        ) : null}
         {branch && expanded ? (
-          <div className="task-deps-rail" aria-label={`Tasks related to ${task.short_id}`}>
+          <div className="task-deps-rail" role="group" aria-label={`Tasks related to ${task.short_id}`}>
             {childRows}
           </div>
         ) : childRows}
@@ -271,7 +290,7 @@ export function LiveTaskRail({
   }
 
   return (
-    <aside className="task-rail" aria-label="Tasks">
+    <aside className={`task-rail${attentionPrototype ? ' ta-28-task-rail' : ''}`} aria-label="Tasks">
       <div className="task-list-scroll">
         {!projectId ? (
           <p className="tasks-empty">Create a project first.</p>
@@ -335,6 +354,22 @@ export function LiveTaskDetail({
     return (
       <div className="empty-state" style={{ padding: 'var(--space-5)' }}>
         Select a task or create one.
+      </div>
+    );
+  }
+  if (taskId === ATTENTION_EXAMPLE_TASK_ID) {
+    return (
+      <div className="task-view" aria-label="Task detail">
+        <header className="task-view-head">
+          <div className="task-view-top">
+            <span className="entity-num">TEST</span>
+            <h2 className="task-detail-title">{ATTENTION_EXAMPLE_TITLE}</h2>
+            <span className="badge badge-task-waiting">Waiting for input</span>
+          </div>
+        </header>
+        <div className="task-detail-pane">
+          <p>{ATTENTION_EXAMPLE_REQUEST}</p>
+        </div>
       </div>
     );
   }

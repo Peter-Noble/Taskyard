@@ -8,7 +8,7 @@ import { SearchDialog } from '@/components/search-dialog';
 import { ChatStream, StreamHeaderSub } from '@/components/chat-stream';
 import { MachineDock, ThreadRailAside, ThreadRailHead } from '@/components/machine-dock';
 import { NewThreadModal } from '@/components/new-thread-modal';
-import { LiveTaskDetail, LiveTaskRail } from '@/components/live-task-board';
+import { ATTENTION_EXAMPLE_TASK_ID, LiveTaskDetail, LiveTaskRail } from '@/components/live-task-board';
 import { WorkspaceSeams } from '@/components/workspace-seams';
 import { type PanelVisibility } from '@/lib/panel-visibility';
 import {
@@ -46,10 +46,12 @@ export function DashboardClient({
   initialPanels,
   initialTaskId = null,
   attentionPrototype = false,
+  attentionExampleParent,
 }: {
   initialPanels?: PanelVisibility;
   initialTaskId?: string | null;
   attentionPrototype?: boolean;
+  attentionExampleParent?: string;
 }) {
   const router = useRouter();
   const { useTestData: testDataOn, hydrated } = useTestData();
@@ -127,9 +129,11 @@ export function DashboardClient({
   }, [active, liveProjectId, testDataOn, visibleProjects]);
 
   useEffect(() => {
-    if (!initialTaskId || testDataOn || !hydrated || !collectionsLoaded) return;
+    const exampleSelected = Boolean(attentionExampleParent && initialTaskId === ATTENTION_EXAMPLE_TASK_ID);
+    const lookupId = exampleSelected ? attentionExampleParent : initialTaskId ?? attentionExampleParent;
+    if (!lookupId || testDataOn || !hydrated || !collectionsLoaded) return;
     let cancelled = false;
-    void fetch(`/api/tasks/${encodeURIComponent(initialTaskId)}`)
+    void fetch(`/api/tasks/${encodeURIComponent(lookupId)}`)
       .then(async (res) => {
         if (!res.ok) return null;
         return (await res.json()) as { task: { id: string; project_id: string } };
@@ -138,14 +142,16 @@ export function DashboardClient({
         if (cancelled || !data) return;
         if (active && !active.project_ids.includes(data.task.project_id)) selectCollection(null);
         setLiveProjectId(data.task.project_id);
-        setSelectedTaskId(data.task.id);
-        setComposingTask(false);
-        setCenterMode('task');
+        if (initialTaskId) {
+          setSelectedTaskId(exampleSelected ? ATTENTION_EXAMPLE_TASK_ID : data.task.id);
+          setComposingTask(false);
+          setCenterMode('task');
+        }
       });
     return () => {
       cancelled = true;
     };
-  }, [initialTaskId, testDataOn, hydrated, collectionsLoaded]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [initialTaskId, attentionExampleParent, testDataOn, hydrated, collectionsLoaded]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const liveTaskOpen = !testDataOn && centerMode === 'task' && !composingTask && Boolean(selectedTaskId);
   const liveProjectName = visibleProjects.find((project) => project.id === liveProjectId)?.name ?? 'project';
@@ -171,6 +177,7 @@ export function DashboardClient({
   function updateDashboardUrl(taskId?: string) {
     const params = new URLSearchParams();
     if (attentionPrototype) params.set('ta-28-design', 'A');
+    if (attentionExampleParent) params.set('ta-28-waiting', attentionExampleParent);
     if (taskId) params.set('task', taskId);
     const query = params.size ? `?${params.toString()}` : '';
     window.history.replaceState(null, '', `/dashboard${query}`);
@@ -335,6 +342,7 @@ export function DashboardClient({
             <LiveTaskRail
               key={liveProjectId ?? 'no-project'}
               attentionPrototype={attentionPrototype}
+              attentionExampleParent={attentionExampleParent}
               projectId={liveProjectId}
               selectedTaskId={selectedTaskId}
               onSelectTask={handleSelectTask}
