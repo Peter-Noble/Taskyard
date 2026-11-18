@@ -273,7 +273,7 @@ export function LiveTaskRail({
           </div>
           {branch ? (
             <span
-              className={waiting > 0 ? 'badge badge-task-waiting ta-28-waiting-indicator' : 'task-blocks-indicator'}
+              className={`task-blocks-indicator${waiting > 0 ? ' ta-28-waiting-indicator' : ''}`}
               role="img"
               aria-label={indicatorLabel}
               title={indicatorLabel}
