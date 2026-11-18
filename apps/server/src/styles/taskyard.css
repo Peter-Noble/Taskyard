@@ -558,6 +558,40 @@ a:hover {
   background: var(--fg);
 }
 
+.live-task-rail .task-deps-rail {
+  border-bottom: 0;
+}
+
+.live-task-rail .task-deps-rail .task-item-dependent {
+  width: calc(100% - var(--space-2));
+  border-bottom: 0;
+}
+
+.live-task-rail .task-deps-rail .task-item-dependent::after {
+  content: "";
+  position: absolute;
+  left: calc(-1 * (var(--task-nest-branch) + var(--space-2)));
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: var(--border);
+  pointer-events: none;
+}
+
+.live-task-rail .task-blocks-indicator {
+  pointer-events: auto;
+}
+
+.live-task-rail .task-item[aria-expanded="true"] > .task-blocks-indicator {
+  border-color: var(--fg);
+  background: var(--fg);
+}
+
+.live-task-rail .task-item[aria-expanded="false"] > .task-blocks-indicator-waiting {
+  border-color: var(--waiting);
+  background: oklch(82% 0.16 85);
+}
+
 .task-item {
   position: relative;
   display: block;
@@ -1206,41 +1240,6 @@ a:hover {
   color: var(--waiting);
   background: var(--waiting-bg);
   border-color: color-mix(in oklch, var(--waiting) 35%, var(--border));
-}
-
-/* TA-28 dashboard prototype */
-.ta-28-task-rail .task-deps-rail {
-  border-bottom: 0;
-}
-
-.ta-28-task-rail .task-deps-rail .task-item-dependent {
-  width: calc(100% - var(--space-2));
-  border-bottom: 0;
-}
-
-.ta-28-task-rail .task-deps-rail .task-item-dependent::after {
-  content: "";
-  position: absolute;
-  left: calc(-1 * (var(--task-nest-branch) + var(--space-2)));
-  right: 0;
-  bottom: 0;
-  height: 1px;
-  background: var(--border);
-  pointer-events: none;
-}
-
-.ta-28-task-rail .task-blocks-indicator {
-  pointer-events: auto;
-}
-
-.ta-28-task-rail .task-item[aria-expanded="true"] > .task-blocks-indicator {
-  border-color: var(--fg);
-  background: var(--fg);
-}
-
-.ta-28-task-rail .task-item[aria-expanded="false"] > .ta-28-waiting-indicator {
-  border-color: var(--waiting);
-  background: oklch(82% 0.16 85);
 }
 
 .badge-task-done {
