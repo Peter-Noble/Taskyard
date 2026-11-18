@@ -1,8 +1,8 @@
 import { allEventsSse } from '@/lib/sse';
-import { requireIdeaPerson } from '@/lib/ideas-api';
+import { requireFullSession } from '@/lib/people-api';
 
 export async function GET(req: Request) {
-  const gate = requireIdeaPerson(req);
+  const gate = requireFullSession(req);
   if (!gate.ok) return gate.response;
   const since = new URL(req.url).searchParams.get('since');
   return allEventsSse(since, gate.person.id);

@@ -1,7 +1,7 @@
 import type { TaskStatus, UpdateTaskRequest } from '@taskyard/protocol';
 import { getDb, getTaskDetail, updateTask } from '@taskyard/core';
 import { jsonError, jsonOk } from '@/lib/api-response';
-import { actorFromWebSession } from '@/lib/people-api';
+import { requireFullSession, sessionActor } from '@/lib/people-api';
 import { taskErrorResponse } from '@/lib/task-error';
 
 type Params = { params: Promise<{ id: string }> };
@@ -17,7 +17,10 @@ const TASK_STATUSES: TaskStatus[] = [
   'cancelled',
 ];
 
-export async function GET(_req: Request, { params }: Params) {
+export async function GET(req: Request, { params }: Params) {
+  const gate = requireFullSession(req);
+  if (!gate.ok) return gate.response;
+
   const { id } = await params;
   const db = getDb();
   const task = getTaskDetail(db, id);
@@ -26,6 +29,9 @@ export async function GET(_req: Request, { params }: Params) {
 }
 
 export async function PATCH(req: Request, { params }: Params) {
+  const gate = requireFullSession(req);
+  if (!gate.ok) return gate.response;
+
   const { id } = await params;
   let body: UpdateTaskRequest;
   try {
@@ -38,12 +44,9 @@ export async function PATCH(req: Request, { params }: Params) {
     return jsonError(`Invalid status: ${body.status}`, 400);
   }
 
-  const actor = actorFromWebSession(req, body.actor);
-  if (!actor.ok) return actor.response;
-
   const db = getDb();
   try {
-    const task = updateTask(db, id, { ...body, actor: actor.actor });
+    const task = updateTask(db, id, { ...body, actor: sessionActor(gate, body.actor) });
     if (!task) return jsonError('Task not found', 404);
     return jsonOk({ task });
   } catch (err) {

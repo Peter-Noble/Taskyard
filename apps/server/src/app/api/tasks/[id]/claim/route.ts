@@ -1,11 +1,15 @@
 import type { ClaimTaskRequest } from '@taskyard/protocol';
 import { claimTask, getDb } from '@taskyard/core';
 import { jsonError, jsonOk } from '@/lib/api-response';
+import { requireFullSession, sessionActor } from '@/lib/people-api';
 import { taskErrorResponse } from '@/lib/task-error';
 
 type Params = { params: Promise<{ id: string }> };
 
 export async function POST(req: Request, { params }: Params) {
+  const gate = requireFullSession(req);
+  if (!gate.ok) return gate.response;
+
   const { id } = await params;
   let body: ClaimTaskRequest;
   try {
@@ -18,7 +22,7 @@ export async function POST(req: Request, { params }: Params) {
 
   const db = getDb();
   try {
-    const task = claimTask(db, id, body.assignee, body.actor);
+    const task = claimTask(db, id, body.assignee, sessionActor(gate, body.actor));
     if (!task) return jsonError('Task not found', 404);
     return jsonOk({ task });
   } catch (err) {

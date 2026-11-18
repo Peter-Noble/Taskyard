@@ -1,8 +1,12 @@
 import { getDb, nextTask, TaskError } from '@taskyard/core';
 import { jsonError, jsonOk } from '@/lib/api-response';
+import { requireFullSession } from '@/lib/people-api';
 import { taskErrorResponse } from '@/lib/task-error';
 
 export async function GET(req: Request) {
+  const gate = requireFullSession(req);
+  if (!gate.ok) return gate.response;
+
   const projectId = new URL(req.url).searchParams.get('project_id');
   if (!projectId) return jsonError('project_id is required');
 

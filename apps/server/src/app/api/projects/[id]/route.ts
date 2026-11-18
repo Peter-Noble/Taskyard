@@ -1,10 +1,14 @@
 import type { UpdateProjectRequest } from '@taskyard/protocol';
 import { getDb, ProjectError, updateProject } from '@taskyard/core';
 import { jsonError, jsonOk } from '@/lib/api-response';
+import { requireFullSession } from '@/lib/people-api';
 
 type RouteContext = { params: Promise<{ id: string }> };
 
 export async function PATCH(req: Request, context: RouteContext) {
+  const gate = requireFullSession(req);
+  if (!gate.ok) return gate.response;
+
   const { id } = await context.params;
   let body: UpdateProjectRequest;
   try {

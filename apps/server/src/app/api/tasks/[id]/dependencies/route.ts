@@ -1,11 +1,15 @@
 import type { AddTaskDependencyRequest } from '@taskyard/protocol';
 import { addTaskDependency, getDb, removeTaskDependency } from '@taskyard/core';
 import { jsonError, jsonOk } from '@/lib/api-response';
+import { requireFullSession } from '@/lib/people-api';
 import { taskErrorResponse } from '@/lib/task-error';
 
 type Params = { params: Promise<{ id: string }> };
 
 export async function POST(req: Request, { params }: Params) {
+  const gate = requireFullSession(req);
+  if (!gate.ok) return gate.response;
+
   const { id } = await params;
   let body: AddTaskDependencyRequest;
   try {
@@ -27,6 +31,9 @@ export async function POST(req: Request, { params }: Params) {
 }
 
 export async function DELETE(req: Request, { params }: Params) {
+  const gate = requireFullSession(req);
+  if (!gate.ok) return gate.response;
+
   const { id } = await params;
   const dependsOn = new URL(req.url).searchParams.get('depends_on');
   if (!dependsOn?.trim()) return jsonError('depends_on is required');

@@ -1,8 +1,12 @@
 import { getDb, listPendingDecisions, listProjectDecisions } from '@taskyard/core';
 import { jsonError, jsonOk } from '@/lib/api-response';
+import { requireFullSession } from '@/lib/people-api';
 import { taskErrorResponse } from '@/lib/task-error';
 
 export async function GET(req: Request) {
+  const gate = requireFullSession(req);
+  if (!gate.ok) return gate.response;
+
   const params = new URL(req.url).searchParams;
   const projectId = params.get('project_id');
   if (!projectId) return jsonError('project_id is required');

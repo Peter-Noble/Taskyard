@@ -1,7 +1,7 @@
 import type { CreateTaskRequest, TaskStatus } from '@taskyard/protocol';
 import { createTask, getDb, listTasks } from '@taskyard/core';
 import { jsonError, jsonOk } from '@/lib/api-response';
-import { actorFromWebSession } from '@/lib/people-api';
+import { requireFullSession, sessionActor } from '@/lib/people-api';
 import { taskErrorResponse } from '@/lib/task-error';
 
 const TASK_STATUSES: TaskStatus[] = [
@@ -16,6 +16,9 @@ const TASK_STATUSES: TaskStatus[] = [
 ];
 
 export async function GET(req: Request) {
+  const gate = requireFullSession(req);
+  if (!gate.ok) return gate.response;
+
   const db = getDb();
   const params = new URL(req.url).searchParams;
   const projectId = params.get('project_id') ?? undefined;
@@ -45,6 +48,9 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
+  const gate = requireFullSession(req);
+  if (!gate.ok) return gate.response;
+
   let body: CreateTaskRequest;
   try {
     body = (await req.json()) as CreateTaskRequest;
@@ -56,12 +62,9 @@ export async function POST(req: Request) {
     return jsonError('title and project_id are required');
   }
 
-  const actor = actorFromWebSession(req, undefined);
-  if (!actor.ok) return actor.response;
-
   const db = getDb();
   try {
-    const task = createTask(db, body, actor.actor);
+    const task = createTask(db, body, sessionActor(gate));
     return jsonOk({ task }, 201);
   } catch (err) {
     return taskErrorResponse(err, 'Failed to create task');

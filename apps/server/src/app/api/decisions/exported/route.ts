@@ -1,9 +1,13 @@
 import type { MarkDecisionsExportedRequest } from '@taskyard/protocol';
 import { getDb, markDecisionsExported } from '@taskyard/core';
 import { jsonError, jsonOk } from '@/lib/api-response';
+import { requireFullSession } from '@/lib/people-api';
 import { taskErrorResponse } from '@/lib/task-error';
 
 export async function POST(req: Request) {
+  const gate = requireFullSession(req);
+  if (!gate.ok) return gate.response;
+
   let body: MarkDecisionsExportedRequest;
   try {
     body = (await req.json()) as MarkDecisionsExportedRequest;

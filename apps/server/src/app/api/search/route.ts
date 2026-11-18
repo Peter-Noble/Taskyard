@@ -1,12 +1,12 @@
 import type { SearchType } from '@taskyard/protocol';
 import { getDb, search, SearchError } from '@taskyard/core';
 import { jsonError, jsonOk } from '@/lib/api-response';
-import { requireIdeaPerson } from '@/lib/ideas-api';
+import { requireFullSession } from '@/lib/people-api';
 
 const SEARCH_TYPES: SearchType[] = ['task', 'idea', 'all'];
 
 export async function GET(req: Request) {
-  const gate = requireIdeaPerson(req);
+  const gate = requireFullSession(req);
   if (!gate.ok) return gate.response;
   const params = new URL(req.url).searchParams;
   const query = params.get('q')?.trim() ?? '';
