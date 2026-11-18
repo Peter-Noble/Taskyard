@@ -45,12 +45,15 @@ type ProjectsResponse = { projects: Project[] };
 export function DashboardClient({
   initialPanels,
   initialTaskId = null,
+  attentionPrototype = false,
 }: {
   initialPanels?: PanelVisibility;
   initialTaskId?: string | null;
+  attentionPrototype?: boolean;
 }) {
   const router = useRouter();
-  const { useTestData: testDataOn, hydrated } = useTestData();
+  const { useTestData: testDataEnabled, hydrated } = useTestData();
+  const testDataOn = attentionPrototype || testDataEnabled;
   const { active, loaded: collectionsLoaded, select: selectCollection } = useCollections();
   const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
@@ -94,14 +97,14 @@ export function DashboardClient({
     if (!hydrated) return;
     if (testDataOn) {
       setSelectedThreadId((prev) => (prev && isDemoThreadId(prev) ? prev : DEFAULT_TEST_THREAD_ID));
-      setCenterMode('chat');
-      setSelectedTaskId(null);
+      setCenterMode(attentionPrototype && initialTaskId ? 'task' : 'chat');
+      setSelectedTaskId(attentionPrototype ? initialTaskId : null);
     } else {
       setSelectedThreadId((prev) => (prev && isDemoThreadId(prev) ? null : prev));
       setSelectedTaskId(null);
       setCenterMode('chat');
     }
-  }, [testDataOn, hydrated]);
+  }, [testDataOn, hydrated, attentionPrototype, initialTaskId]);
 
   const selectedThread = useMemo(
     () => visibleThreads.find((t) => t.id === selectedThreadId) ?? null,
@@ -168,6 +171,7 @@ export function DashboardClient({
 
   function updateDashboardUrl(taskId?: string) {
     const params = new URLSearchParams();
+    if (attentionPrototype) params.set('ta-28-design', 'A');
     if (taskId) params.set('task', taskId);
     const query = params.size ? `?${params.toString()}` : '';
     window.history.replaceState(null, '', `/dashboard${query}`);
@@ -320,6 +324,7 @@ export function DashboardClient({
   const taskBody = testDataOn ? (
             <TaskRail
               key={taskTick}
+              attentionPrototype={attentionPrototype}
               useFixtures={testDataOn}
               threadSlug={threadSlug}
               projectId={selectedThread?.project_id ?? null}
@@ -407,6 +412,7 @@ export function DashboardClient({
 
   return (
     <AppShell
+      fixturePreviewExitHref={attentionPrototype ? '/dashboard' : undefined}
       actions={(
         <SearchDialog
           entity="task"

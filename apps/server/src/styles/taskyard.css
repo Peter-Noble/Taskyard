@@ -1208,6 +1208,40 @@ a:hover {
   border-color: color-mix(in oklch, var(--waiting) 35%, var(--border));
 }
 
+/* TA-28 dashboard prototype */
+.ta-28-attention-branch {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.ta-28-attention-branch > .task-item {
+  grid-area: 1 / 1;
+  padding-bottom: 34px;
+}
+
+.ta-28-attention-toggle {
+  grid-area: 1 / 1;
+  position: relative;
+  align-self: end;
+  justify-self: center;
+  min-height: 24px;
+  margin-bottom: 5px;
+  padding-inline: 8px;
+  text-transform: none;
+  letter-spacing: normal;
+  cursor: pointer;
+}
+
+.ta-28-attention-toggle:not(.badge-task-waiting) {
+  color: var(--muted);
+}
+
+.ta-28-attention-toggle:hover,
+.ta-28-attention-toggle:focus-visible {
+  outline: 1px solid currentColor;
+  outline-offset: 1px;
+}
+
 .badge-task-done {
   color: var(--success);
   background: var(--success-bg);

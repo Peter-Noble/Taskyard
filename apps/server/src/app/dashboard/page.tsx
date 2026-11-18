@@ -7,10 +7,16 @@ export const dynamic = 'force-dynamic';
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ task?: string }>;
+  searchParams: Promise<{ task?: string; 'ta-28-design'?: string }>;
 }) {
   const jar = await cookies();
   const params = await searchParams;
   const initialPanels = parsePanelVisibility(jar.get(PANEL_VISIBILITY_COOKIE)?.value);
-  return <DashboardClient initialPanels={initialPanels} initialTaskId={params.task ?? null} />;
+  return (
+    <DashboardClient
+      initialPanels={initialPanels}
+      initialTaskId={params.task ?? null}
+      attentionPrototype={params['ta-28-design'] === 'A'}
+    />
+  );
 }

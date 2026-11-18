@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type Dispatch, type SetStateAction } from 'react';
 import {
   type DashboardTask,
   PROJECT_ORDER,
@@ -22,6 +22,7 @@ import { MarkdownMessage } from '@/components/markdown-message';
 type TaskRailProps = {
   /** When true, render design fixtures from dashboard-tasks.ts */
   useFixtures: boolean;
+  attentionPrototype?: boolean;
   threadSlug: string;
   projectId: string | null;
   selectedTaskId: string | null;
@@ -163,52 +164,111 @@ function TaskListItem({
   );
 }
 
-function TaskDependents({
-  parentTask,
+type AttentionBranches = {
+  expanded: Record<string, boolean>;
+  setExpanded: Dispatch<SetStateAction<Record<string, boolean>>>;
+};
+
+// The prototype uses fixture requests explicitly labeled as waiting for a user.
+function collectInputRequests(task: DashboardTask) {
+  const requests = new Set<string>();
+  const branches = new Set<string>();
+  const path = new Set<string>();
+
+  function visit(parent: DashboardTask): boolean {
+    path.add(parent.id);
+    let hasRequests = false;
+    for (const child of getDependentTasks(parent)) {
+      if (path.has(child.id) || child.status === 'completed') continue;
+      const needsInput = child.status === 'waiting' && child.statusLabel === 'Waiting for user';
+      if (needsInput) requests.add(child.id);
+      if (visit(child) || needsInput) hasRequests = true;
+    }
+    path.delete(parent.id);
+    if (hasRequests) branches.add(parent.id);
+    return hasRequests;
+  }
+
+  visit(task);
+  return { count: requests.size, branches };
+}
+
+function TaskBranch({
+  task,
+  related,
   depth,
   selectedTaskId,
   centerMode,
   onSelect,
+  attention,
 }: {
-  parentTask: DashboardTask;
+  task: DashboardTask;
+  related?: boolean;
   depth: number;
   selectedTaskId: string | null;
   centerMode: 'chat' | 'task';
   onSelect: (id: string) => void;
+  attention?: AttentionBranches;
 }) {
-  const dependents = getDependentTasks(parentTask);
-  if (!dependents.length) return null;
+  const expanded = attention?.expanded[task.id] ?? shouldExpandDependents(task, centerMode, selectedTaskId);
+  const input = attention && collectInputRequests(task);
+  const showControl = Boolean(input && input.count);
+
+  function toggleAttentionBranch() {
+    if (!attention || !input) return;
+    attention.setExpanded((previous) => {
+      if (expanded) return { ...previous, [task.id]: false };
+      const next = { ...previous };
+      for (const branchId of input.branches) next[branchId] = true;
+      return next;
+    });
+  }
 
   return (
-    <div className="task-deps-rail" data-depth={depth} aria-label={`Tasks blocked by ${parentTask.num}`}>
-      {dependents.map((dep) => {
-        const nested = shouldExpandDependents(dep, centerMode, selectedTaskId);
-        return (
-          <div key={dep.id} className="task-item-wrap task-item-wrap-nested">
-            <TaskListItem
-              task={dep}
-              selected={selectedTaskId === dep.id}
-              dependent
+    <div className={`task-item-wrap${depth ? ' task-item-wrap-nested' : ''}${showControl ? ' ta-28-attention-branch' : ''}`}>
+      <TaskListItem
+        task={task}
+        selected={selectedTaskId === task.id}
+        related={related}
+        dependent={depth > 0}
+        onSelect={onSelect}
+      />
+      {input && showControl ? (
+        <button
+          type="button"
+          className={`badge ta-28-attention-toggle${expanded ? '' : ' badge-task-waiting'}`}
+          aria-expanded={expanded}
+          onClick={toggleAttentionBranch}
+        >
+          {expanded ? (
+            <>Collapse <span aria-hidden="true">⌃</span></>
+          ) : (
+            <><span aria-hidden="true">!</span> {input.count} {input.count === 1 ? 'needs' : 'need'} input <span aria-hidden="true">⌄</span></>
+          )}
+        </button>
+      ) : null}
+      {expanded ? (
+        <div className="task-deps-rail" data-depth={depth + 1} aria-label={`Tasks blocked by ${task.num}`}>
+          {getDependentTasks(task).map((dependent) => (
+            <TaskBranch
+              key={dependent.id}
+              task={dependent}
+              depth={depth + 1}
+              selectedTaskId={selectedTaskId}
+              centerMode={centerMode}
               onSelect={onSelect}
+              attention={attention}
             />
-            {nested ? (
-              <TaskDependents
-                parentTask={dep}
-                depth={depth + 1}
-                selectedTaskId={selectedTaskId}
-                centerMode={centerMode}
-                onSelect={onSelect}
-              />
-            ) : null}
-          </div>
-        );
-      })}
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 }
 
 export function TaskRail({
   useFixtures,
+  attentionPrototype,
   threadSlug,
   projectId,
   selectedTaskId,
@@ -218,6 +278,7 @@ export function TaskRail({
 }: TaskRailProps) {
   const [apiTasks, setApiTasks] = useState<DashboardTask[] | null>(null);
   const [apiChecked, setApiChecked] = useState(false);
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     if (useFixtures || !projectId) {
@@ -308,29 +369,18 @@ export function TaskRail({
             <span className="entity-label">{project.name}</span>
           </div>
           <div className="task-project-items">
-            {visibleTasks.map((task) => {
-              const related = key === activeProject;
-              const showDeps = shouldExpandDependents(task, centerMode, selectedTaskId);
-              return (
-                <div key={task.id} className="task-item-wrap">
-                  <TaskListItem
-                    task={task}
-                    selected={selectedTaskId === task.id}
-                    related={related}
-                    onSelect={onSelectTask}
-                  />
-                  {showDeps ? (
-                    <TaskDependents
-                      parentTask={task}
-                      depth={1}
-                      selectedTaskId={selectedTaskId}
-                      centerMode={centerMode}
-                      onSelect={onSelectTask}
-                    />
-                  ) : null}
-                </div>
-              );
-            })}
+            {visibleTasks.map((task) => (
+              <TaskBranch
+                key={task.id}
+                task={task}
+                depth={0}
+                related={key === activeProject}
+                selectedTaskId={selectedTaskId}
+                centerMode={centerMode}
+                onSelect={onSelectTask}
+                attention={attentionPrototype ? { expanded, setExpanded } : undefined}
+              />
+            ))}
           </div>
         </section>
       );
