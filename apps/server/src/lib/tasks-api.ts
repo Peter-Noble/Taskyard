@@ -12,6 +12,7 @@ export type TaskStatus =
 
 export type ApiTask = {
   id: string;
+  short_id: string;
   project_id: string;
   parent_id: string | null;
   title: string;

@@ -3284,6 +3284,58 @@ html:has(body.launcher-page) {
   flex: 1;
 }
 
+.task-dependencies-heading,
+.task-dependency-picker .form-help,
+.task-dependency-error {
+  margin: 0;
+}
+
+.task-dependency-error {
+  color: var(--danger);
+}
+
+.task-dependency-links {
+  max-height: 10rem;
+  overflow: auto;
+}
+
+.task-dependency-links .task-view-blocker {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  text-align: left;
+}
+
+.task-dependency-results {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 12rem;
+  overflow: auto;
+  border: 1px solid var(--border);
+}
+
+.task-dependency-results li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.task-dependency-results li[aria-selected="true"],
+.task-dependency-results li:hover {
+  background: var(--surface-elevated);
+}
+
+.task-dependency-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
 .task-view-feed {
   flex: 1;
   min-height: 0;

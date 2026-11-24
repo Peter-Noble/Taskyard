@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useLayoutEffect, useRef, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type FormEvent } from 'react';
 import type { Project, Task, TaskDetail, TaskStatus } from '@taskyard/protocol';
 import { useSessionPerson } from '@/components/providers';
 import {
@@ -16,6 +16,7 @@ import {
 import { categoriesFromTasks, taskPriorityLabel, taskPriorityTone, taskTypeMeta } from '@/lib/task-labels';
 import { ChatCommentComposer, ChatMessage } from '@/components/chat-message';
 import { MarkdownMessage } from '@/components/markdown-message';
+import { fetchTasksForProject, type ApiTask } from '@/lib/tasks-api';
 
 function useProjectCategorySuggestions(projectId: string | null | undefined, refreshKey = 0) {
   const [suggestions, setSuggestions] = useState<string[]>([]);
@@ -440,6 +441,261 @@ function isMine(actor: string, displayName: string | null): boolean {
   return actor.trim().toLowerCase() === displayName.trim().toLowerCase();
 }
 
+const dependencySections = [
+  { direction: 'blocked_by', label: 'Depends on', addLabel: 'Add prerequisite' },
+  { direction: 'blocks', label: 'Blocks', addLabel: 'Add downstream task' },
+] as const;
+type DependencyDirection = (typeof dependencySections)[number]['direction'];
+
+function DependencyPicker({
+  task,
+  direction,
+  saving,
+  onAdd,
+  onCancel,
+}: {
+  task: TaskDetail;
+  direction: DependencyDirection;
+  saving: boolean;
+  onAdd: (id: string) => void;
+  onCancel: () => void;
+}) {
+  const [candidates, setCandidates] = useState<ApiTask[] | null | undefined>(undefined);
+  const [query, setQuery] = useState('');
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [selected, setSelected] = useState<ApiTask | null>(null);
+  const resultsId = useId();
+  const activeResultRef = useRef<HTMLLIElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const confirmRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    void fetchTasksForProject(task.project_id).then((items) => {
+      if (!cancelled) setCandidates(items);
+    });
+    return () => { cancelled = true; };
+  }, [task.project_id]);
+
+  const excluded = new Set([task.id, ...task[direction].map((link) => link.id)]);
+  const search = query.trim().toLowerCase();
+  const results = (candidates ?? []).filter((candidate) =>
+    !excluded.has(candidate.id) && (
+      candidate.short_id.toLowerCase().includes(search) || candidate.title.toLowerCase().includes(search)
+    ),
+  ).sort((left, right) =>
+    Number(right.short_id.toLowerCase() === search) - Number(left.short_id.toLowerCase() === search),
+  ).slice(0, 12);
+  const choice = selected && !excluded.has(selected.id) ? selected : null;
+  const activeResult = results[Math.min(activeIndex, results.length - 1)];
+
+  useEffect(() => {
+    if (choice) confirmRef.current?.focus();
+    else inputRef.current?.focus();
+  }, [choice]);
+
+  useEffect(() => {
+    activeResultRef.current?.scrollIntoView({ block: 'nearest' });
+  }, [activeResult?.id]);
+
+  return (
+    <form
+      className="task-view-detail-block task-dependency-picker"
+      onKeyDown={(event) => {
+        if (event.key === 'Escape' && !saving) {
+          event.preventDefault();
+          onCancel();
+        }
+      }}
+      onSubmit={(event) => {
+        event.preventDefault();
+        if (choice) onAdd(choice.id);
+        else if (activeResult) setSelected(activeResult);
+      }}
+    >
+      {choice ? (
+        <p className="form-help">
+          {direction === 'blocked_by'
+            ? <><strong>{task.short_id}</strong> depends on <strong>{choice.short_id}</strong></>
+            : <><strong>{choice.short_id}</strong> depends on <strong>{task.short_id}</strong></>}
+          {' · '}{choice.title}
+        </p>
+      ) : (
+        <>
+          <input
+            ref={inputRef}
+            className="form-input"
+            role="combobox"
+            aria-label="Find a task in this project"
+            aria-autocomplete="list"
+            aria-expanded={results.length > 0}
+            aria-controls={resultsId}
+            aria-activedescendant={activeResult ? `${resultsId}-${activeResult.id}` : undefined}
+            autoComplete="off"
+            placeholder="Search by task ID or title"
+            value={query}
+            onChange={(event) => {
+              setQuery(event.target.value);
+              setActiveIndex(0);
+            }}
+            onKeyDown={(event) => {
+              if (!results.length || (event.key !== 'ArrowDown' && event.key !== 'ArrowUp')) return;
+              event.preventDefault();
+              const index = results.indexOf(activeResult);
+              const next = index + (event.key === 'ArrowDown' ? 1 : -1);
+              setActiveIndex((next + results.length) % results.length);
+            }}
+          />
+          <ul id={resultsId} className="task-dependency-results" role="listbox" aria-label="Matching tasks" hidden={!results.length}>
+            {results.map((candidate) => (
+              <li
+                key={candidate.id}
+                id={`${resultsId}-${candidate.id}`}
+                ref={candidate === activeResult ? activeResultRef : undefined}
+                role="option"
+                aria-selected={candidate === activeResult}
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={() => setSelected(candidate)}
+              >
+                <span>{candidate.short_id} · {candidate.title}</span>
+                <span className={`badge ${badgeClass(candidate.status)}`}>{statusLabel(candidate.status)}</span>
+              </li>
+            ))}
+          </ul>
+          {!results.length ? (
+            <p className="form-help" role="status">
+              {candidates === undefined ? 'Loading tasks…' : candidates === null ? 'Could not load tasks.' : 'No matching tasks to link.'}
+            </p>
+          ) : null}
+        </>
+      )}
+      <div className="task-dependency-actions">
+        {choice ? (
+          <>
+            <button ref={confirmRef} type="submit" className="btn btn-primary btn-sm" disabled={saving}>
+              {saving ? 'Adding…' : 'Add dependency'}
+            </button>
+            <button type="button" className="btn btn-ghost btn-sm" disabled={saving} onClick={() => setSelected(null)}>
+              Change task
+            </button>
+          </>
+        ) : null}
+        <button type="button" className="btn btn-ghost btn-sm" disabled={saving} onClick={onCancel}>
+          Cancel
+        </button>
+      </div>
+    </form>
+  );
+}
+
+function TaskDependencies({
+  task,
+  onSelectTask,
+  onChanged,
+}: {
+  task: TaskDetail;
+  onSelectTask: (id: string) => void;
+  onChanged: () => Promise<void>;
+}) {
+  const [picker, setPicker] = useState<DependencyDirection | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const savingRef = useRef(false);
+  const addButtons = useRef<Partial<Record<DependencyDirection, HTMLButtonElement | null>>>({});
+
+  function closePicker(direction: DependencyDirection) {
+    setPicker(null);
+    setError(null);
+    addButtons.current[direction]?.focus();
+  }
+
+  async function save(direction: DependencyDirection, relatedId: string, method: 'POST' | 'DELETE') {
+    if (savingRef.current) return;
+    savingRef.current = true;
+    setSaving(true);
+    setError(null);
+    const [dependent, prerequisite] = direction === 'blocked_by' ? [task.id, relatedId] : [relatedId, task.id];
+    const path = `/api/tasks/${encodeURIComponent(dependent)}/dependencies`;
+    try {
+      const res = method === 'POST'
+        ? await fetch(path, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ depends_on: prerequisite }),
+        })
+        : await fetch(`${path}?depends_on=${encodeURIComponent(prerequisite)}`, { method });
+      if (!res.ok) throw new Error(await readError(res));
+      await onChanged();
+      closePicker(direction);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not update the dependency.');
+    } finally {
+      savingRef.current = false;
+      setSaving(false);
+    }
+  }
+
+  return (
+    <section className="task-view-detail-block" aria-label="Dependencies">
+      <h3 className="form-label task-dependencies-heading">Dependencies</h3>
+      {error ? <p className="form-help task-dependency-error" role="alert">{error}</p> : null}
+      {dependencySections.map(({ direction, label, addLabel }) => {
+        const links = task[direction];
+        return (
+          <div className="task-view-detail-block" key={direction}>
+            <div className="task-view-detail-label-row">
+              <span>{label}</span>
+              <button
+                ref={(button) => { addButtons.current[direction] = button; }}
+                className="btn btn-ghost btn-sm"
+                type="button"
+                aria-expanded={picker === direction}
+                onClick={() => {
+                  if (savingRef.current) return;
+                  setError(null);
+                  setPicker((current) => current === direction ? null : direction);
+                }}
+              >
+                {addLabel}
+              </button>
+            </div>
+            {links.length ? (
+              <ul className="task-view-statements task-dependency-links">
+                {links.map((link) => (
+                  <li key={link.id}>
+                    <button type="button" className="task-view-blocker" onClick={() => onSelectTask(link.id)}>
+                      {link.short_id} · {link.title}
+                    </button>
+                    <span className={`badge ${badgeClass(link.status)}`}>{statusLabel(link.status)}</span>
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-sm"
+                      aria-label={`Remove link to ${link.short_id}`}
+                      disabled={saving}
+                      onClick={() => void save(direction, link.id, 'DELETE')}
+                    >
+                      Remove link
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+            {picker === direction ? (
+              <DependencyPicker
+                task={task}
+                direction={direction}
+                saving={saving}
+                onAdd={(id) => void save(direction, id, 'POST')}
+                onCancel={() => closePicker(direction)}
+              />
+            ) : null}
+          </div>
+        );
+      })}
+    </section>
+  );
+}
+
 function TaskEditor({
   taskId,
   refreshKey,
@@ -467,12 +723,14 @@ function TaskEditor({
   const scrollRef = useRef<HTMLDivElement>(null);
   const commentSubmittingRef = useRef(false);
   const briefEditingRef = useRef(false);
+  const activeTaskIdRef = useRef(taskId);
   const remoteUpdatedAtRef = useRef(remoteUpdatedAt);
   const loadedUpdatedAt = useRef<string | null>(null);
   const requestSeq = useRef(0);
   const readyRef = useRef(false);
   const loadTaskRef = useRef<(seq: number, resetUi: boolean) => Promise<void>>(async () => {});
   briefEditingRef.current = briefEditing;
+  activeTaskIdRef.current = taskId;
   remoteUpdatedAtRef.current = remoteUpdatedAt;
 
   const applyTask = useCallback((next: TaskDetail, resetUi: boolean) => {
@@ -768,6 +1026,18 @@ function TaskEditor({
                 <div className="task-view-brief">{task.description || 'No brief yet.'}</div>
               )}
             </div>
+            {task.id === taskId ? (
+              <TaskDependencies
+                key={task.id}
+                task={task}
+                onSelectTask={onSelectTask}
+                onChanged={async () => {
+                  if (activeTaskIdRef.current === task.id) {
+                    await loadTaskRef.current(++requestSeq.current, false);
+                  }
+                }}
+              />
+            ) : null}
             <div className="task-view-detail-block">
               <span className="form-label">Decisions</span>
               <ul className="task-view-statements">
