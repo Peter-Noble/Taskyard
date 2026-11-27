@@ -51,6 +51,13 @@ describe('global config server URL', () => {
     expect(resolveProjectContext().serverUrl).toBe('https://from-env.test');
   });
 
+  it('reads a config with the UTF-8 BOM written by Windows PowerShell', () => {
+    const config = path.join(tmpHome, '.config', 'taskyard');
+    fs.mkdirSync(config, { recursive: true });
+    fs.writeFileSync(path.join(config, 'config.json'), '\uFEFF{"server_url":"https://example.test"}');
+    expect(getGlobalServerUrl()).toBe('https://example.test');
+  });
+
   it('prefers project.json server_url over global config', () => {
     const ws = fs.mkdtempSync(path.join(tmpHome, 'proj-'));
     fs.mkdirSync(path.join(ws, '.taskyard'));
