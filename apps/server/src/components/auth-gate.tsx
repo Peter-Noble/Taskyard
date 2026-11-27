@@ -16,6 +16,11 @@ async function readError(res: Response): Promise<string> {
   }
 }
 
+function continueAfterAuth() {
+  if (window.location.pathname === '/activate') window.location.reload();
+  else window.location.assign('/overview');
+}
+
 export function AuthGate({ gate }: { gate: AuthGateState }) {
   if (gate.kind === 'setup') return <SetupForm />;
   if (gate.kind === 'change-password') return <PasswordForm username={gate.username} displayName={gate.displayName} />;
@@ -45,7 +50,7 @@ function SetupForm() {
         body: JSON.stringify({ username, display_name: displayName, password }),
       });
       if (!res.ok) throw new Error(await readError(res));
-      window.location.assign('/overview');
+      continueAfterAuth();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create the account');
       setPending(false);
@@ -86,7 +91,7 @@ function LoginForm() {
         body: JSON.stringify({ username, password }),
       });
       if (!res.ok) throw new Error(await readError(res));
-      window.location.assign('/overview');
+      continueAfterAuth();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to sign in');
       setPending(false);
@@ -129,7 +134,7 @@ function PasswordForm({ username, displayName }: { username: string; displayName
         body: JSON.stringify({ new_password: password }),
       });
       if (!res.ok) throw new Error(await readError(res));
-      window.location.assign('/overview');
+      continueAfterAuth();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to set the password');
       setPending(false);

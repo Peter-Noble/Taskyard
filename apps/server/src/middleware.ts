@@ -8,6 +8,8 @@ const SESSION_ROUTES = new Set([
   'POST /api/auth/logout',
   'POST /api/auth/password',
   'GET /api/auth/session',
+  'POST /api/auth/cli/start',
+  'POST /api/auth/cli/poll',
 ]);
 
 export function middleware(req: NextRequest): NextResponse {

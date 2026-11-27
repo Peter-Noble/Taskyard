@@ -22,6 +22,8 @@ irm https://<your-taskyard-host>/install.ps1 | iex
 
 This downloads an esbuild-bundled `taskyard` (still needs Node 20+ on PATH), puts it on your PATH, and writes `server_url` to `~/.config/taskyard/config.json`. If Node is missing, the script warns and pauses until you confirm. After the server is redeployed, the CLI compares artifact hashes and suggests `taskyard update`.
 
+Run `taskyard login`, open the printed URL in a browser, and enter the terminal code after signing in. You can use a browser on another device. The CLI saves the session in your user profile for that server. Run `taskyard logout` on the terminal or sign out its session from **Account** in the browser. Use the HTTPS URL in your Taskyard configuration for remote servers.
+
 Build the served artifact with `pnpm bundle:cli` (also runs in the Docker image build).
 
 ## Setup
@@ -53,7 +55,8 @@ Then in the browser: http://localhost:3000 — create a task, start a `stub` or 
 ```bash
 pnpm --filter cli build
 node apps/cli/dist/main.js task list --pretty
-node apps/cli/dist/main.js task create --project <project_id> --title "Ship MVP" --description "..."
+node apps/cli/dist/main.js task create --project <project_id> --title "Ship MVP" --type feature --priority high --category "Release"
+node apps/cli/dist/main.js task update <short_id> --type design --priority medium --clear-category
 node apps/cli/dist/main.js task claim <short_id> --as me
 node apps/cli/dist/main.js task status <short_id> in_progress
 node apps/cli/dist/main.js task decision add --task <short_id> --choice "..." --why "..."

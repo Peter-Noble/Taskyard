@@ -1,12 +1,15 @@
 import type {
+  CreateTaskRequest,
   Task,
   TaskActivity,
   TaskDecision,
   TaskDetail,
   TaskStatus,
   ThreadDetail,
+  UpdateTaskRequest,
 } from '@taskyard/protocol';
 import { announceUpdatedInstructions, writeAgentsInstructions } from './agents-file.js';
+import { readCliToken } from './credentials.js';
 import { syncDecisionsFile } from './decisions-file.js';
 import { decisionsFilePath, readProjectFile, resolveProjectContext, writeProjectFile } from './project-file.js';
 
@@ -30,7 +33,7 @@ export type UpdateTaskResponse = { task: Task };
 export type AddCommentResponse = { activity: TaskActivity };
 export type GetThreadResponse = { thread: ThreadDetail };
 
-export const DEFAULT_SERVER_URL = 'http://taskyard.app';
+export const DEFAULT_SERVER_URL = 'https://taskyard.app';
 
 export type ShowThreadResult = {
   thread_id: string;
@@ -90,8 +93,11 @@ async function parseJsonBody(res: Response): Promise<unknown> {
   }
 }
 
-export async function apiFetch<T>(path: string, init?: RequestInit, serverUrl?: string): Promise<T> {
-  const url = joinUrl(serverUrl ?? getServerUrl(), path);
+export async function apiFetch<T>(path: string, init?: RequestInit, serverUrl = getServerUrl(), useSession = true): Promise<T> {
+  const url = joinUrl(serverUrl, path);
+  const token = useSession
+    ? process.env.TASKYARD_SESSION_TOKEN || (!process.env.TASKYARD_THREAD_ID ? readCliToken(serverUrl) : undefined)
+    : undefined;
   let res: Response;
   try {
     res = await fetch(url, {
@@ -99,10 +105,8 @@ export async function apiFetch<T>(path: string, init?: RequestInit, serverUrl?: 
       headers: {
         Accept: 'application/json',
         ...(init?.body ? { 'Content-Type': 'application/json' } : {}),
-        ...(process.env.TASKYARD_SESSION_TOKEN
-          ? { Authorization: `Bearer ${process.env.TASKYARD_SESSION_TOKEN}` }
-          : {}),
-        ...(process.env.TASKYARD_PERSON_ID
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...(useSession && process.env.TASKYARD_PERSON_ID
           ? { 'x-taskyard-person-id': process.env.TASKYARD_PERSON_ID }
           : {}),
         ...init?.headers,
@@ -124,6 +128,9 @@ export async function apiFetch<T>(path: string, init?: RequestInit, serverUrl?: 
         : (body as ApiErrorBody);
     } else {
       errorBody = { error: `HTTP ${res.status}: ${res.statusText || 'Request failed'}`.trim() };
+    }
+    if (useSession && res.status === 401 && !process.env.TASKYARD_THREAD_ID && !errorBody.hint) {
+      errorBody.hint = 'Run taskyard login to sign in to this Taskyard server.';
     }
     throw new TaskCliError(res.status, errorBody);
   }
@@ -189,6 +196,9 @@ function formatPretty(data: unknown): string {
       `status: ${task.status}${task.blocked ? ' (blocked)' : ''}`,
       `project: ${task.project_id}`,
     ];
+    if (task.task_type) lines.push(`type: ${task.task_type}`);
+    if (task.priority) lines.push(`priority: ${task.priority}`);
+    if (task.category) lines.push(`category: ${task.category}`);
     if (task.parent_short_id) lines.push(`parent: ${task.parent_short_id}`);
     if (task.assignee) lines.push(`assignee: ${task.assignee}`);
     if (task.description) {
@@ -281,20 +291,29 @@ export async function cmdList(
   writeOutput(data, pretty);
 }
 
+type TaskLabelOptions = {
+  type?: CreateTaskRequest['task_type'];
+  priority?: CreateTaskRequest['priority'];
+  category?: CreateTaskRequest['category'];
+};
+
 export async function cmdCreate(
   opts: {
     title: string;
     parent?: string;
     project?: string;
     description?: string;
-  },
+  } & TaskLabelOptions,
   pretty: boolean,
 ): Promise<void> {
   const projectId = requireProjectId(opts.project);
 
-  const body: Record<string, string | null> = {
+  const body: CreateTaskRequest = {
     title: opts.title,
     project_id: projectId,
+    task_type: opts.type,
+    priority: opts.priority,
+    category: opts.category,
   };
   if (opts.parent) body.parent_id = opts.parent;
   if (opts.description) body.description = opts.description;
@@ -345,17 +364,20 @@ export async function cmdStatus(
 
 export async function cmdUpdate(
   id: string,
-  opts: { title?: string; description?: string; assignee?: string },
+  opts: { title?: string; description?: string; assignee?: string } & TaskLabelOptions,
   pretty: boolean,
 ): Promise<void> {
-  const body: Record<string, string | null> = { actor: actorFromEnv() };
+  const body: UpdateTaskRequest = { actor: actorFromEnv() };
   if (opts.title !== undefined) body.title = opts.title;
   if (opts.description !== undefined) body.description = opts.description;
   if (opts.assignee !== undefined) body.assignee = opts.assignee;
+  if (opts.type !== undefined) body.task_type = opts.type;
+  if (opts.priority !== undefined) body.priority = opts.priority;
+  if (opts.category !== undefined) body.category = opts.category;
   if (Object.keys(body).length === 1) {
     throw new TaskCliError(1, {
       error: 'Nothing to update',
-      hint: 'Pass --title, --description, or --assignee.',
+      hint: 'Pass --title, --description, --assignee, --type, --priority, --category, or --clear-category.',
     });
   }
   const data = await apiFetch<UpdateTaskResponse>(`/api/tasks/${encodeURIComponent(id)}`, {

@@ -2,6 +2,7 @@
 import { loadTaskyardEnv } from '@taskyard/core';
 import { Command } from 'commander';
 import { registerAgentsRefresh } from './agents-file.js';
+import { registerAuthCommands } from './register-auth-commands.js';
 import { registerIdeaCommands } from './register-idea-commands.js';
 import { registerSearchCommands } from './register-search-commands.js';
 import { registerTaskCommands } from './register-task-commands.js';
@@ -45,8 +46,9 @@ program
   });
 
 registerTaskCommands(program);
+registerAuthCommands(program);
 registerIdeaCommands(program);
 registerSearchCommands(program);
 registerAgentsRefresh(program);
 
-program.parse();
+await program.parseAsync();

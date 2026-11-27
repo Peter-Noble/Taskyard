@@ -122,6 +122,7 @@ if [[ "${NODE_MISSING}" -eq 1 ]]; then
 fi
 
 echo "Next steps:"
+echo "  taskyard login"
 echo "  taskyard setup --project <project-id>"
 echo "  taskyard update   # after this server is redeployed"
 echo

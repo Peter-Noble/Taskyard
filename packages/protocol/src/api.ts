@@ -85,9 +85,11 @@ export type TaskStatus =
   | 'completed'
   | 'cancelled';
 
-export type TaskType = 'feature' | 'bug' | 'documentation' | 'thought' | 'design';
+export const TASK_TYPES = ['feature', 'bug', 'documentation', 'thought', 'design'] as const;
+export type TaskType = (typeof TASK_TYPES)[number];
 
-export type TaskPriority = 'low' | 'medium' | 'high' | 'critical';
+export const TASK_PRIORITIES = ['low', 'medium', 'high', 'critical'] as const;
+export type TaskPriority = (typeof TASK_PRIORITIES)[number];
 
 export type DecisionStatus = 'accepted' | 'rejected';
 

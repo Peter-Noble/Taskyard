@@ -1,8 +1,13 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cmdSearch } from './search-cli.js';
+
+beforeEach(() => {
+  vi.stubEnv('TASKYARD_SERVER_URL', 'https://taskyard.test');
+});
 
 afterEach(() => {
   vi.restoreAllMocks();
+  vi.unstubAllEnvs();
 });
 
 describe('taskyard search', () => {
@@ -18,7 +23,7 @@ describe('taskyard search', () => {
     await cmdSearch('app wide', { project: 'project-1' }, false);
 
     expect(fetchMock).toHaveBeenCalledWith(
-      'http://taskyard.app/api/search?q=app+wide&type=task&limit=20&project_id=project-1',
+      'https://taskyard.test/api/search?q=app+wide&type=task&limit=20&project_id=project-1',
       expect.any(Object),
     );
     expect(output).toHaveBeenCalledWith('{"results":[]}\n');
@@ -48,7 +53,7 @@ describe('taskyard search', () => {
     await cmdSearch('app', { allProjects: true, limit: '50' }, true);
 
     expect(globalThis.fetch).toHaveBeenCalledWith(
-      'http://taskyard.app/api/search?q=app&type=task&limit=50&all_projects=1',
+      'https://taskyard.test/api/search?q=app&type=task&limit=50&all_projects=1',
       expect.any(Object),
     );
     expect(output).toHaveBeenCalledWith(

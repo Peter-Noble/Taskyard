@@ -18,7 +18,7 @@ export function readGlobalConfig(): GlobalConfig | null {
   const file = globalConfigPath();
   if (!fs.existsSync(file)) return null;
   try {
-    const parsed = JSON.parse(fs.readFileSync(file, 'utf8')) as GlobalConfig;
+    const parsed = JSON.parse(fs.readFileSync(file, 'utf8').replace(/^\uFEFF/, '')) as GlobalConfig;
     return parsed && typeof parsed === 'object' ? parsed : null;
   } catch {
     return null;

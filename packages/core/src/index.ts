@@ -16,6 +16,7 @@ export * from './threads.js';
 export * from './tasks.js';
 export * from './passwords.js';
 export * from './people.js';
+export * from './cli-login.js';
 export * from './collections.js';
 export * from './ideas.js';
 export * from './search.js';

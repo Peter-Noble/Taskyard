@@ -1,4 +1,5 @@
-import type { Command } from 'commander';
+import { TASK_PRIORITIES, TASK_TYPES } from '@taskyard/protocol';
+import { Option, type Command } from 'commander';
 import {
   cmdClaim,
   cmdComment,
@@ -20,6 +21,13 @@ import {
   DEFAULT_SERVER_URL,
   TASK_STATUSES,
 } from './task-cli.js';
+
+function addTaskLabelOptions(command: Command): Command {
+  return command
+    .addOption(new Option('--type <type>', 'Task type').choices([...TASK_TYPES]))
+    .addOption(new Option('--priority <priority>', 'Task priority').choices([...TASK_PRIORITIES]))
+    .option('--category <text>', 'Free-text category');
+}
 
 /** Registers `task *`, `setup`, `sync`, and `link` on a commander program. */
 export function registerTaskCommands(program: Command): void {
@@ -54,35 +62,16 @@ export function registerTaskCommands(program: Command): void {
       },
     );
 
-  task
-    .command('create')
+  addTaskLabelOptions(task.command('create'))
     .description('Create a task')
     .requiredOption('--title <title>', 'Task title')
     .option('--parent <id>', 'Parent task id for subtasks')
     .option('--project <id>', 'Project id (default: .taskyard/project.json or $TASKYARD_PROJECT_ID)')
     .option('--description <text>', 'Brief: the work this task asks for')
     .option('--pretty', 'Human-readable output instead of JSON')
-    .action(
-      async (opts: {
-        title: string;
-        parent?: string;
-        project?: string;
-        description?: string;
-        pretty?: boolean;
-      }) => {
-        await runTaskCommand(() =>
-          cmdCreate(
-            {
-              title: opts.title,
-              parent: opts.parent,
-              project: opts.project,
-              description: opts.description,
-            },
-            Boolean(opts.pretty),
-          ),
-        );
-      },
-    );
+    .action(async (opts: Parameters<typeof cmdCreate>[0] & { pretty?: boolean }) => {
+      await runTaskCommand(() => cmdCreate(opts, Boolean(opts.pretty)));
+    });
 
   task
     .command('status')
@@ -95,23 +84,23 @@ export function registerTaskCommands(program: Command): void {
       await runTaskCommand(() => cmdStatus(id, status, Boolean(opts.pretty), opts.reason));
     });
 
-  task
-    .command('update')
-    .description('Change a task title, brief, or assignee')
+  addTaskLabelOptions(task.command('update'))
+    .description('Change a task title, brief, assignee, type, priority, or category')
     .argument('<id>', 'Task id or short id')
     .option('--title <title>', 'New title')
     .option('--description <text>', 'Replace the brief when the work the task asks for has changed')
     .option('--assignee <name>', 'Assignee, or empty string to clear')
+    .addOption(new Option('--clear-category', 'Remove the category').conflicts('category'))
     .option('--pretty', 'Human-readable output instead of JSON')
     .action(
       async (
         id: string,
-        opts: { title?: string; description?: string; assignee?: string; pretty?: boolean },
+        opts: Parameters<typeof cmdUpdate>[1] & { clearCategory?: boolean; pretty?: boolean },
       ) => {
         await runTaskCommand(() =>
           cmdUpdate(
             id,
-            { title: opts.title, description: opts.description, assignee: opts.assignee },
+            { ...opts, category: opts.clearCategory ? null : opts.category },
             Boolean(opts.pretty),
           ),
         );

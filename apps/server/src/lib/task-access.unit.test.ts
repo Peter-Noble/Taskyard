@@ -56,6 +56,8 @@ describe('default API authentication', () => {
     ['POST', '/api/auth/logout'],
     ['POST', '/api/auth/password'],
     ['GET', '/api/auth/session'],
+    ['POST', '/api/auth/cli/start'],
+    ['POST', '/api/auth/cli/poll'],
   ])('lets %s %s handle its own session requirements', (method, path) => {
     const response = middleware(new NextRequest(`https://taskyard.test${path}`, { method }));
     expect(response.headers.get('x-middleware-next')).toBe('1');
@@ -66,6 +68,8 @@ describe('default API authentication', () => {
     ['GET', '/api/auth/login'],
     ['POST', '/api/auth/login/future-endpoint'],
     ['POST', '/api/auth/profile'],
+    ['POST', '/api/auth/cli/approve'],
+    ['DELETE', '/api/auth/cli/sessions/fixture-id'],
   ])('rejects unauthenticated %s %s by default', (method, path) => {
     const req = new NextRequest(`https://taskyard.test${path}`, {
       method,

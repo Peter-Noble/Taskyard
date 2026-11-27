@@ -224,6 +224,18 @@ if (!hasTable('sessions')) {
   console.log('created sessions');
 }
 
+if (!hasTable('cli_login_requests')) {
+  db.exec(`
+    CREATE TABLE cli_login_requests (
+      secret_hash text PRIMARY KEY NOT NULL,
+      code_hash text NOT NULL UNIQUE,
+      expires_at integer NOT NULL,
+      approved_by text REFERENCES sessions(id) ON DELETE CASCADE
+    );
+  `);
+  console.log('created cli_login_requests');
+}
+
 if (!hasTable('collections')) {
   db.exec(`
     CREATE TABLE collections (

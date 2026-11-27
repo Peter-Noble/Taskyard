@@ -24,7 +24,7 @@ export async function POST(req: Request, { params }: Params) {
 
   const db = getDb();
   try {
-    const decision = addTaskDecision(db, id, { ...body, actor: sessionActor(gate, body.actor) });
+    const decision = addTaskDecision(db, id, { ...body, actor: sessionActor(gate) });
     if (!decision) return jsonError('Task not found', 404);
     return jsonOk({ decision }, 201);
   } catch (err) {
@@ -43,7 +43,7 @@ export async function DELETE(req: Request, { params }: Params) {
 
   const db = getDb();
   try {
-    const actor = sessionActor(gate, searchParams.get('actor') ?? undefined);
+    const actor = sessionActor(gate);
     const task = removeTaskDecision(db, id, decisionId, actor);
     if (!task) return jsonError('Task not found', 404);
     return jsonOk({ task });
