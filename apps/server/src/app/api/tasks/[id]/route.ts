@@ -46,7 +46,7 @@ export async function PATCH(req: Request, { params }: Params) {
 
   const db = getDb();
   try {
-    const task = updateTask(db, id, { ...body, actor: sessionActor(gate, body.actor) });
+    const task = updateTask(db, id, { ...body, actor: sessionActor(gate) });
     if (!task) return jsonError('Task not found', 404);
     return jsonOk({ task });
   } catch (err) {

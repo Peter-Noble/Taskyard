@@ -23,7 +23,7 @@ export async function POST(req: Request, { params }: Params) {
 
   const db = getDb();
   try {
-    const activity = addTaskComment(db, id, { ...body, actor: sessionActor(gate, body.actor) });
+    const activity = addTaskComment(db, id, { ...body, actor: sessionActor(gate) });
     if (!activity) return jsonError('Task not found', 404);
     return jsonOk({ activity }, 201);
   } catch (err) {

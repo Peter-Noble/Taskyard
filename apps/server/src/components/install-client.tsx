@@ -72,7 +72,8 @@ export function InstallClient() {
           <CopyBlock label="macOS / Linux" command={bash} />
           <CopyBlock label="Windows (PowerShell)" command={ps} />
           <p style={{ margin: 0, opacity: 0.85 }}>
-            After install: <code className="spec-mono">taskyard setup --project &lt;id&gt;</code>
+            After installing, run <code className="spec-mono">taskyard login</code> and approve the terminal in your browser.
+            Then run <code className="spec-mono">taskyard setup --project &lt;id&gt;</code>.
           </p>
         </div>
       </div>

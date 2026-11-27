@@ -21,8 +21,6 @@ export function requireFullSession(
   return { ok: true, ...session };
 }
 
-export function sessionActor(session: WebSession, requested?: string): string {
-  return session.kind === 'web'
-    ? session.person.displayName
-    : requested?.trim() || session.person.displayName;
+export function sessionActor(session: WebSession): string {
+  return session.person.displayName;
 }

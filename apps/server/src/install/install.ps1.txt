@@ -106,6 +106,7 @@ node "$BundlePath" %*
   }
 
   Write-Host "Next steps:"
+  Write-Host "  taskyard login"
   Write-Host "  taskyard setup --project <project-id>"
   Write-Host "  taskyard update   # after this server is redeployed"
   Write-Host ""

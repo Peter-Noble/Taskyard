@@ -22,7 +22,7 @@ export async function POST(req: Request, { params }: Params) {
 
   const db = getDb();
   try {
-    const task = claimTask(db, id, body.assignee, sessionActor(gate, body.actor));
+    const task = claimTask(db, id, body.assignee, sessionActor(gate));
     if (!task) return jsonError('Task not found', 404);
     return jsonOk({ task });
   } catch (err) {

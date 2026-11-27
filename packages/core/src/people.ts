@@ -1,5 +1,5 @@
 import { people, sessions, type TaskyardDb } from '@taskyard/db';
-import { asc, count, eq } from 'drizzle-orm';
+import { and, asc, count, desc, eq } from 'drizzle-orm';
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import { generateTemporaryPassword, hashPassword, verifyPassword } from './passwords.js';
 
@@ -29,6 +29,11 @@ export type WebSession = {
 };
 
 const USERNAME_PATTERN = /^[a-z0-9][a-z0-9._-]{0,31}$/;
+const CLI_SESSION_MS = 30 * 24 * 60 * 60 * 1000;
+
+function cliSessionExpiresAt(createdAt: Date | null): Date {
+  return new Date((createdAt?.getTime() ?? 0) + CLI_SESSION_MS);
+}
 
 function toPerson(row: typeof people.$inferSelect): PersonRecord {
   return {
@@ -266,10 +271,27 @@ export function deleteSessionByToken(db: TaskyardDb, token: string): void {
   db.delete(sessions).where(eq(sessions.tokenHash, hashSessionToken(token))).run();
 }
 
+export function listCliSessions(db: TaskyardDb, personId: string) {
+  const now = Date.now();
+  return db.select({ id: sessions.id, createdAt: sessions.createdAt }).from(sessions)
+    .where(and(eq(sessions.personId, personId), eq(sessions.kind, 'cli')))
+    .orderBy(desc(sessions.createdAt)).all()
+    .map((session) => ({ ...session, expiresAt: cliSessionExpiresAt(session.createdAt) }))
+    .filter((session) => session.expiresAt.getTime() > now);
+}
+
+export function revokeCliSession(db: TaskyardDb, personId: string, sessionId: string): void {
+  db.delete(sessions).where(and(
+    eq(sessions.id, sessionId), eq(sessions.personId, personId), eq(sessions.kind, 'cli'),
+  )).run();
+}
+
 export function personFromToken(db: TaskyardDb, token: string): WebSession | null {
   if (!token) return null;
   const session = db.select().from(sessions).where(eq(sessions.tokenHash, hashSessionToken(token))).get();
-  if (!session) return null;
+  if (!session || (session.kind === 'cli' && cliSessionExpiresAt(session.createdAt).getTime() <= Date.now())) {
+    return null;
+  }
   const row = db.select().from(people).where(eq(people.id, session.personId)).get();
   if (!row) return null;
   return {

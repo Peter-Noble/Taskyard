@@ -13,7 +13,9 @@ async function readError(res: Response): Promise<string> {
   }
 }
 
-export function AccountClient() {
+type TerminalSession = { id: string; createdAt: Date | null; expiresAt: Date };
+
+export function AccountClient({ cliSessions }: { cliSessions: TerminalSession[] }) {
   const person = useSessionPerson();
   const [displayName, setDisplayName] = useState(person?.displayName ?? '');
   const [currentPassword, setCurrentPassword] = useState('');
@@ -21,7 +23,24 @@ export function AccountClient() {
   const [confirm, setConfirm] = useState('');
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [pending, setPending] = useState<'name' | 'password' | 'sign-out' | null>(null);
+  const [pending, setPending] = useState<'name' | 'password' | 'sign-out' | 'terminal' | null>(null);
+  const [terminalSessions, setTerminalSessions] = useState(cliSessions);
+
+  async function revokeTerminal(id: string) {
+    setPending('terminal');
+    setError(null);
+    setMessage(null);
+    try {
+      const res = await fetch(`/api/auth/cli/sessions/${encodeURIComponent(id)}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error(await readError(res));
+      setTerminalSessions((current) => current.filter((session) => session.id !== id));
+      setMessage('Terminal signed out.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to sign out the terminal');
+    } finally {
+      setPending(null);
+    }
+  }
 
   async function signOut() {
     setPending('sign-out');
@@ -149,6 +168,21 @@ export function AccountClient() {
           </button>
         </form>
 
+        {terminalSessions.length > 0 ? (
+          <section>
+            <h2>Terminal sessions</h2>
+            <ul>
+              {terminalSessions.map((session) => (
+                <li key={session.id}>
+                  <span>Signed in {session.createdAt?.toUTCString()} · Expires {session.expiresAt.toUTCString()}</span>{' '}
+                  <button type="button" className="btn" disabled={pending !== null} onClick={() => void revokeTerminal(session.id)}>
+                    Sign out terminal
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
         <button type="button" className="btn account-sign-out" disabled={pending !== null} onClick={() => void signOut()}>
           {pending === 'sign-out' ? 'Signing out…' : 'Sign out'}
         </button>

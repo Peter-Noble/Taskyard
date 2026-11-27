@@ -7,6 +7,7 @@ import type {
   ThreadDetail,
 } from '@taskyard/protocol';
 import { announceUpdatedInstructions, writeAgentsInstructions } from './agents-file.js';
+import { readCliToken } from './credentials.js';
 import { syncDecisionsFile } from './decisions-file.js';
 import { decisionsFilePath, readProjectFile, resolveProjectContext, writeProjectFile } from './project-file.js';
 
@@ -30,7 +31,7 @@ export type UpdateTaskResponse = { task: Task };
 export type AddCommentResponse = { activity: TaskActivity };
 export type GetThreadResponse = { thread: ThreadDetail };
 
-export const DEFAULT_SERVER_URL = 'http://taskyard.app';
+export const DEFAULT_SERVER_URL = 'https://taskyard.app';
 
 export type ShowThreadResult = {
   thread_id: string;
@@ -90,8 +91,11 @@ async function parseJsonBody(res: Response): Promise<unknown> {
   }
 }
 
-export async function apiFetch<T>(path: string, init?: RequestInit, serverUrl?: string): Promise<T> {
-  const url = joinUrl(serverUrl ?? getServerUrl(), path);
+export async function apiFetch<T>(path: string, init?: RequestInit, serverUrl = getServerUrl(), useSession = true): Promise<T> {
+  const url = joinUrl(serverUrl, path);
+  const token = useSession
+    ? process.env.TASKYARD_SESSION_TOKEN || (!process.env.TASKYARD_THREAD_ID ? readCliToken(serverUrl) : undefined)
+    : undefined;
   let res: Response;
   try {
     res = await fetch(url, {
@@ -99,10 +103,8 @@ export async function apiFetch<T>(path: string, init?: RequestInit, serverUrl?: 
       headers: {
         Accept: 'application/json',
         ...(init?.body ? { 'Content-Type': 'application/json' } : {}),
-        ...(process.env.TASKYARD_SESSION_TOKEN
-          ? { Authorization: `Bearer ${process.env.TASKYARD_SESSION_TOKEN}` }
-          : {}),
-        ...(process.env.TASKYARD_PERSON_ID
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...(useSession && process.env.TASKYARD_PERSON_ID
           ? { 'x-taskyard-person-id': process.env.TASKYARD_PERSON_ID }
           : {}),
         ...init?.headers,
@@ -124,6 +126,9 @@ export async function apiFetch<T>(path: string, init?: RequestInit, serverUrl?: 
         : (body as ApiErrorBody);
     } else {
       errorBody = { error: `HTTP ${res.status}: ${res.statusText || 'Request failed'}`.trim() };
+    }
+    if (useSession && res.status === 401 && !process.env.TASKYARD_THREAD_ID && !errorBody.hint) {
+      errorBody.hint = 'Run taskyard login to sign in to this Taskyard server.';
     }
     throw new TaskCliError(res.status, errorBody);
   }

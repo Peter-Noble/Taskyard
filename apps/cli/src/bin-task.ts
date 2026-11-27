@@ -10,6 +10,7 @@ import { createInterface } from 'node:readline';
 import { Command } from 'commander';
 import { registerAgentsRefresh } from './agents-file.js';
 import { loadEnvLite } from './load-env-lite.js';
+import { registerAuthCommands } from './register-auth-commands.js';
 import { registerIdeaCommands } from './register-idea-commands.js';
 import { registerSearchCommands } from './register-search-commands.js';
 import { registerTaskCommands } from './register-task-commands.js';
@@ -49,7 +50,7 @@ async function chooseUpdate(server: string): Promise<'update' | 'continue' | 'ca
 }
 
 program.hook('preAction', async (_program, command) => {
-  if (command.parent === program && command.name() === 'update') return;
+  if (command.parent === program && ['update', 'login', 'logout'].includes(command.name())) return;
   const server = await findCliUpdate();
   if (!server) return;
 
@@ -81,6 +82,7 @@ program.hook('preAction', async (_program, command) => {
 });
 
 registerTaskCommands(program);
+registerAuthCommands(program);
 registerIdeaCommands(program);
 registerSearchCommands(program);
 

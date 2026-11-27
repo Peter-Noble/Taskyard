@@ -235,6 +235,13 @@ export const sessions = sqliteTable('sessions', {
   createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
 });
 
+export const cliLoginRequests = sqliteTable('cli_login_requests', {
+  secretHash: text('secret_hash').primaryKey(),
+  codeHash: text('code_hash').notNull().unique(),
+  expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
+  approvedBy: text('approved_by').references(() => sessions.id, { onDelete: 'cascade' }),
+});
+
 export const collections = sqliteTable(
   'collections',
   {
