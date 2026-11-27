@@ -2,6 +2,7 @@ import { projects, taskActivity, taskDecisions, taskDependencies, tasks } from '
 import { and, asc, desc, eq, inArray, isNull, or, sql } from 'drizzle-orm';
 import { randomUUID } from 'node:crypto';
 import type { TaskyardDb } from '@taskyard/db';
+import { TASK_PRIORITIES, TASK_TYPES } from '@taskyard/protocol';
 import type {
   AddTaskCommentRequest,
   AddTaskDecisionRequest,
@@ -43,10 +44,6 @@ const TASK_STATUSES: TaskStatus[] = [
   'completed',
   'cancelled',
 ];
-
-const TASK_TYPES: TaskType[] = ['feature', 'bug', 'documentation', 'thought', 'design'];
-
-const TASK_PRIORITIES: TaskPriority[] = ['low', 'medium', 'high', 'critical'];
 
 const OPEN_DEPENDENCY_STATUSES: TaskStatus[] = [
   'backlog',

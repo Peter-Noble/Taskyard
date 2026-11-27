@@ -1,10 +1,12 @@
 import type {
+  CreateTaskRequest,
   Task,
   TaskActivity,
   TaskDecision,
   TaskDetail,
   TaskStatus,
   ThreadDetail,
+  UpdateTaskRequest,
 } from '@taskyard/protocol';
 import { announceUpdatedInstructions, writeAgentsInstructions } from './agents-file.js';
 import { readCliToken } from './credentials.js';
@@ -194,6 +196,9 @@ function formatPretty(data: unknown): string {
       `status: ${task.status}${task.blocked ? ' (blocked)' : ''}`,
       `project: ${task.project_id}`,
     ];
+    if (task.task_type) lines.push(`type: ${task.task_type}`);
+    if (task.priority) lines.push(`priority: ${task.priority}`);
+    if (task.category) lines.push(`category: ${task.category}`);
     if (task.parent_short_id) lines.push(`parent: ${task.parent_short_id}`);
     if (task.assignee) lines.push(`assignee: ${task.assignee}`);
     if (task.description) {
@@ -286,20 +291,29 @@ export async function cmdList(
   writeOutput(data, pretty);
 }
 
+type TaskLabelOptions = {
+  type?: CreateTaskRequest['task_type'];
+  priority?: CreateTaskRequest['priority'];
+  category?: CreateTaskRequest['category'];
+};
+
 export async function cmdCreate(
   opts: {
     title: string;
     parent?: string;
     project?: string;
     description?: string;
-  },
+  } & TaskLabelOptions,
   pretty: boolean,
 ): Promise<void> {
   const projectId = requireProjectId(opts.project);
 
-  const body: Record<string, string | null> = {
+  const body: CreateTaskRequest = {
     title: opts.title,
     project_id: projectId,
+    task_type: opts.type,
+    priority: opts.priority,
+    category: opts.category,
   };
   if (opts.parent) body.parent_id = opts.parent;
   if (opts.description) body.description = opts.description;
@@ -350,17 +364,20 @@ export async function cmdStatus(
 
 export async function cmdUpdate(
   id: string,
-  opts: { title?: string; description?: string; assignee?: string },
+  opts: { title?: string; description?: string; assignee?: string } & TaskLabelOptions,
   pretty: boolean,
 ): Promise<void> {
-  const body: Record<string, string | null> = { actor: actorFromEnv() };
+  const body: UpdateTaskRequest = { actor: actorFromEnv() };
   if (opts.title !== undefined) body.title = opts.title;
   if (opts.description !== undefined) body.description = opts.description;
   if (opts.assignee !== undefined) body.assignee = opts.assignee;
+  if (opts.type !== undefined) body.task_type = opts.type;
+  if (opts.priority !== undefined) body.priority = opts.priority;
+  if (opts.category !== undefined) body.category = opts.category;
   if (Object.keys(body).length === 1) {
     throw new TaskCliError(1, {
       error: 'Nothing to update',
-      hint: 'Pass --title, --description, or --assignee.',
+      hint: 'Pass --title, --description, --assignee, --type, --priority, --category, or --clear-category.',
     });
   }
   const data = await apiFetch<UpdateTaskResponse>(`/api/tasks/${encodeURIComponent(id)}`, {

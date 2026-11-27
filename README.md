@@ -55,7 +55,8 @@ Then in the browser: http://localhost:3000 — create a task, start a `stub` or 
 ```bash
 pnpm --filter cli build
 node apps/cli/dist/main.js task list --pretty
-node apps/cli/dist/main.js task create --project <project_id> --title "Ship MVP" --description "..."
+node apps/cli/dist/main.js task create --project <project_id> --title "Ship MVP" --type feature --priority high --category "Release"
+node apps/cli/dist/main.js task update <short_id> --type design --priority medium --clear-category
 node apps/cli/dist/main.js task claim <short_id> --as me
 node apps/cli/dist/main.js task status <short_id> in_progress
 node apps/cli/dist/main.js task decision add --task <short_id> --choice "..." --why "..."
