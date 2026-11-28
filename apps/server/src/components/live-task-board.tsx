@@ -17,21 +17,21 @@ import { categoriesFromTasks, taskPriorityLabel, taskPriorityTone, taskTypeMeta 
 import { ChatCommentComposer, ChatMessage } from '@/components/chat-message';
 import { MarkdownMessage } from '@/components/markdown-message';
 import { fetchTasksForProject, type ApiTask } from '@/lib/tasks-api';
+import { TaskGroupedList, taskGroupKey } from '@/components/task-grouped-list';
+
+const NO_CATEGORY_SUGGESTIONS: string[] = [];
 
 function useProjectCategorySuggestions(projectId: string | null | undefined, refreshKey = 0) {
-  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [result, setResult] = useState<{ projectId: string; suggestions: string[] }>();
   useEffect(() => {
-    if (!projectId) {
-      setSuggestions([]);
-      return;
-    }
+    if (!projectId) return;
     let cancelled = false;
     void fetch(`/api/tasks?project_id=${encodeURIComponent(projectId)}`)
       .then(async (res) => {
         if (!res.ok) return;
         const data = (await res.json()) as { tasks?: Task[] };
         if (cancelled) return;
-        setSuggestions(categoriesFromTasks(data.tasks ?? []));
+        setResult({ projectId, suggestions: categoriesFromTasks(data.tasks ?? []) });
       })
       .catch(() => {
         /* suggestions are optional */
@@ -40,7 +40,7 @@ function useProjectCategorySuggestions(projectId: string | null | undefined, ref
       cancelled = true;
     };
   }, [projectId, refreshKey]);
-  return suggestions;
+  return result && result.projectId === projectId ? result.suggestions : NO_CATEGORY_SUGGESTIONS;
 }
 
 const STATUSES: TaskStatus[] = [
@@ -161,8 +161,12 @@ export function LiveTaskRail({
     : tasks.filter((task) => task.status !== 'cancelled');
   const sort = filter?.sort ?? 'priority_desc';
   const visible = sortTasksForRail(filtered, sort);
-  const visibleIds = new Set(visible.map((task) => task.id));
-  const roots = visible.filter((task) => !task.parent_id || !visibleIds.has(task.parent_id));
+  const groupBy = filter?.groupBy === 'none' ? undefined : filter?.groupBy;
+  const visibleById = new Map(visible.map((task) => [task.id, task]));
+  const roots = visible.filter((task) => {
+    const parent = task.parent_id ? visibleById.get(task.parent_id) : undefined;
+    return !parent || (groupBy && taskGroupKey(task, groupBy) !== taskGroupKey(parent, groupBy));
+  });
   const open = roots.filter((task) => task.status !== 'completed');
   const completed = roots.filter((task) => task.status === 'completed');
   const parentIdsByTask = new Map<string, Set<string>>();
@@ -266,6 +270,14 @@ export function LiveTaskRail({
           <p className="tasks-empty">Loading tasks…</p>
         ) : visible.length === 0 ? (
           <p className="tasks-empty">No tasks yet.</p>
+        ) : groupBy ? (
+          <TaskGroupedList
+            key={groupBy}
+            groupBy={groupBy}
+            tasks={visible}
+            roots={roots}
+            renderTask={(task) => renderTask(task)}
+          />
         ) : (
           <>
             <div className="task-project-items">{open.map((task) => renderTask(task))}</div>

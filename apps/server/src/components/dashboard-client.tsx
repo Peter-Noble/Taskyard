@@ -60,7 +60,7 @@ export function DashboardClient({
   const [selectedTaskUpdatedAt, setSelectedTaskUpdatedAt] = useState<string | null>(null);
   const [liveProjectId, setLiveProjectId] = useState<string | null>(null);
   const [composingTask, setComposingTask] = useState(false);
-  const [taskFilter, setTaskFilter] = useState<TaskRailFilterState>(() => defaultTaskRailFilter());
+  const [taskFilter, setTaskFilter] = useState<TaskRailFilterState>(defaultTaskRailFilter);
 
   const { data: machinesData } = useJsonFetch<MachinesResponse>(
     '/api/machines',

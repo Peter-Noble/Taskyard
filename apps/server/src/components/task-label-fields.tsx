@@ -5,7 +5,6 @@ import type { TaskPriority, TaskType } from '@taskyard/protocol';
 import {
   TASK_PRIORITIES,
   TASK_TYPES,
-  mergeCategorySuggestions,
   taskPriorityLabel,
   taskPriorityTone,
   taskTypeMeta,
@@ -48,14 +47,9 @@ function CategoryInput({
   onSubmit?: (next: string) => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const [known, setKnown] = useState(suggestions);
   const [highlight, setHighlight] = useState(-1);
   const [focused, setFocused] = useState(false);
   const listId = `${id}-suggestions`;
-
-  useEffect(() => {
-    setKnown((prev) => mergeCategorySuggestions(prev, suggestions));
-  }, [suggestions]);
 
   useEffect(() => {
     if (!autoFocus) return;
@@ -65,9 +59,9 @@ function CategoryInput({
 
   const filtered = useMemo(() => {
     const q = value.trim().toLowerCase();
-    const list = !q ? known : known.filter((item) => item.toLowerCase().includes(q));
+    const list = !q ? suggestions : suggestions.filter((item) => item.toLowerCase().includes(q));
     return list.slice(0, SUGGESTION_LIMIT);
-  }, [known, value]);
+  }, [suggestions, value]);
   const showSuggestions = focused && filtered.length > 0;
 
   useEffect(() => {

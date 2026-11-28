@@ -6,7 +6,7 @@ import { PRIORITY_RANK, TASK_PRIORITIES, TASK_TYPES } from '@/lib/task-labels';
 import { RailFilterPopover } from '@/components/rail-filter';
 
 // D-007
-const STATUS_OPTIONS: Array<{ id: TaskStatus; label: string }> = [
+export const STATUS_OPTIONS: Array<{ id: TaskStatus; label: string }> = [
   { id: 'backlog', label: 'Backlog' },
   { id: 'ready', label: 'Ready' },
   { id: 'in_progress', label: 'In progress' },
@@ -22,6 +22,16 @@ const STATUS_RANK: Record<TaskStatus, number> = Object.fromEntries(
 ) as Record<TaskStatus, number>;
 
 const PRIORITY_MAX = TASK_PRIORITIES.length - 1;
+
+export const TASK_RAIL_GROUP_OPTIONS = [
+  { id: 'none', label: 'None' },
+  { id: 'type', label: 'Type' },
+  { id: 'priority', label: 'Priority' },
+  { id: 'category', label: 'Category' },
+  { id: 'status', label: 'Status' },
+] as const;
+
+export type TaskRailGroupBy = (typeof TASK_RAIL_GROUP_OPTIONS)[number]['id'];
 
 export type TaskRailSort =
   | 'updated_desc'
@@ -50,6 +60,7 @@ export type TaskRailFilterState = {
   priorityMin: number;
   priorityMax: number;
   sort: TaskRailSort;
+  groupBy: TaskRailGroupBy;
 };
 
 export function defaultTaskRailFilter(): TaskRailFilterState {
@@ -61,6 +72,7 @@ export function defaultTaskRailFilter(): TaskRailFilterState {
     priorityMin: 0,
     priorityMax: PRIORITY_MAX,
     sort: 'priority_desc',
+    groupBy: 'category',
   };
 }
 
@@ -175,6 +187,21 @@ function PriorityRangeSlider({
   );
 }
 
+function countFilterChanges(value: TaskRailFilterState, reference: TaskRailFilterState): number {
+  let count = 0;
+  for (const { id } of TASK_TYPES) {
+    if (value.types[id] !== reference.types[id]) count += 1;
+  }
+  for (const { id } of STATUS_OPTIONS) {
+    if (value.statuses[id] !== reference.statuses[id]) count += 1;
+  }
+  if (value.priorityMin !== reference.priorityMin || value.priorityMax !== reference.priorityMax) {
+    count += 1;
+  }
+  if (value.groupBy !== reference.groupBy) count += 1;
+  return count;
+}
+
 /** Funnel filter between project select and New task — D-007. */
 export function TaskRailFilterButton({
   value,
@@ -186,20 +213,11 @@ export function TaskRailFilterButton({
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState(value);
 
-  const activeCount = useMemo(() => {
-    const defaults = defaultTaskRailFilter();
-    let count = 0;
-    for (const t of TASK_TYPES) {
-      if (value.types[t.id] !== defaults.types[t.id]) count += 1;
-    }
-    for (const s of STATUS_OPTIONS) {
-      if (value.statuses[s.id] !== defaults.statuses[s.id]) count += 1;
-    }
-    if (value.priorityMin !== defaults.priorityMin || value.priorityMax !== defaults.priorityMax) {
-      count += 1;
-    }
-    return count;
-  }, [value]);
+  const activeCount = useMemo(
+    () => countFilterChanges(value, defaultTaskRailFilter()),
+    [value],
+  );
+  const hasChanges = draft.sort !== value.sort || countFilterChanges(draft, value) > 0;
 
   function openPopover() {
     setDraft(value);
@@ -223,6 +241,23 @@ export function TaskRailFilterButton({
       open={open}
       activeCount={activeCount}
       onToggle={openPopover}
+      footer={(
+        <footer className="ta35-filter-popover-actions">
+          <button type="button" className="btn btn-ghost btn-sm ta35-filter-clear" onClick={clear}>
+            Clear
+          </button>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={() => setOpen(false)}>
+            Cancel
+          </button>
+          <button
+            type="button"
+            className={`btn btn-sm ta35-filter-apply${hasChanges ? ' ta35-filter-apply--changed' : ''}`}
+            onClick={apply}
+          >
+            Apply
+          </button>
+        </footer>
+      )}
     >
       <h3>Sort</h3>
       <select
@@ -260,6 +295,20 @@ export function TaskRailFilterButton({
         ))}
       </div>
 
+      <h3><label htmlFor="task-rail-group-by">Group by</label></h3>
+      <select
+        id="task-rail-group-by"
+        className="form-select ta35-filter-sort"
+        value={draft.groupBy}
+        onChange={(event) =>
+          setDraft((prev) => ({ ...prev, groupBy: event.target.value as TaskRailGroupBy }))
+        }
+      >
+        {TASK_RAIL_GROUP_OPTIONS.map(({ id, label }) => (
+          <option key={id} value={id}>{label}</option>
+        ))}
+      </select>
+
       <h3>Priority</h3>
       <PriorityRangeSlider
         min={draft.priorityMin}
@@ -284,15 +333,6 @@ export function TaskRailFilterButton({
             {opt.label}
           </label>
         ))}
-      </div>
-
-      <div className="ta35-filter-popover-actions">
-        <button type="button" className="btn btn-ghost btn-sm" onClick={clear}>
-          Clear
-        </button>
-        <button type="button" className="btn btn-primary btn-sm" onClick={apply}>
-          Apply{activeCount > 0 ? ` · ${activeCount}` : ''}
-        </button>
       </div>
     </RailFilterPopover>
   );

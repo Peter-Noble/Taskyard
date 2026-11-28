@@ -457,6 +457,65 @@ a:hover {
   flex-direction: column;
 }
 
+.task-rail-group-head {
+  position: sticky;
+  z-index: 2;
+  top: 0;
+  margin: 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.task-rail-group-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  padding: 7px var(--space-4);
+  border: 0;
+  background: var(--surface-elevated);
+  text-align: left;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--fg);
+  cursor: pointer;
+}
+
+.task-rail-group-toggle:hover {
+  background: var(--surface);
+}
+
+.task-rail-group-toggle:focus-visible {
+  outline-offset: -2px;
+}
+
+.task-rail-group-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.task-rail-group-count {
+  flex: none;
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.task-rail-group-chevron {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  margin: 0 2px;
+  border-right: 1px solid currentColor;
+  border-bottom: 1px solid currentColor;
+  transform: rotate(-45deg);
+}
+
+.task-rail-group-toggle[aria-expanded="true"] .task-rail-group-chevron {
+  transform: translateY(-1px) rotate(45deg);
+}
+
 .task-item-wrap {
   display: flex;
   flex-direction: column;
@@ -3960,6 +4019,25 @@ html:has(body.launcher-page) {
   overflow: auto;
 }
 
+.workspace-rail-tasks:has(.ta35-filter-popover--with-footer) {
+  container-type: size;
+}
+
+.ta35-filter-popover--with-footer {
+  display: flex;
+  flex-direction: column;
+  max-height: min(70dvh, 520px, calc(100cqh - var(--panel-head-h)));
+  padding: 0;
+  overflow: hidden;
+}
+
+.ta35-filter-popover-content {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--space-3);
+}
+
 .ta35-priority-range {
   position: relative;
   margin: 0 0 var(--space-3);
@@ -4135,6 +4213,27 @@ html:has(body.launcher-page) {
   margin-top: var(--space-3);
   padding-top: var(--space-3);
   border-top: 1px solid var(--border);
+}
+
+.ta35-filter-popover--with-footer > .ta35-filter-popover-actions {
+  flex: none;
+  margin: 0;
+  padding: var(--space-3);
+}
+
+.ta35-filter-clear {
+  margin-inline-end: auto;
+}
+
+.ta35-filter-apply {
+  background: #fff;
+  color: #000;
+}
+
+.ta35-filter-apply--changed {
+  background: #000;
+  border-color: #000;
+  color: #fff;
 }
 
 .ta35-filter-strip {

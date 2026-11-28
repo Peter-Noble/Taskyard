@@ -39,14 +39,15 @@ export function taskPriorityTone(id: TaskPriority) {
 }
 
 /**
- * Distinct non-empty categories from tasks, ranked by use count then recency.
+ * Distinct non-empty categories from active tasks, ranked by use count then recency.
  * Empty-query suggestions should show this order (popular / recently used).
  */
 export function categoriesFromTasks(
-  tasks: Array<Pick<Task, 'category' | 'updated_at'>>,
+  tasks: Array<Pick<Task, 'category' | 'status' | 'updated_at'>>,
 ): string[] {
   const map = new Map<string, { label: string; count: number; latest: number }>();
   for (const task of tasks) {
+    if (task.status === 'completed' || task.status === 'cancelled') continue;
     const category = task.category?.trim();
     if (!category) continue;
     const key = category.toLowerCase();
@@ -68,31 +69,4 @@ export function categoriesFromTasks(
         b.count - a.count || b.latest - a.latest || a.label.localeCompare(b.label),
     )
     .map((entry) => entry.label);
-}
-
-/**
- * Merge suggestion lists without dropping known values when a slower fetch arrives.
- * Incoming order wins (ranked popular/recent); prev-only items append.
- */
-export function mergeCategorySuggestions(prev: string[], incoming: string[]): string[] {
-  if (incoming.length === 0) return prev;
-  const seen = new Set<string>();
-  const next: string[] = [];
-  for (const raw of incoming) {
-    const item = raw.trim();
-    if (!item) continue;
-    const key = item.toLowerCase();
-    if (seen.has(key)) continue;
-    seen.add(key);
-    next.push(item);
-  }
-  for (const raw of prev) {
-    const item = raw.trim();
-    if (!item) continue;
-    const key = item.toLowerCase();
-    if (seen.has(key)) continue;
-    seen.add(key);
-    next.push(item);
-  }
-  return next;
 }
