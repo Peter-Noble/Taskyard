@@ -488,15 +488,20 @@ a:hover {
   font-weight: 600;
 }
 
-.ta27-section-head,
-.ta27-folder-head {
+.ta27-category-toggle {
   display: flex;
   align-items: center;
   gap: var(--space-2);
+  width: 100%;
+  padding: 8px var(--space-3);
+  border: 0;
+  background: var(--surface);
   text-align: left;
+  font-family: inherit;
   font-size: 12px;
   font-weight: 600;
   color: var(--fg);
+  cursor: pointer;
 }
 
 .ta27-section-head {
@@ -504,9 +509,16 @@ a:hover {
   z-index: 2;
   top: 0;
   margin: 0;
-  padding: 7px var(--space-4);
   border-bottom: 1px solid var(--border);
+}
+
+.ta27-section-head .ta27-category-toggle {
+  padding: 7px var(--space-4);
   background: var(--surface-elevated);
+}
+
+.ta27-section-head .ta27-category-toggle:hover {
+  background: var(--surface);
 }
 
 .ta27-category-name {
@@ -534,24 +546,16 @@ a:hover {
   overflow: hidden;
 }
 
-.ta27-folder-head {
-  width: 100%;
-  padding: 8px var(--space-3);
-  border: 0;
-  background: var(--surface);
-  cursor: pointer;
-}
-
-.ta27-folder-head:hover,
-.ta27-folder-head[aria-expanded="true"] {
+.ta27-folder .ta27-category-toggle:hover,
+.ta27-folder .ta27-category-toggle[aria-expanded="true"] {
   background: var(--surface-elevated);
 }
 
-.ta27-folder-head:focus-visible {
+.ta27-category-toggle:focus-visible {
   outline-offset: -2px;
 }
 
-.ta27-folder-chevron {
+.ta27-category-chevron {
   flex: none;
   width: 6px;
   height: 6px;
@@ -561,7 +565,7 @@ a:hover {
   transform: rotate(-45deg);
 }
 
-.ta27-folder-head[aria-expanded="true"] .ta27-folder-chevron {
+.ta27-category-toggle[aria-expanded="true"] .ta27-category-chevron {
   transform: translateY(-1px) rotate(45deg);
 }
 

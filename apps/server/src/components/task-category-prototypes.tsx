@@ -48,7 +48,7 @@ export function TaskCategoryPrototype({
   selectedTaskId: string | null;
   renderTask: (task: Task) => ReactNode;
 }) {
-  const [folderOverrides, setFolderOverrides] = useState<Record<string, boolean>>({});
+  const [expandedGroups, setExpandedGroups] = useState(() => new Map<string, boolean>());
   const [pickedKey, setPickedKey] = useState<string | null>(null);
   const groupsByKey = new Map<string, CategoryGroup>();
   for (const task of tasks) {
@@ -88,40 +88,31 @@ export function TaskCategoryPrototype({
     );
   }
 
-  if (design === 'B') {
-    return (
-      <div className="ta27-folders">
-        {groups.map((group) => {
-          const open = Object.hasOwn(folderOverrides, group.key)
-            ? folderOverrides[group.key]
-            : group.key === defaultGroup?.key;
-          return (
-            <section key={group.key} className="ta27-folder" aria-label={group.label}>
-              <button
-                className="ta27-folder-head"
-                type="button"
-                aria-expanded={open}
-                onClick={() => setFolderOverrides({ ...folderOverrides, [group.key]: !open })}
-              >
-                <span className="ta27-folder-chevron" aria-hidden="true" />
-                <span className="ta27-category-name">{group.label}</span>
-                <span className="ta27-category-count">{group.count}</span>
-              </button>
-              {open ? <div className="task-project-items">{group.roots.map(renderTask)}</div> : null}
-            </section>
-          );
-        })}
-      </div>
-    );
-  }
-
-  return groups.map((group) => (
-    <section key={group.key} className="ta27-section" aria-label={group.label}>
-      <h2 className="ta27-section-head">
+  const sections = design === 'A';
+  const categoryGroups = groups.map((group) => {
+    const open = expandedGroups.get(group.key) ?? (sections || group.key === defaultGroup?.key);
+    const toggle = (
+      <button
+        className="ta27-category-toggle"
+        type="button"
+        aria-expanded={open}
+        onClick={() => setExpandedGroups((current) => new Map(current).set(group.key, !open))}
+      >
+        <span className="ta27-category-chevron" aria-hidden="true" />
         <span className="ta27-category-name">{group.label}</span>
         <span className="ta27-category-count">{group.count}</span>
-      </h2>
-      <div className="task-project-items">{group.roots.map(renderTask)}</div>
-    </section>
-  ));
+      </button>
+    );
+    return (
+      <section
+        key={group.key}
+        className={sections ? 'ta27-section' : 'ta27-folder'}
+        aria-label={group.label}
+      >
+        {sections ? <h2 className="ta27-section-head">{toggle}</h2> : toggle}
+        {open ? <div className="task-project-items">{group.roots.map(renderTask)}</div> : null}
+      </section>
+    );
+  });
+  return sections ? categoryGroups : <div className="ta27-folders">{categoryGroups}</div>;
 }
