@@ -20,7 +20,7 @@ import { fetchTasksForProject, type ApiTask } from '@/lib/tasks-api';
 import {
   CategoryPrototypeSwitcher,
   TaskCategoryPrototype,
-  taskCategoryKey,
+  taskGroupKey,
   type CategoryDesign,
 } from '@/components/task-category-prototypes';
 
@@ -171,11 +171,11 @@ export function LiveTaskRail({
     : tasks.filter((task) => task.status !== 'cancelled');
   const sort = filter?.sort ?? 'priority_desc';
   const visible = sortTasksForRail(filtered, sort);
-  const groupedDesign = filter?.groupByCategory ? categoryDesign : undefined;
+  const groupBy = categoryDesign && filter?.groupBy !== 'none' ? filter?.groupBy : undefined;
   const visibleById = new Map(visible.map((task) => [task.id, task]));
   const roots = visible.filter((task) => {
     const parent = task.parent_id ? visibleById.get(task.parent_id) : undefined;
-    return !parent || (groupedDesign && taskCategoryKey(task) !== taskCategoryKey(parent));
+    return !parent || (groupBy && taskGroupKey(task, groupBy) !== taskGroupKey(parent, groupBy));
   });
   const open = roots.filter((task) => task.status !== 'completed');
   const completed = roots.filter((task) => task.status === 'completed');
@@ -189,9 +189,9 @@ export function LiveTaskRail({
   const childrenByTask = new Map<string, Task[]>();
   for (const task of visible) {
     for (const parentId of parentIdsByTask.get(task.id) ?? []) {
-      if (groupedDesign) {
+      if (groupBy) {
         const parent = visibleById.get(parentId);
-        if (!parent || taskCategoryKey(task) !== taskCategoryKey(parent)) continue;
+        if (!parent || taskGroupKey(task, groupBy) !== taskGroupKey(parent, groupBy)) continue;
       }
       const children = childrenByTask.get(parentId);
       if (children) children.push(task);
@@ -287,10 +287,11 @@ export function LiveTaskRail({
           <p className="tasks-empty">Loading tasks…</p>
         ) : visible.length === 0 ? (
           <p className="tasks-empty">No tasks yet.</p>
-        ) : groupedDesign ? (
+        ) : categoryDesign && groupBy ? (
           <TaskCategoryPrototype
-            key={groupedDesign}
-            design={groupedDesign}
+            key={`${categoryDesign}-${groupBy}`}
+            design={categoryDesign}
+            groupBy={groupBy}
             tasks={visible}
             roots={roots}
             selectedTaskId={selectedTaskId}

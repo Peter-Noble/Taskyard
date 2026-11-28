@@ -64,10 +64,9 @@ export function DashboardClient({
   const [liveProjectId, setLiveProjectId] = useState<string | null>(null);
   const [composingTask, setComposingTask] = useState(false);
   const [categoryDesign, setCategoryDesign] = useState(initialCategoryDesign);
-  const [taskFilter, setTaskFilter] = useState<TaskRailFilterState>(() => ({
-    ...defaultTaskRailFilter(),
-    groupByCategory: Boolean(initialCategoryDesign),
-  }));
+  const [taskFilter, setTaskFilter] = useState<TaskRailFilterState>(() =>
+    defaultTaskRailFilter(initialCategoryDesign ? 'category' : 'none'),
+  );
 
   const { data: machinesData } = useJsonFetch<MachinesResponse>(
     '/api/machines',
@@ -186,7 +185,6 @@ export function DashboardClient({
     url.searchParams.set('ta-27-design', design);
     window.history.replaceState(null, '', url);
     setCategoryDesign(design);
-    setTaskFilter((filter) => ({ ...filter, groupByCategory: true }));
   }
 
   function showChat() {
@@ -267,7 +265,7 @@ export function DashboardClient({
               <TaskRailFilterButton
                 value={taskFilter}
                 onChange={setTaskFilter}
-                showCategoryGrouping={Boolean(categoryDesign)}
+                showGrouping={Boolean(categoryDesign)}
               />
             ) : null}
             <button
