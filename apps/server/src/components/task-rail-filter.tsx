@@ -50,6 +50,7 @@ export type TaskRailFilterState = {
   priorityMin: number;
   priorityMax: number;
   sort: TaskRailSort;
+  groupByCategory: boolean;
 };
 
 export function defaultTaskRailFilter(): TaskRailFilterState {
@@ -61,6 +62,7 @@ export function defaultTaskRailFilter(): TaskRailFilterState {
     priorityMin: 0,
     priorityMax: PRIORITY_MAX,
     sort: 'priority_desc',
+    groupByCategory: false,
   };
 }
 
@@ -179,9 +181,11 @@ function PriorityRangeSlider({
 export function TaskRailFilterButton({
   value,
   onChange,
+  showCategoryGrouping = false,
 }: {
   value: TaskRailFilterState;
   onChange: (next: TaskRailFilterState) => void;
+  showCategoryGrouping?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState(value);
@@ -198,8 +202,9 @@ export function TaskRailFilterButton({
     if (value.priorityMin !== defaults.priorityMin || value.priorityMax !== defaults.priorityMax) {
       count += 1;
     }
+    if (showCategoryGrouping && value.groupByCategory) count += 1;
     return count;
-  }, [value]);
+  }, [value, showCategoryGrouping]);
 
   function openPopover() {
     setDraft(value);
@@ -224,6 +229,18 @@ export function TaskRailFilterButton({
       activeCount={activeCount}
       onToggle={openPopover}
     >
+      {showCategoryGrouping ? (
+        <label className="ta35-filter-option">
+          <input
+            type="checkbox"
+            checked={draft.groupByCategory}
+            onChange={(event) =>
+              setDraft({ ...draft, groupByCategory: event.target.checked })
+            }
+          />
+          Group by category
+        </label>
+      ) : null}
       <h3>Sort</h3>
       <select
         className="form-select ta35-filter-sort"

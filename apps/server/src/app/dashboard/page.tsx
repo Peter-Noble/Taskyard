@@ -7,10 +7,17 @@ export const dynamic = 'force-dynamic';
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ task?: string }>;
+  searchParams: Promise<{ task?: string; 'ta-27-design'?: string }>;
 }) {
   const jar = await cookies();
   const params = await searchParams;
   const initialPanels = parsePanelVisibility(jar.get(PANEL_VISIBILITY_COOKIE)?.value);
-  return <DashboardClient initialPanels={initialPanels} initialTaskId={params.task ?? null} />;
+  const design = params['ta-27-design'];
+  return (
+    <DashboardClient
+      initialPanels={initialPanels}
+      initialTaskId={params.task ?? null}
+      initialCategoryDesign={design === 'A' || design === 'B' || design === 'C' ? design : undefined}
+    />
+  );
 }

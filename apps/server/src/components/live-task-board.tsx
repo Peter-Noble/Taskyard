@@ -17,6 +17,12 @@ import { categoriesFromTasks, taskPriorityLabel, taskPriorityTone, taskTypeMeta 
 import { ChatCommentComposer, ChatMessage } from '@/components/chat-message';
 import { MarkdownMessage } from '@/components/markdown-message';
 import { fetchTasksForProject, type ApiTask } from '@/lib/tasks-api';
+import {
+  CategoryPrototypeSwitcher,
+  TaskCategoryPrototype,
+  taskCategoryKey,
+  type CategoryDesign,
+} from '@/components/task-category-prototypes';
 
 function useProjectCategorySuggestions(projectId: string | null | undefined, refreshKey = 0) {
   const [suggestions, setSuggestions] = useState<string[]>([]);
@@ -112,12 +118,16 @@ export function LiveTaskRail({
   onSelectTask,
   onSelectedUpdatedAt,
   filter,
+  categoryDesign,
+  onCategoryDesignChange,
 }: {
   projectId: string | null;
   selectedTaskId: string | null;
   onSelectTask: (taskId: string) => void;
   onSelectedUpdatedAt?: (updatedAt: string | null) => void;
   filter?: TaskRailFilterState;
+  categoryDesign?: CategoryDesign;
+  onCategoryDesignChange?: (design: CategoryDesign) => void;
 }) {
   const [{ tasks, dependencies }, setSnapshot] = useState<ProjectTaskSnapshot>({ tasks: [], dependencies: [] });
   const [loading, setLoading] = useState(false);
@@ -161,8 +171,12 @@ export function LiveTaskRail({
     : tasks.filter((task) => task.status !== 'cancelled');
   const sort = filter?.sort ?? 'priority_desc';
   const visible = sortTasksForRail(filtered, sort);
-  const visibleIds = new Set(visible.map((task) => task.id));
-  const roots = visible.filter((task) => !task.parent_id || !visibleIds.has(task.parent_id));
+  const groupedDesign = filter?.groupByCategory ? categoryDesign : undefined;
+  const visibleById = new Map(visible.map((task) => [task.id, task]));
+  const roots = visible.filter((task) => {
+    const parent = task.parent_id ? visibleById.get(task.parent_id) : undefined;
+    return !parent || (groupedDesign && taskCategoryKey(task) !== taskCategoryKey(parent));
+  });
   const open = roots.filter((task) => task.status !== 'completed');
   const completed = roots.filter((task) => task.status === 'completed');
   const parentIdsByTask = new Map<string, Set<string>>();
@@ -175,6 +189,10 @@ export function LiveTaskRail({
   const childrenByTask = new Map<string, Task[]>();
   for (const task of visible) {
     for (const parentId of parentIdsByTask.get(task.id) ?? []) {
+      if (groupedDesign) {
+        const parent = visibleById.get(parentId);
+        if (!parent || taskCategoryKey(task) !== taskCategoryKey(parent)) continue;
+      }
       const children = childrenByTask.get(parentId);
       if (children) children.push(task);
       else childrenByTask.set(parentId, [task]);
@@ -259,6 +277,9 @@ export function LiveTaskRail({
 
   return (
     <aside className="task-rail live-task-rail" aria-label="Tasks">
+      {categoryDesign && onCategoryDesignChange ? (
+        <CategoryPrototypeSwitcher design={categoryDesign} onChange={onCategoryDesignChange} />
+      ) : null}
       <div className="task-list-scroll">
         {!projectId ? (
           <p className="tasks-empty">Create a project first.</p>
@@ -266,6 +287,15 @@ export function LiveTaskRail({
           <p className="tasks-empty">Loading tasks…</p>
         ) : visible.length === 0 ? (
           <p className="tasks-empty">No tasks yet.</p>
+        ) : groupedDesign ? (
+          <TaskCategoryPrototype
+            key={groupedDesign}
+            design={groupedDesign}
+            tasks={visible}
+            roots={roots}
+            selectedTaskId={selectedTaskId}
+            renderTask={(task) => renderTask(task)}
+          />
         ) : (
           <>
             <div className="task-project-items">{open.map((task) => renderTask(task))}</div>

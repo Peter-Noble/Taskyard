@@ -457,6 +457,144 @@ a:hover {
   flex-direction: column;
 }
 
+/* TA-27 category layout previews */
+.ta27-switcher {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 3px;
+  padding: 6px var(--space-3);
+  border-bottom: 1px solid var(--border);
+}
+
+.ta27-switcher button {
+  padding: 4px 2px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.ta27-switcher button:hover,
+.ta27-switcher button[aria-pressed="true"] {
+  background: var(--surface-elevated);
+  color: var(--fg);
+}
+
+.ta27-switcher button[aria-pressed="true"] {
+  border-color: var(--border);
+  font-weight: 600;
+}
+
+.ta27-section-head,
+.ta27-folder-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.ta27-section-head {
+  position: sticky;
+  z-index: 2;
+  top: 0;
+  margin: 0;
+  padding: 7px var(--space-4);
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-elevated);
+}
+
+.ta27-category-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.ta27-category-count {
+  flex: none;
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.ta27-folders {
+  display: grid;
+  gap: 6px;
+  padding: var(--space-3);
+}
+
+.ta27-folder {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.ta27-folder-head {
+  width: 100%;
+  padding: 8px var(--space-3);
+  border: 0;
+  background: var(--surface);
+  cursor: pointer;
+}
+
+.ta27-folder-head:hover,
+.ta27-folder-head[aria-expanded="true"] {
+  background: var(--surface-elevated);
+}
+
+.ta27-folder-head:focus-visible {
+  outline-offset: -2px;
+}
+
+.ta27-folder-chevron {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  margin: 0 2px;
+  border-right: 1px solid currentColor;
+  border-bottom: 1px solid currentColor;
+  transform: rotate(-45deg);
+}
+
+.ta27-folder-head[aria-expanded="true"] .ta27-folder-chevron {
+  transform: translateY(-1px) rotate(45deg);
+}
+
+.ta27-folder .task-project-items {
+  border-top: 1px solid var(--border);
+}
+
+.ta27-folder .task-project-items > :last-child > .task-item {
+  border-bottom: 0;
+}
+
+.ta27-picker {
+  position: sticky;
+  z-index: 2;
+  top: 0;
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+}
+
+.ta27-picker label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.ta27-picker select {
+  width: 100%;
+  min-width: 0;
+}
+
 .task-item-wrap {
   display: flex;
   flex-direction: column;
