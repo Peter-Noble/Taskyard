@@ -7,12 +7,12 @@ import { RailFilterPopover } from '@/components/rail-filter';
 
 // D-007
 export const STATUS_OPTIONS: Array<{ id: TaskStatus; label: string }> = [
-  { id: 'backlog', label: 'Backlog' },
-  { id: 'ready', label: 'Ready' },
-  { id: 'in_progress', label: 'In progress' },
-  { id: 'review', label: 'Ready to review' },
-  { id: 'merge', label: 'Ready to merge' },
   { id: 'waiting', label: 'Waiting' },
+  { id: 'merge', label: 'Ready to merge' },
+  { id: 'review', label: 'Ready to review' },
+  { id: 'in_progress', label: 'In progress' },
+  { id: 'ready', label: 'Ready' },
+  { id: 'backlog', label: 'Backlog' },
   { id: 'completed', label: 'Completed' },
   { id: 'cancelled', label: 'Cancelled' },
 ];
@@ -105,6 +105,8 @@ export function sortTasksForRail(tasks: Task[], sort: TaskRailSort): Task[] {
       case 'priority_desc':
         return (
           (PRIORITY_RANK[b.priority] ?? 0) - (PRIORITY_RANK[a.priority] ?? 0) ||
+          Number(a.blocked) - Number(b.blocked) ||
+          STATUS_RANK[a.status] - STATUS_RANK[b.status] ||
           timeMs(b.updated_at) - timeMs(a.updated_at) ||
           compareTaskId(a, b)
         );
