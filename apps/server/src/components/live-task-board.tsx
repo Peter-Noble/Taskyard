@@ -19,20 +19,19 @@ import { MarkdownMessage } from '@/components/markdown-message';
 import { fetchTasksForProject, type ApiTask } from '@/lib/tasks-api';
 import { TaskGroupedList, taskGroupKey } from '@/components/task-grouped-list';
 
+const NO_CATEGORY_SUGGESTIONS: string[] = [];
+
 function useProjectCategorySuggestions(projectId: string | null | undefined, refreshKey = 0) {
-  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [result, setResult] = useState<{ projectId: string; suggestions: string[] }>();
   useEffect(() => {
-    if (!projectId) {
-      setSuggestions([]);
-      return;
-    }
+    if (!projectId) return;
     let cancelled = false;
     void fetch(`/api/tasks?project_id=${encodeURIComponent(projectId)}`)
       .then(async (res) => {
         if (!res.ok) return;
         const data = (await res.json()) as { tasks?: Task[] };
         if (cancelled) return;
-        setSuggestions(categoriesFromTasks(data.tasks ?? []));
+        setResult({ projectId, suggestions: categoriesFromTasks(data.tasks ?? []) });
       })
       .catch(() => {
         /* suggestions are optional */
@@ -41,7 +40,7 @@ function useProjectCategorySuggestions(projectId: string | null | undefined, ref
       cancelled = true;
     };
   }, [projectId, refreshKey]);
-  return suggestions;
+  return result && result.projectId === projectId ? result.suggestions : NO_CATEGORY_SUGGESTIONS;
 }
 
 const STATUSES: TaskStatus[] = [
