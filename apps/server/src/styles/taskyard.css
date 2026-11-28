@@ -4102,6 +4102,25 @@ html:has(body.launcher-page) {
   overflow: auto;
 }
 
+.workspace-rail-tasks:has(.ta35-filter-popover--with-footer) {
+  container-type: size;
+}
+
+.ta35-filter-popover--with-footer {
+  display: flex;
+  flex-direction: column;
+  max-height: min(70dvh, 520px, calc(100cqh - var(--panel-head-h)));
+  padding: 0;
+  overflow: hidden;
+}
+
+.ta35-filter-popover-content {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--space-3);
+}
+
 .ta35-priority-range {
   position: relative;
   margin: 0 0 var(--space-3);
@@ -4277,6 +4296,27 @@ html:has(body.launcher-page) {
   margin-top: var(--space-3);
   padding-top: var(--space-3);
   border-top: 1px solid var(--border);
+}
+
+.ta35-filter-popover--with-footer > .ta35-filter-popover-actions {
+  flex: none;
+  margin: 0;
+  padding: var(--space-3);
+}
+
+.ta35-filter-clear {
+  margin-inline-end: auto;
+}
+
+.ta35-filter-apply {
+  background: #fff;
+  color: #000;
+}
+
+.ta35-filter-apply--changed {
+  background: #000;
+  border-color: #000;
+  color: #fff;
 }
 
 .ta35-filter-strip {

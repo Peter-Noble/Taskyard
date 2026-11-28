@@ -16,12 +16,14 @@ export function RailFilterPopover({
   activeCount,
   onToggle,
   children,
+  footer,
 }: {
   label: string;
   open: boolean;
   activeCount: number;
   onToggle: () => void;
   children: ReactNode;
+  footer?: ReactNode;
 }) {
   return (
     <>
@@ -36,8 +38,17 @@ export function RailFilterPopover({
         {activeCount > 0 ? <span className="ta35-filter-count">{activeCount}</span> : null}
       </button>
       {open ? (
-        <div className="ta35-filter-popover" role="dialog" aria-label={label}>
-          {children}
+        <div
+          className={`ta35-filter-popover${footer ? ' ta35-filter-popover--with-footer' : ''}`}
+          role="dialog"
+          aria-label={label}
+        >
+          {footer ? (
+            <>
+              <div className="ta35-filter-popover-content">{children}</div>
+              {footer}
+            </>
+          ) : children}
         </div>
       ) : null}
     </>

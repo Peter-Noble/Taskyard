@@ -187,6 +187,21 @@ function PriorityRangeSlider({
   );
 }
 
+function countFilterChanges(value: TaskRailFilterState, reference: TaskRailFilterState): number {
+  let count = 0;
+  for (const { id } of TASK_TYPES) {
+    if (value.types[id] !== reference.types[id]) count += 1;
+  }
+  for (const { id } of STATUS_OPTIONS) {
+    if (value.statuses[id] !== reference.statuses[id]) count += 1;
+  }
+  if (value.priorityMin !== reference.priorityMin || value.priorityMax !== reference.priorityMax) {
+    count += 1;
+  }
+  if (value.groupBy !== reference.groupBy) count += 1;
+  return count;
+}
+
 /** Funnel filter between project select and New task — D-007. */
 export function TaskRailFilterButton({
   value,
@@ -200,21 +215,11 @@ export function TaskRailFilterButton({
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState(value);
 
-  const activeCount = useMemo(() => {
-    const defaults = defaultTaskRailFilter(showGrouping ? 'category' : 'none');
-    let count = 0;
-    for (const t of TASK_TYPES) {
-      if (value.types[t.id] !== defaults.types[t.id]) count += 1;
-    }
-    for (const s of STATUS_OPTIONS) {
-      if (value.statuses[s.id] !== defaults.statuses[s.id]) count += 1;
-    }
-    if (value.priorityMin !== defaults.priorityMin || value.priorityMax !== defaults.priorityMax) {
-      count += 1;
-    }
-    if (value.groupBy !== defaults.groupBy) count += 1;
-    return count;
-  }, [value, showGrouping]);
+  const activeCount = useMemo(
+    () => countFilterChanges(value, defaultTaskRailFilter(showGrouping ? 'category' : 'none')),
+    [value, showGrouping],
+  );
+  const hasChanges = draft.sort !== value.sort || countFilterChanges(draft, value) > 0;
 
   function openPopover() {
     setDraft(value);
@@ -238,6 +243,23 @@ export function TaskRailFilterButton({
       open={open}
       activeCount={activeCount}
       onToggle={openPopover}
+      footer={(
+        <footer className="ta35-filter-popover-actions">
+          <button type="button" className="btn btn-ghost btn-sm ta35-filter-clear" onClick={clear}>
+            Clear
+          </button>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={() => setOpen(false)}>
+            Cancel
+          </button>
+          <button
+            type="button"
+            className={`btn btn-sm ta35-filter-apply${hasChanges ? ' ta35-filter-apply--changed' : ''}`}
+            onClick={apply}
+          >
+            Apply
+          </button>
+        </footer>
+      )}
     >
       <h3>Sort</h3>
       <select
@@ -317,15 +339,6 @@ export function TaskRailFilterButton({
             {opt.label}
           </label>
         ))}
-      </div>
-
-      <div className="ta35-filter-popover-actions">
-        <button type="button" className="btn btn-ghost btn-sm" onClick={clear}>
-          Clear
-        </button>
-        <button type="button" className="btn btn-primary btn-sm" onClick={apply}>
-          Apply{activeCount > 0 ? ` · ${activeCount}` : ''}
-        </button>
       </div>
     </RailFilterPopover>
   );
