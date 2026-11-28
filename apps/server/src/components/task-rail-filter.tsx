@@ -63,7 +63,7 @@ export type TaskRailFilterState = {
   groupBy: TaskRailGroupBy;
 };
 
-export function defaultTaskRailFilter(groupBy: TaskRailGroupBy = 'none'): TaskRailFilterState {
+export function defaultTaskRailFilter(): TaskRailFilterState {
   return {
     types: Object.fromEntries(TASK_TYPES.map((t) => [t.id, true])) as Record<TaskType, boolean>,
     statuses: Object.fromEntries(
@@ -72,7 +72,7 @@ export function defaultTaskRailFilter(groupBy: TaskRailGroupBy = 'none'): TaskRa
     priorityMin: 0,
     priorityMax: PRIORITY_MAX,
     sort: 'priority_desc',
-    groupBy,
+    groupBy: 'category',
   };
 }
 
@@ -206,18 +206,16 @@ function countFilterChanges(value: TaskRailFilterState, reference: TaskRailFilte
 export function TaskRailFilterButton({
   value,
   onChange,
-  showGrouping = false,
 }: {
   value: TaskRailFilterState;
   onChange: (next: TaskRailFilterState) => void;
-  showGrouping?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState(value);
 
   const activeCount = useMemo(
-    () => countFilterChanges(value, defaultTaskRailFilter(showGrouping ? 'category' : 'none')),
-    [value, showGrouping],
+    () => countFilterChanges(value, defaultTaskRailFilter()),
+    [value],
   );
   const hasChanges = draft.sort !== value.sort || countFilterChanges(draft, value) > 0;
 
@@ -227,7 +225,7 @@ export function TaskRailFilterButton({
   }
 
   function clear() {
-    const next = defaultTaskRailFilter(showGrouping ? 'category' : 'none');
+    const next = defaultTaskRailFilter();
     setDraft(next);
     onChange(next);
   }
@@ -297,23 +295,19 @@ export function TaskRailFilterButton({
         ))}
       </div>
 
-      {showGrouping ? (
-        <>
-          <h3><label htmlFor="ta27-group-by">Group by</label></h3>
-          <select
-            id="ta27-group-by"
-            className="form-select ta35-filter-sort"
-            value={draft.groupBy}
-            onChange={(event) =>
-              setDraft((prev) => ({ ...prev, groupBy: event.target.value as TaskRailGroupBy }))
-            }
-          >
-            {TASK_RAIL_GROUP_OPTIONS.map(({ id, label }) => (
-              <option key={id} value={id}>{label}</option>
-            ))}
-          </select>
-        </>
-      ) : null}
+      <h3><label htmlFor="task-rail-group-by">Group by</label></h3>
+      <select
+        id="task-rail-group-by"
+        className="form-select ta35-filter-sort"
+        value={draft.groupBy}
+        onChange={(event) =>
+          setDraft((prev) => ({ ...prev, groupBy: event.target.value as TaskRailGroupBy }))
+        }
+      >
+        {TASK_RAIL_GROUP_OPTIONS.map(({ id, label }) => (
+          <option key={id} value={id}>{label}</option>
+        ))}
+      </select>
 
       <h3>Priority</h3>
       <PriorityRangeSlider

@@ -9,7 +9,6 @@ import { ChatStream, StreamHeaderSub } from '@/components/chat-stream';
 import { MachineDock, ThreadRailAside, ThreadRailHead } from '@/components/machine-dock';
 import { NewThreadModal } from '@/components/new-thread-modal';
 import { LiveTaskDetail, LiveTaskRail } from '@/components/live-task-board';
-import type { CategoryDesign } from '@/components/task-category-prototypes';
 import { WorkspaceSeams } from '@/components/workspace-seams';
 import { type PanelVisibility } from '@/lib/panel-visibility';
 import {
@@ -46,11 +45,9 @@ type ProjectsResponse = { projects: Project[] };
 export function DashboardClient({
   initialPanels,
   initialTaskId = null,
-  initialCategoryDesign,
 }: {
   initialPanels?: PanelVisibility;
   initialTaskId?: string | null;
-  initialCategoryDesign?: CategoryDesign;
 }) {
   const router = useRouter();
   const { useTestData: testDataOn, hydrated } = useTestData();
@@ -63,10 +60,7 @@ export function DashboardClient({
   const [selectedTaskUpdatedAt, setSelectedTaskUpdatedAt] = useState<string | null>(null);
   const [liveProjectId, setLiveProjectId] = useState<string | null>(null);
   const [composingTask, setComposingTask] = useState(false);
-  const [categoryDesign, setCategoryDesign] = useState(initialCategoryDesign);
-  const [taskFilter, setTaskFilter] = useState<TaskRailFilterState>(() =>
-    defaultTaskRailFilter(initialCategoryDesign ? 'category' : 'none'),
-  );
+  const [taskFilter, setTaskFilter] = useState<TaskRailFilterState>(defaultTaskRailFilter);
 
   const { data: machinesData } = useJsonFetch<MachinesResponse>(
     '/api/machines',
@@ -173,18 +167,10 @@ export function DashboardClient({
   );
 
   function updateDashboardUrl(taskId?: string) {
-    const params = new URLSearchParams(window.location.search);
+    const params = new URLSearchParams();
     if (taskId) params.set('task', taskId);
-    else params.delete('task');
     const query = params.size ? `?${params.toString()}` : '';
     window.history.replaceState(null, '', `/dashboard${query}`);
-  }
-
-  function switchCategoryDesign(design: CategoryDesign) {
-    const url = new URL(window.location.href);
-    url.searchParams.set('ta-27-design', design);
-    window.history.replaceState(null, '', url);
-    setCategoryDesign(design);
   }
 
   function showChat() {
@@ -262,11 +248,7 @@ export function DashboardClient({
               </div>
             ) : null}
             {!testDataOn ? (
-              <TaskRailFilterButton
-                value={taskFilter}
-                onChange={setTaskFilter}
-                showGrouping={Boolean(categoryDesign)}
-              />
+              <TaskRailFilterButton value={taskFilter} onChange={setTaskFilter} />
             ) : null}
             <button
               type="button"
@@ -354,8 +336,6 @@ export function DashboardClient({
               onSelectTask={handleSelectTask}
               onSelectedUpdatedAt={handleSelectedUpdatedAt}
               filter={taskFilter}
-              categoryDesign={categoryDesign}
-              onCategoryDesignChange={switchCategoryDesign}
             />
   );
 

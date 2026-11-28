@@ -457,45 +457,22 @@ a:hover {
   flex-direction: column;
 }
 
-/* TA-27 category layout previews */
-.ta27-switcher {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 3px;
-  padding: 6px var(--space-3);
+.task-rail-group-head {
+  position: sticky;
+  z-index: 2;
+  top: 0;
+  margin: 0;
   border-bottom: 1px solid var(--border);
 }
 
-.ta27-switcher button {
-  padding: 4px 2px;
-  border: 1px solid transparent;
-  border-radius: 4px;
-  background: transparent;
-  color: var(--muted);
-  font: inherit;
-  font-size: 11px;
-  cursor: pointer;
-}
-
-.ta27-switcher button:hover,
-.ta27-switcher button[aria-pressed="true"] {
-  background: var(--surface-elevated);
-  color: var(--fg);
-}
-
-.ta27-switcher button[aria-pressed="true"] {
-  border-color: var(--border);
-  font-weight: 600;
-}
-
-.ta27-category-toggle {
+.task-rail-group-toggle {
   display: flex;
   align-items: center;
   gap: var(--space-2);
   width: 100%;
-  padding: 8px var(--space-3);
+  padding: 7px var(--space-4);
   border: 0;
-  background: var(--surface);
+  background: var(--surface-elevated);
   text-align: left;
   font-family: inherit;
   font-size: 12px;
@@ -504,29 +481,20 @@ a:hover {
   cursor: pointer;
 }
 
-.ta27-section-head {
-  position: sticky;
-  z-index: 2;
-  top: 0;
-  margin: 0;
-  border-bottom: 1px solid var(--border);
-}
-
-.ta27-section-head .ta27-category-toggle {
-  padding: 7px var(--space-4);
-  background: var(--surface-elevated);
-}
-
-.ta27-section-head .ta27-category-toggle:hover {
+.task-rail-group-toggle:hover {
   background: var(--surface);
 }
 
-.ta27-category-name {
+.task-rail-group-toggle:focus-visible {
+  outline-offset: -2px;
+}
+
+.task-rail-group-name {
   min-width: 0;
   overflow-wrap: anywhere;
 }
 
-.ta27-category-count {
+.task-rail-group-count {
   flex: none;
   margin-left: auto;
   color: var(--muted);
@@ -534,28 +502,7 @@ a:hover {
   font-variant-numeric: tabular-nums;
 }
 
-.ta27-folders {
-  display: grid;
-  gap: 6px;
-  padding: var(--space-3);
-}
-
-.ta27-folder {
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  overflow: hidden;
-}
-
-.ta27-folder .ta27-category-toggle:hover,
-.ta27-folder .ta27-category-toggle[aria-expanded="true"] {
-  background: var(--surface-elevated);
-}
-
-.ta27-category-toggle:focus-visible {
-  outline-offset: -2px;
-}
-
-.ta27-category-chevron {
+.task-rail-group-chevron {
   flex: none;
   width: 6px;
   height: 6px;
@@ -565,38 +512,8 @@ a:hover {
   transform: rotate(-45deg);
 }
 
-.ta27-category-toggle[aria-expanded="true"] .ta27-category-chevron {
+.task-rail-group-toggle[aria-expanded="true"] .task-rail-group-chevron {
   transform: translateY(-1px) rotate(45deg);
-}
-
-.ta27-folder .task-project-items {
-  border-top: 1px solid var(--border);
-}
-
-.ta27-folder .task-project-items > :last-child > .task-item {
-  border-bottom: 0;
-}
-
-.ta27-picker {
-  position: sticky;
-  z-index: 2;
-  top: 0;
-  display: grid;
-  gap: var(--space-1);
-  padding: var(--space-3) var(--space-4);
-  border-bottom: 1px solid var(--border);
-  background: var(--bg);
-}
-
-.ta27-picker label {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--muted);
-}
-
-.ta27-picker select {
-  width: 100%;
-  min-width: 0;
 }
 
 .task-item-wrap {
